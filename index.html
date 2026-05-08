@@ -402,15 +402,15 @@
             z-index: 1;
         }
 
-        /* ── Slider deslizable ── */
+        /* ── Mini Tabs: Actualizado para 3 pestañas ── */
         .mini-tabs::before {
             content: '';
             position: absolute;
             top: var(--sp-1);
             left: var(--sp-1);
             bottom: var(--sp-1);
-            width: calc(50% - var(--sp-1));
-            /* 50% porque son 2 pestañas */
+            width: calc(33.333% - var(--sp-1));
+            /* Ahora ocupa un tercio */
             background: var(--bg-card);
             border-radius: calc(var(--radius-sm) - 2px);
             box-shadow: var(--shadow);
@@ -418,9 +418,13 @@
             z-index: -1;
         }
 
-        /* Detectamos la pestaña activa para mover el slider a la derecha */
+        /* Movimiento del slider según la activa */
         .mini-tabs:has(.mini-tab-btn[data-target="edificio"].activa)::before {
             transform: translateX(100%);
+        }
+
+        .mini-tabs:has(.mini-tab-btn[data-target="modelo"].activa)::before {
+            transform: translateX(200%);
         }
 
         .mini-tab-btn {
@@ -1063,7 +1067,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: var(--sp-5);
-            align-items: start;
+            align-items: stretch;
         }
 
         .dash-col-left,
@@ -1071,10 +1075,12 @@
             display: flex;
             flex-direction: column;
             gap: var(--sp-5);
+            height: 100%;
         }
 
         .dash-2col .card {
             margin-bottom: 0;
+            flex: 1;
         }
 
         .tipo-row {
@@ -1450,10 +1456,6 @@
             justify-content: center;
             width: 48px;
             height: 48px;
-            color: var(--text-muted);
-        }
-
-        .gist-eye-btn:hover {
             color: var(--text-main);
         }
 
@@ -1783,7 +1785,8 @@
 
         /* ── Contenedor altura mínima del dashboard de cámaras ── */
         .dash-camaras-container {
-            min-height: 28rem;
+            overflow-y: auto;
+            max-height: 420px;
         }
 
         /* ── Texto de párrafo en modal filtros ── */
@@ -2006,23 +2009,23 @@
         }
 
         .stat-chip-val--produccion {
-            color: var(--c-blue);
+            color: var(--c-blue) !important;
         }
 
         .stat-chip-val--disponible {
-            color: var(--c-green);
+            color: var(--c-green) !important;
         }
 
         .stat-chip-val--averiado {
-            color: var(--c-red);
+            color: var(--c-red) !important;
         }
 
         .stat-chip-val--revisar {
-            color: var(--c-purple);
+            color: var(--c-purple) !important;
         }
 
         .stat-chip-val--desafectado {
-            color: var(--text-muted);
+            color: var(--text-muted) !important;
         }
 
         .panel-produccion--card-mt {
@@ -2327,6 +2330,65 @@
             justify-content: space-between;
         }
 
+        /* ── Edificio expandible ── */
+        .dash-edif-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--sp-2) 0;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+        .dash-edif-row:last-child {
+            border-bottom: none;
+        }
+        .dash-edif-row--open {
+            border-bottom: none;
+        }
+        .dash-edif-label {
+            flex: 1;
+            font-size: var(--fs-md);
+            color: var(--text-muted);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+        }
+        .dash-edif-chevron {
+            width: 1em; height: 1em;
+            stroke: var(--text-muted);
+            stroke-width: 2.5;
+            fill: none;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .dash-edif-row--open .dash-edif-chevron {
+            transform: rotate(90deg);
+        }
+        .dash-edif-pisos {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.22s ease;
+        }
+        .dash-edif-pisos--open {
+            max-height: 2000px;
+        }
+        .dash-edif-piso-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--sp-1) 0 var(--sp-1) var(--sp-5);
+            border-bottom: 1px solid var(--border);
+        }
+        .dash-edif-piso-row:last-child {
+            border-bottom: none;
+        }
+        .dash-edif-piso-label {
+            font-size: var(--fs-sm);
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
         /* ── Separador muted en título de tipo activo ── */
         .sep-muted {
             color: var(--text-muted);
@@ -2435,6 +2497,23 @@
             padding-right: var(--sp-5);
         }
 
+        /* ── Contenedor de botones en chips Dashboard ── */
+        .dash-chip-btn-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 2.8rem;
+            margin-top: 0.4rem;
+            gap: 0.5rem;
+        }
+
+        /* Ajuste para que los botones sean compactos y quepan en el espacio */
+        .dash-chip-btn {
+            margin-top: 0 !important;
+            padding: 0.25rem 1rem !important;
+        }
+
         .dash-chip-main {
             background: var(--bg-card);
             border: 1px solid var(--bg-card);
@@ -2450,8 +2529,8 @@
             margin: 1rem;
             box-sizing: border-box;
             transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
-            min-height: 160px;
-
+            min-height: 165px;
+            gap: 0.1rem
         }
 
         .dash-chip-main.clickable {
@@ -2872,7 +2951,8 @@
         <div class="search-actions-bar">
             <div id="barra-busqueda" class="search-inner">
                 <input type="text" id="input-busqueda" placeholder="Buscar por tipo, MAC, edificio, piso…"
-                    oninput="UI.filtrarActivos()">
+                    oninput="UI.filtrarActivos()"
+                    onpaste="(function(e){ if(_tabActual!=='activos'){e.preventDefault();var t=(e.clipboardData||window.clipboardData).getData('text');UI.cambiarTab('activos',true);setTimeout(function(){var inp=document.getElementById('input-busqueda');inp.value=t;document.getElementById('btn-limpiar-busqueda').style.display='';inp.focus();UI.filtrarActivos();},220);}else{setTimeout(()=>UI.filtrarActivos(),0);} }).call(this,event)">
                 <svg class="icon icon-line icon-search-lupa">
                     <use href="#icon-search" />
                 </svg>
@@ -2918,7 +2998,6 @@
                                 <use href="#icon-camera" />
                             </svg> Cámaras</h2>
 
-                        <!-- ⬅ Botonera fija acá -->
                         <div class="mini-tabs">
                             <button id="mini-tab-forma" class="mini-tab-btn activa" data-target="forma"
                                 onclick="_setCamarasVista('forma')">
@@ -2927,6 +3006,10 @@
                             <button id="mini-tab-edificio" class="mini-tab-btn" data-target="edificio"
                                 onclick="_setCamarasVista('edificio')">
                                 Por edificio
+                            </button>
+                            <button id="mini-tab-modelo" class="mini-tab-btn" data-target="modelo"
+                                onclick="_setCamarasVista('modelo')">
+                                Por modelo
                             </button>
                         </div>
                         <div id="dash-camaras" class="dash-camaras-container"></div>
@@ -5302,7 +5385,9 @@
 
             /* ---------- DASHBOARD ---------- */
             let _dashTipoAbierto = null;
-            let _dashTipoAbiertoPrevio = null; // <-- NUEVA VARIABLE DE MEMORIA
+            let _dashTipoAbiertoPrevio = null;
+            let _dashEstadoAbierto = null;
+            let _dashEstadoAbiertoPrevio = null;
             let _dashCamarasVista = 'forma';
 
             // ── NUEVO: Función para cambiar la vista de cámaras sin redibujar el resto ──
@@ -5405,9 +5490,10 @@
                 return res;
             }
 
-            function _toggleTipoDetalle(tipoKey) {
+            window._toggleTipoDetalle = function (tipoKey) {
+                if (_dashTipoAbierto !== tipoKey) _dashEstadoAbierto = null; // Limpia nivel 2 si cambio de tipo
                 _dashTipoAbierto = _dashTipoAbierto === tipoKey ? null : tipoKey;
-                // Solo re-renderiza el panel de tipos — grabadores y cámaras no cambian
+
                 const disps = _data.dispositivos;
                 const grabs = _data.grabadores;
                 const idsEnProd = new Set([
@@ -5416,7 +5502,22 @@
                     ...(_data.otros_prod || []).filter(o => o.dispositivoId).map(o => o.dispositivoId)
                 ]);
                 _renderResumenGeneral(disps, idsEnProd);
-            }
+            };
+
+            window._toggleEstadoDetalle = function (estadoKey) {
+                if (_dashTipoAbierto !== 'camara') return;
+
+                _dashEstadoAbierto = _dashEstadoAbierto === estadoKey ? null : estadoKey;
+
+                const disps = _data.dispositivos;
+                const grabs = _data.grabadores;
+                const idsEnProd = new Set([
+                    ...grabs.flatMap(g => g.canales_data.filter(c => c.dispositivoId).map(c => c.dispositivoId)),
+                    ...grabs.filter(g => g.dispositivoId).map(g => g.dispositivoId),
+                    ...(_data.otros_prod || []).filter(o => o.dispositivoId).map(o => o.dispositivoId)
+                ]);
+                _renderResumenGeneral(disps, idsEnProd);
+            };
 
             // Genera los delays escalonados de chips via JS — evita repetir nth-child en CSS
             function _inyectarStaggerChips() {
@@ -5448,68 +5549,148 @@
                     { key: 'desafectado', label: 'Desafectados' },
                 ];
 
-                // --- HTML: Vista General ---
-                const chipTotal = `
-                <div class="dash-chip-main">
-                    <div class="stat-chip-valor">${disps.length}</div>
-                    <div class="stat-chip-label">Dispositivos en total</div>
-                </div>`;
+                const depth = (!_dashTipoAbierto) ? 0 : (!_dashEstadoAbierto ? 1 : 2);
 
-                const chipsTipo = tiposOrden.map(tipoKey => {
-                    const tc = S.TIPOS[tipoKey];
-                    if (!tc) return '';
-                    const n = disps.filter(d => d.tipo === tipoKey).length;
-                    return `
-                    <div class="stat-chip stat-chip-tipo" onclick="_toggleTipoDetalle('${tipoKey}')">
-                        <div class="stat-chip-valor">${n}</div>
-                        <div class="stat-chip-label">${tc.emoji} ${(tc.label + (tipoKey === 'camara' ? 's' : '')).toUpperCase()}</div>
-                        <span class="stat-chip-arrow">▶</span>
+                // --- GENERADOR NIVEL 0: TIPOS ---
+                const getTiposHtml = () => {
+                    const chipTotal = `
+                    <div class="dash-chip-main">
+                        <div class="stat-chip-valor">${disps.length}</div>
+                        <div class="stat-chip-label">Dispositivos en total</div>
                     </div>`;
-                }).join('');
 
-                const panelGeneralHtml = `
-                <div class="dash-resumen-grid">
-                    <div class="dash-resumen-col-info">${chipTotal}</div>
-                    <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsTipo}</div></div>
-                </div>`;
+                    const chipsTipo = tiposOrden.map(tipoKey => {
+                        const tc = S.TIPOS[tipoKey];
+                        if (!tc) return '';
+                        const n = disps.filter(d => d.tipo === tipoKey).length;
+                        return `
+                        <div class="stat-chip stat-chip-tipo" onclick="_toggleTipoDetalle('${tipoKey}')">
+                            <div class="stat-chip-valor">${n}</div>
+                            <div class="stat-chip-label">${tc.emoji} ${(tc.label + (tipoKey === 'camara' ? 's' : '')).toUpperCase()}</div>
+                            <span class="stat-chip-arrow">▶</span>
+                        </div>`;
+                    }).join('');
 
-                // --- HTML: Vista de Detalle ---
-                let panelDetalleHtml = '';
-                if (_dashTipoAbierto && S.TIPOS[_dashTipoAbierto]) {
-                    const tc = S.TIPOS[_dashTipoAbierto];
-                    const dispsDelTipo = disps.filter(d => d.tipo === _dashTipoAbierto);
+                    return `
+                    <div class="dash-resumen-grid">
+                        <div class="dash-resumen-col-info">${chipTotal}</div>
+                        <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsTipo}</div></div>
+                    </div>`;
+                };
+
+                // --- GENERADOR NIVEL 1: ESTADOS ---
+                const getEstadosHtml = (tipoOverride) => {
+                    const tipo = tipoOverride || _dashTipoAbierto;
+                    if (!tipo || !S.TIPOS[tipo]) return '';
+
+                    const tc = S.TIPOS[tipo];
+                    const dispsDelTipo = disps.filter(d => d.tipo === tipo);
                     const est = _estadosDeDisps(dispsDelTipo, idsEnProd);
 
                     const chipSeleccionado = `
-                    <div class="dash-chip-main clickable">
+                    <div class="dash-chip-main clickable" onclick="_toggleTipoDetalle('${tipo}')">
                         <div class="stat-chip-valor">${dispsDelTipo.length}</div>
-                        <div class="stat-chip-label">${tc.emoji} ${(tc.label + (_dashTipoAbierto === 'camara' ? 's' : '')).toUpperCase()}</div>
-                        <div class="stat-chip-volver">◀ VOLVER</div>
+                        <div class="stat-chip-label">${tc.emoji} ${(tc.label + (tipo === 'camara' ? 's' : '')).toUpperCase()}</div>
+                        <div class="dash-chip-btn-group">
+                            <div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div>
+                        </div>
                     </div>`;
 
                     const chipsEstado = ESTADOS_DEFS.map(e => {
                         const n = est[e.key];
+                        const esCamara = tipo === 'camara';
+                        const clickAction = (esCamara && n > 0)
+                            ? `_toggleEstadoDetalle('${e.key}')`
+                            : `UI.irAActivosConFiltro('${tipo}','${e.key}')`;
+
                         const clickable = n > 0
-                            ? `class="stat-chip stat-chip-tipo" onclick="event.stopPropagation(); UI.irAActivosConFiltro('${_dashTipoAbierto}','${e.key}')"`
+                            ? `class="stat-chip stat-chip-tipo" onclick="event.stopPropagation(); ${clickAction}"`
                             : `class="stat-chip" onclick="event.stopPropagation();"`;
+
                         return `
                         <div ${clickable}>
                             <div class="stat-chip-valor stat-chip-val--${e.key}">${n}</div>
                             <div class="stat-chip-label">${e.label}</div>
+                            ${(esCamara && n > 0) ? '<span class="stat-chip-arrow">▶</span>' : ''}
                         </div>`;
                     }).join('');
 
-                    panelDetalleHtml = `
-                    <div class="dash-resumen-grid" onclick="_toggleTipoDetalle('${_dashTipoAbierto}')">
+                    return `
+                    <div class="dash-resumen-grid">
                         <div class="dash-resumen-col-info">${chipSeleccionado}</div>
                         <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsEstado}</div></div>
                     </div>`;
+                };
+
+                // --- GENERADOR NIVEL 2: FORMAS ---
+                const getFormasHtml = (estadoOverride) => {
+                    const estado = estadoOverride || _dashEstadoAbierto;
+                    if (!estado) return '';
+
+                    const ESTADOS_NOMBRES = { produccion: 'En producción', disponible: 'Disponibles', averiado: 'Averiados', revisar: 'A revisar', desafectado: 'Desafectados' };
+                    const camarasDelEstado = disps.filter(d => d.tipo === 'camara' && (d.estado || (idsEnProd.has(d.id) ? 'produccion' : 'disponible')) === estado);
+                    const FORMAS_DEF = [{ key: 'domo', label: 'Domo' }, { key: 'bullet', label: 'Bullet' }, { key: 'turret', label: 'Turret' }, { key: 'minidomo', label: 'Mini domo' }, { key: 'minibullet', label: 'Mini bullet' }, { key: 'domo-ptz', label: 'Domo PTZ' }];
+
+                    const conteo = {};
+                    camarasDelEstado.forEach(d => { const k = d.forma || '__sin__'; conteo[k] = (conteo[k] || 0) + 1; });
+
+                    const chipEstado = `
+                    <div class="dash-chip-main clickable" onclick="_toggleEstadoDetalle('${estado}')">
+                        <div class="stat-chip-valor stat-chip-val--${estado}">${camarasDelEstado.length}</div>
+                        <div class="stat-chip-label stat-chip-val--${estado}">${(ESTADOS_NOMBRES[estado] || estado).toUpperCase()}</div>
+                        <div class="dash-chip-btn-group">
+                            <div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div>
+                            <div class="stat-chip-volver dash-chip-btn" onclick="event.stopPropagation(); UI.irAActivosConFiltro('camara', '${estado}')">VER TODOS ▶</div>
+                        </div>
+                    </div>`;
+
+                    const filas = FORMAS_DEF.filter(f => conteo[f.key] > 0);
+                    if (conteo['__sin__'] > 0) filas.push({ key: '', label: 'Sin forma' });
+
+                    const chipsForma = filas.map(f => `
+                        <div class="stat-chip stat-chip-tipo" onclick="event.stopPropagation(); UI.irAActivosConFiltro('camara', '${estado}', '${f.key}')">
+                            <div class="stat-chip-valor">${conteo[f.key || '__sin__']}</div>
+                            <div class="stat-chip-label">${f.label.toUpperCase()}</div>
+                        </div>`).join('');
+
+                    return `
+                    <div class="dash-resumen-grid">
+                        <div class="dash-resumen-col-info">${chipEstado}</div>
+                        <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsForma}</div></div>
+                    </div>`;
+                };
+
+                // --- RUTEO Y LÓGICA DE ANIMACIÓN MULTI-NIVEL ---
+                let htmlIzq = '', htmlDer = '';
+                let enDetalle = depth > 0;
+                let isSlidingAtrasNivel2 = false;
+
+                const saltandoNivel = (_dashEstadoAbiertoPrevio !== _dashEstadoAbierto && _dashTipoAbierto && _dashTipoAbiertoPrevio === _dashTipoAbierto);
+                const saltandoAdelante = saltandoNivel && _dashEstadoAbierto !== null;
+                const saltandoAtras = saltandoNivel && _dashEstadoAbierto === null;
+
+                if (depth === 0) {
+                    htmlIzq = getTiposHtml();
+                    htmlDer = getEstadosHtml(_dashTipoAbiertoPrevio); // Mantiene visualmente el panel derecho mientras se esconde hacia la derecha
+                }
+                else if (depth === 1) {
+                    htmlIzq = getTiposHtml();
+                    htmlDer = getEstadosHtml();
+
+                    if (saltandoAtras) {
+                        // TRUCO MAGICO: Engañamos al HTML para forzar visualmente el retroceso
+                        htmlIzq = getEstadosHtml(); // Ponemos Nivel 1 en la izquierda
+                        htmlDer = getFormasHtml(_dashEstadoAbiertoPrevio); // Ponemos Nivel 2 en la derecha
+                        enDetalle = false; // Deslizamos hacia la izquierda de forma natural
+                        isSlidingAtrasNivel2 = true;
+                    }
+                }
+                else if (depth === 2) {
+                    htmlIzq = getEstadosHtml();
+                    htmlDer = getFormasHtml();
                 }
 
-                // --- Motor de animación slide ---
                 const contenedor = document.getElementById('dash-disp-tree');
-                const enDetalle = !!(_dashTipoAbierto && S.TIPOS[_dashTipoAbierto]);
-
                 let wrap = contenedor.querySelector('.dash-slide-wrap');
                 if (!wrap) {
                     contenedor.innerHTML = `
@@ -5526,14 +5707,22 @@
                 const alturaActual = contenedor.offsetHeight;
                 const esPrimeraCarga = alturaActual === 0;
 
-                // ── MAGIA: Evitar congelar la altura y animar si estamos en el mismo panel ──
-                if (_dashTipoAbiertoPrevio === _dashTipoAbierto && !esPrimeraCarga) {
-                    panelIzq.innerHTML = panelGeneralHtml;
-                    panelDer.innerHTML = panelDetalleHtml || '';
+                if (_dashTipoAbiertoPrevio === _dashTipoAbierto && _dashEstadoAbiertoPrevio === _dashEstadoAbierto && !esPrimeraCarga) {
+                    panelIzq.innerHTML = htmlIzq;
+                    panelDer.innerHTML = htmlDer;
                     return;
                 }
+
+                if (saltandoAdelante && !esPrimeraCarga) {
+                    wrap.style.transition = 'none';
+                    wrap.classList.remove('en-detalle');
+                    panelIzq.innerHTML = getEstadosHtml();
+                    void wrap.offsetWidth;
+                    wrap.style.transition = '';
+                }
+
                 _dashTipoAbiertoPrevio = _dashTipoAbierto;
-                // ────────────────────────────────────────────────────────────────────────────
+                _dashEstadoAbiertoPrevio = _dashEstadoAbierto;
 
                 if (!esPrimeraCarga) {
                     contenedor.style.transition = 'none';
@@ -5545,8 +5734,8 @@
                 panelDer.style.height = '';
                 panelDer.style.overflow = '';
 
-                panelIzq.innerHTML = panelGeneralHtml;
-                panelDer.innerHTML = panelDetalleHtml || '';
+                panelIzq.innerHTML = htmlIzq;
+                panelDer.innerHTML = htmlDer;
 
                 void contenedor.offsetHeight;
 
@@ -5567,16 +5756,33 @@
                         contenedor.style.transition = 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
                         wrap.classList.toggle('en-detalle', enDetalle);
                         if (alturaObjetivo > 0) contenedor.style.height = alturaObjetivo + 'px';
+
                         setTimeout(() => {
                             if (contenedor.style.height === alturaObjetivo + 'px') {
                                 contenedor.style.height = '';
                                 contenedor.style.transition = '';
-                                if (enDetalle) {
+
+                                if (isSlidingAtrasNivel2) {
+                                    // SNAP SILENCIOSO: Una vez terminada la animación, reacomodamos los paneles a la vista Nivel 1 oficial
+                                    wrap.style.transition = 'none';
+                                    panelIzq.innerHTML = getTiposHtml();
+                                    panelDer.innerHTML = getEstadosHtml();
+                                    wrap.classList.add('en-detalle');
+                                    void wrap.offsetWidth;
+                                    wrap.style.transition = '';
+
                                     panelIzq.style.height = '0px';
                                     panelIzq.style.overflow = 'hidden';
+                                    panelDer.style.height = '';
+                                    panelDer.style.overflow = '';
                                 } else {
-                                    panelDer.style.height = '0px';
-                                    panelDer.style.overflow = 'hidden';
+                                    if (enDetalle) {
+                                        panelIzq.style.height = '0px';
+                                        panelIzq.style.overflow = 'hidden';
+                                    } else {
+                                        panelDer.style.height = '0px';
+                                        panelDer.style.overflow = 'hidden';
+                                    }
                                 }
                             }
                         }, 360);
@@ -5682,40 +5888,50 @@
                 const camarasDisps = disps.filter(d => d.tipo === 'camara');
                 const enProd = camarasDisps.filter(d => idsEnProd.has(d.id)).length;
 
-                const btnForma = document.getElementById('mini-tab-forma');
-                const btnEdificio = document.getElementById('mini-tab-edificio');
-                if (btnForma) btnForma.classList.toggle('activa', _dashCamarasVista === 'forma');
-                if (btnEdificio) btnEdificio.classList.toggle('activa', _dashCamarasVista === 'edificio');
+                // Actualizar clases de los botones
+                ['forma', 'edificio', 'modelo'].forEach(v => {
+                    const btn = document.getElementById(`mini-tab-${v}`);
+                    if (btn) btn.classList.toggle('activa', _dashCamarasVista === v);
+                });
 
                 let vistaHtml = '';
 
-                if (_dashCamarasVista === 'forma') {
-                    const FORMAS_DEF = [
-                        { key: 'domo', label: 'Domo' },
-                        { key: 'bullet', label: 'Bullet' },
-                        { key: 'turret', label: 'Turret' },
-                        { key: 'minidomo', label: 'Mini domo' },
-                        { key: 'minibullet', label: 'Mini bullet' },
-                        { key: 'domo-ptz', label: 'Domo PTZ' },
-                    ];
-                    const conteoForma = {};
-                    camarasDisps.forEach(d => {
-                        const k = d.forma || '__sin_forma__';
-                        if (!conteoForma[k]) conteoForma[k] = { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0 };
-                        conteoForma[k].total++;
-                        if (d.estado === 'averiado') conteoForma[k].averiado++;
-                        else if (d.estado === 'revisar') conteoForma[k].revisar++;
-                        else if (d.estado === 'desafectado') conteoForma[k].desafectado++;
-                        else if (idsEnProd.has(d.id)) conteoForma[k].prod++;
-                    });
-                    const _ceroForma = { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0 };
-                    const filas = FORMAS_DEF
-                        .map(f => ({ label: f.label, ...(conteoForma[f.key] || _ceroForma) }))
-                        .filter(f => f.total > 0);
-                    if (conteoForma['__sin_forma__']?.total > 0)
-                        filas.push({ label: 'Sin forma', ...conteoForma['__sin_forma__'] });
+                // --- LÓGICA COMÚN PARA TABLAS DETALLADAS (Forma y Modelo) ---
+                if (_dashCamarasVista === 'forma' || _dashCamarasVista === 'modelo') {
+                    const campoAgrupar = _dashCamarasVista === 'forma' ? 'forma' : 'modelo';
 
-                    if (filas.length === 0) {
+                    const conteo = {};
+                    camarasDisps.forEach(d => {
+                        const valor = d[campoAgrupar] || '';
+                        const k = valor.trim() || '__sin_valor__';
+                        if (!conteo[k]) conteo[k] = { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0 };
+                        conteo[k].total++;
+                        if (d.estado === 'averiado') conteo[k].averiado++;
+                        else if (d.estado === 'revisar') conteo[k].revisar++;
+                        else if (d.estado === 'desafectado') conteo[k].desafectado++;
+                        else if (idsEnProd.has(d.id)) conteo[k].prod++;
+                    });
+
+                    // Preparar etiquetas legibles
+                    let filasRaw = [];
+                    if (_dashCamarasVista === 'forma') {
+                        const FORMAS_DEF = [
+                            { key: 'domo', label: 'Domo' }, { key: 'bullet', label: 'Bullet' },
+                            { key: 'turret', label: 'Turret' }, { key: 'minidomo', label: 'Mini domo' },
+                            { key: 'minibullet', label: 'Mini bullet' }, { key: 'domo-ptz', label: 'Domo PTZ' }
+                        ];
+                        filasRaw = FORMAS_DEF.map(f => ({ label: f.label, ...(conteo[f.key] || { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0 }) }))
+                            .filter(f => f.total > 0)
+                            .sort((a, b) => a.label.localeCompare(b.label));
+                        if (conteo['__sin_valor__']?.total > 0) filasRaw.push({ label: 'Sin forma', ...conteo['__sin_valor__'] });
+                    } else {
+                        // Ordenar modelos alfabéticamente
+                        filasRaw = Object.entries(conteo)
+                            .map(([k, v]) => ({ label: k === '__sin_valor__' ? 'Sin modelo' : k, ...v }))
+                            .sort((a, b) => a.label.localeCompare(b.label));
+                    }
+
+                    if (filasRaw.length === 0) {
                         vistaHtml = `<div class="dash-empty-text anim-in">Sin cámaras registradas</div>`;
                     } else {
                         const col = (txt, color) => `<span class="dash-cam-label-small" style="color:${color}">${txt}</span>`;
@@ -5730,46 +5946,115 @@
                             ${col('REVIS.', 'var(--c-purple)')}
                             ${col('DESAF.', 'var(--text-muted)')}
                         </div>`;
-                        const rows = filas.map((f, i) => `
-                        <div class="dash-cam-row anim-in${i < filas.length - 1 ? ' dash-cam-row--border' : ''}" style="animation-delay: ${(i + 1) * 0.03}s; animation-fill-mode: both;">
-                            <span class="dash-cam-row-label">${f.label}</span>
+                        const esModoModelo = _dashCamarasVista === 'modelo';
+                        const rows = filasRaw.map((f, i) => {
+                            const esCopiable = esModoModelo && f.label !== 'Sin modelo';
+                            const labelSpan = esCopiable
+                                ? `<span class="dash-cam-row-label text-truncate ip-copiable" onclick="UI.copiarAlPortapapeles('${esc(f.label)}', event)" title="Copiar modelo">${esc(f.label)}</span>`
+                                : `<span class="dash-cam-row-label text-truncate" title="${esc(f.label)}">${esc(f.label)}</span>`;
+                            return `
+                        <div class="dash-cam-row anim-in${i < filasRaw.length - 1 ? ' dash-cam-row--border' : ''}" style="animation-delay: ${(i + 1) * 0.03}s; animation-fill-mode: both;">
+                            ${labelSpan}
                             ${val(f.total, 'var(--text-main)')}
                             ${val(f.prod, 'var(--c-blue)')}
                             ${val(f.total - f.prod - f.averiado - f.revisar - f.desafectado, 'var(--c-green)')}
                             ${val(f.averiado, 'var(--c-red)')}
                             ${val(f.revisar, 'var(--c-purple)')}
                             ${val(f.desafectado, 'var(--text-muted)')}
-                        </div>`).join('');
+                        </div>`;
+                        }).join('');
                         vistaHtml = header + rows;
                     }
-                } else {
+                }
+                // --- VISTA POR EDIFICIO ---
+                else {
+                    // Construir mapa edificio -> piso -> Set de dispositivoId únicos
                     const conteoEdificio = {};
                     grabs.forEach(g => {
                         g.canales_data.forEach(c => {
                             if (!c.dispositivoId) return;
                             const disp = camarasDisps.find(d => d.id === c.dispositivoId);
                             if (!disp) return;
-                            const k = c.edificio?.trim() || '__sin_edificio__';
-                            conteoEdificio[k] = (conteoEdificio[k] || 0) + 1;
+                            const edif = c.edificio?.trim() || '__sin_edificio__';
+                            const piso = S.normalizarPiso(c.piso) || '__sin_piso__';
+                            if (!conteoEdificio[edif]) conteoEdificio[edif] = { ids: new Set(), pisos: {} };
+                            conteoEdificio[edif].ids.add(c.dispositivoId);
+                            if (!conteoEdificio[edif].pisos[piso]) conteoEdificio[edif].pisos[piso] = { ids: new Set() };
+                            if (!conteoEdificio[edif].pisos[piso].ids.has(c.dispositivoId)) {
+                                conteoEdificio[edif].pisos[piso].ids.add(c.dispositivoId);
+                            }
                         });
                     });
-                    const sinEdificio = conteoEdificio['__sin_edificio__'] || 0;
+
                     const filas = Object.entries(conteoEdificio)
                         .filter(([k]) => k !== '__sin_edificio__')
-                        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-                        .map(([label, n]) => ({ label, n }));
-                    if (sinEdificio > 0) filas.push({ label: 'Sin edificio', n: sinEdificio });
+                        .sort((a, b) => a[0].localeCompare(b[0]))
+                        .map(([label, v]) => ({ label, total: v.ids.size, pisos: v.pisos }));
+                    if (conteoEdificio['__sin_edificio__']) {
+                        const v = conteoEdificio['__sin_edificio__'];
+                        filas.push({ label: 'Sin edificio', total: v.ids.size, pisos: v.pisos });
+                    }
 
                     if (filas.length === 0) {
                         vistaHtml = enProd === 0
                             ? `<div class="dash-empty-text anim-in">Sin cámaras en producción</div>`
                             : `<div class="dash-empty-text anim-in">Ningún canal tiene edificio asignado</div>`;
                     } else {
-                        vistaHtml = filas.map((f, i) => `
-                        <div class="dash-cam-row dash-cam-row--spread anim-in${i < filas.length - 1 ? ' dash-cam-row--border' : ''}" style="animation-delay: ${i * 0.03}s; animation-fill-mode: both;">
-                            <span class="dash-cam-row-label">${esc(f.label)}</span>
-                            <span class="dash-cam-val" style="color:var(--text-main)">${f.n}</span>
-                        </div>`).join('');
+                        const chevron = `<svg class="dash-edif-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`;
+
+                        // Funciones de accordion — un edificio abierto a la vez, un piso abierto a la vez
+                        window._toggleEdificio = function(rowEl) {
+                            const container = document.getElementById('dash-camaras');
+                            const wrapper = rowEl.parentNode;
+                            const pisos = wrapper.querySelector('.dash-edif-pisos');
+                            const yaAbierto = pisos.classList.contains('dash-edif-pisos--open');
+
+                            // Cerrar todos los edificios
+                            container.querySelectorAll('.dash-edif-pisos--open').forEach(p => {
+                                p.classList.remove('dash-edif-pisos--open');
+                            });
+                            container.querySelectorAll('.dash-edif-row--open').forEach(r => {
+                                r.classList.remove('dash-edif-row--open');
+                                r.style.borderBottom = '';
+                            });
+
+                            // Abrir el tocado (si estaba cerrado)
+                            if (!yaAbierto) {
+                                pisos.classList.add('dash-edif-pisos--open');
+                                rowEl.classList.add('dash-edif-row--open');
+                                rowEl.style.borderBottom = 'none';
+                            }
+                        };
+
+                        vistaHtml = filas.map((f, i) => {
+                            const pisosOrdenados = Object.entries(f.pisos)
+                                .sort((a, b) => {
+                                    if (a[0] === '__sin_piso__') return 1;
+                                    if (b[0] === '__sin_piso__') return -1;
+                                    return _getPisoPeso(a[0]) - _getPisoPeso(b[0]);
+                                });
+                            const pisosHtml = pisosOrdenados.map(([piso, pd]) => {
+                                const label = piso === '__sin_piso__' ? 'Sin piso' : piso;
+                                return `
+                                <div class="dash-edif-piso-row">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+                                        <span class="dash-edif-piso-label">${esc(label)}</span>
+                                        <span class="dash-cam-val" style="color:var(--text-muted);font-size:var(--fs-base)">${pd.ids.size}</span>
+                                    </div>
+                                </div>`;
+                            }).join('');
+                            return `
+                            <div>
+                                <div class="dash-edif-row anim-in" style="animation-delay:${i*0.03}s;animation-fill-mode:both"
+                                    onclick="window._toggleEdificio(this)">
+                                    <span class="dash-edif-label">${chevron}${esc(f.label)}</span>
+                                    <span class="dash-cam-val" style="color:var(--text-main)">${f.total}</span>
+                                </div>
+                                <div class="dash-edif-pisos">
+                                    ${pisosHtml}
+                                </div>
+                            </div>`;
+                        }).join('');
                     }
                 }
 
@@ -5849,7 +6134,7 @@
                     if (!asig) return 'SIN ASIGNAR';
                     const edif = asig.tipo === 'canal' ? asig.slot.edificio
                         : asig.tipo === 'otro_prod' ? asig.item.edificio
-                        : asig.grab.edificio;
+                            : asig.grab.edificio;
                     return (edif || 'SIN ASIGNAR').toUpperCase();
                 }
                 if (d.tipo === 'camara') return d.forma ? d.forma.replace(/-/g, ' ').toUpperCase() : 'CÁMARA (SIN FORMA)';
@@ -5889,15 +6174,15 @@
 
                 // Múltiples asignaciones: detectar campos comunes
                 const allDesc = bloques.map(b => b.desc);
-                const allIp   = bloques.map(b => b.ip);
+                const allIp = bloques.map(b => b.ip);
                 const descUnica = allDesc.every(v => v === allDesc[0]) ? allDesc[0] : null;
-                const ipUnica   = allIp.every(v => v === allIp[0])     ? allIp[0]   : null;
+                const ipUnica = allIp.every(v => v === allIp[0]) ? allIp[0] : null;
 
                 const descComunHtml = (descUnica) ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(descUnica)}</span></div>` : '';
-                const ipComunHtml   = (ipUnica)   ? ipCopiable(ipUnica) : '';
-                const bloquesHtml   = bloques.map(b => {
+                const ipComunHtml = (ipUnica) ? ipCopiable(ipUnica) : '';
+                const bloquesHtml = bloques.map(b => {
                     const lineaH = b.linea ? `<div class="text-truncate">${b.linea}</div>` : '';
-                    const ipH    = (!ipUnica && b.ip) ? ipCopiable(b.ip) : '';
+                    const ipH = (!ipUnica && b.ip) ? ipCopiable(b.ip) : '';
                     return (lineaH || ipH) ? `<div class="asig-bloque">${lineaH}${ipH}</div>` : '';
                 }).filter(Boolean);
 
@@ -6008,10 +6293,10 @@
                 }
 
                 // 1. Datos derivados
-                const asignaciones   = _buildAsignaciones();
+                const asignaciones = _buildAsignaciones();
                 const tieneMacDuplicada = _calcDupMacs();
                 const dupPatrimonios = _buildDupPatrimonios(disps);
-                const dispLabel      = d => d.mac || d.serial || '';
+                const dispLabel = d => d.mac || d.serial || '';
 
                 // 2. Ordenar
                 let sorted = [...disps].sort((a, b) => {
@@ -6323,7 +6608,12 @@
             }
 
             function _tokenizar(query) {
-                const tokens = (query.match(/"[^"]+"|\S+/g) || []).map(t => t.replace(/"/g, ''));
+                let qNorm = query
+                    .replace(/\bdomo\s+ptz\b/gi, 'domo-ptz')
+                    .replace(/\bmini\s+domo\b/gi, 'minidomo')
+                    .replace(/\bmini\s+bullet\b/gi, 'minibullet');
+
+                const tokens = (qNorm.match(/"[^"]+"|\S+/g) || []).map(t => t.replace(/"/g, ''));
                 const tokenRegexes = tokens.map(t => new RegExp('(?<![a-z0-9])' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![a-z0-9])', 'i'));
                 return { tokens, tokenRegexes };
             }
@@ -6340,8 +6630,13 @@
                     : '';
                 const tipoKey = _busqActivos.has('tipo') ? d.tipo.toLowerCase() : '';
                 const tipoLabel = _busqActivos.has('tipo') ? (S.TIPOS[d.tipo]?.label || '').toLowerCase() : '';
-                const camposMap = { mac: d.mac, serial: d.serial, marca: d.marca, modelo: d.modelo, patrimonio: d.patrimonio, forma: d.forma };
+
+                // ── MAGIA 2: Sacamos 'forma' del texto libre general ──
+                const camposMap = { mac: d.mac, serial: d.serial, marca: d.marca, modelo: d.modelo, patrimonio: d.patrimonio };
                 const campos = Object.entries(camposMap).filter(([k, v]) => v && _busqActivos.has(k)).map(([, v]) => v.toLowerCase());
+
+                // Guardamos la forma exacta por separado
+                const formaKey = _busqActivos.has('forma') ? (d.forma || '').toLowerCase() : '';
 
                 if (_busqActivos.has('ubicacion')) {
                     const edifDisp = (d.edificio || '').trim();
@@ -6368,6 +6663,7 @@
                 }
 
                 if (campos.some(c => c.includes(query)) || (hayCanal && hayCanal.includes(query))) return 0;
+                if (formaKey && query === formaKey) return 0; // Coincidencia temprana si escribió exactamente la forma
 
                 let total = 0;
                 for (let ti = 0; ti < tokens.length; ti++) {
@@ -6375,6 +6671,10 @@
                     const re = tokenRegexes[ti];
                     if (tipoKey === t) { total += 0; continue; }
                     if (tipoLabel === t) { total += 1; continue; }
+
+                    // ── MAGIA 3: Coincidencia ESTRICTA para la forma ──
+                    if (formaKey && t === formaKey) { total += 0; continue; }
+
                     if (re.test(tipoKey) || re.test(tipoLabel)) { total += 2; continue; }
                     if (campos.some(c => re.test(c))) { total += 3; continue; }
                     if (t.length > 1 && campos.some(c => c.includes(t))) { total += 4; continue; }
@@ -7020,14 +7320,19 @@
                     }
                 },
 
-                irAActivosConFiltro(tipo, estado) {
+                irAActivosConFiltro(tipo, estado, forma) {
                     const tipoLabel = S.TIPOS[tipo]?.label?.toLowerCase() || tipo;
                     const estadoQ = estado || '';
-                    const query = [tipoLabel, estadoQ].filter(Boolean).join(' ');
+                    const formaQ = forma || '';
+                    const query = [tipoLabel, estadoQ, formaQ].filter(Boolean).join(' ');
 
-                    _forzarFiltros('tipo', 'estado');
+                    _forzarFiltros('tipo', 'estado', 'forma');
 
-                    if (_dashTipoAbierto) { _dashTipoAbierto = null; setTimeout(() => renderDashboard(), 200); }
+                    if (_dashTipoAbierto) {
+                        _dashTipoAbierto = null;
+                        _dashEstadoAbierto = null;
+                        setTimeout(() => renderDashboard(), 200);
+                    }
                     ['dashboard', 'activos', 'produccion'].forEach(t => {
                         document.getElementById('tab-' + t).classList.toggle('activa', t === 'activos');
                     });
@@ -8704,15 +9009,58 @@
 
                 if (modalAbierto) return;
                 if (enInput) return;
+                // Si el input de búsqueda fue tocado recientemente, no interceptamos
+                const inputBusq = document.getElementById('input-busqueda');
+                if (inputBusq && (document.activeElement === inputBusq || inputBusq._recienTocado)) return;
                 if (e.key === '+' || e.key === '=') { UI.abrirNuevoDispositivo(); return; }
 
                 const esCaracterValido = e.key.length === 1 && /^[a-zA-Z0-9:]$/.test(e.key);
 
                 if ((esCaracterValido || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
                     if (_tabActual !== 'activos') UI.cambiarTab('activos', true);
-                    const input = document.getElementById('input-busqueda');
-                    input.focus();
+                    inputBusq.focus();
                 }
+            });
+
+            // ── Marcar input de búsqueda como "recién tocado" para evitar que keydown lo intercepte ──
+            (() => {
+                const inp = document.getElementById('input-busqueda');
+                if (!inp) return;
+                const marcar = () => {
+                    inp._recienTocado = true;
+                    clearTimeout(inp._recienTocadoTimer);
+                    inp._recienTocadoTimer = setTimeout(() => { inp._recienTocado = false; }, 1000);
+                };
+                inp.addEventListener('touchstart', marcar, { passive: true });
+                inp.addEventListener('focus', marcar);
+            })();
+
+            // ── Paste global: si no hay input activo, redirige pegado a barra de búsqueda ──
+            document.addEventListener('paste', e => {
+                const tag = document.activeElement?.tagName;
+                const enInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+                const modalAbierto = document.body.classList.contains('modal-open');
+                if (enInput || modalAbierto) return;
+
+                const texto = e.clipboardData?.getData('text') || '';
+                if (!texto) return;
+
+                e.preventDefault();
+
+                // Escribimos en el input ANTES de cambiar de tab (el input existe en el DOM aunque esté oculto)
+                const input = document.getElementById('input-busqueda');
+                if (!input) return;
+                input.value = texto;
+                const btnX = document.getElementById('btn-limpiar-busqueda');
+                if (btnX) btnX.style.display = '';
+
+                if (_tabActual !== 'activos') UI.cambiarTab('activos', true);
+
+                // Damos foco y disparamos la búsqueda después de que el panel sea visible
+                setTimeout(() => {
+                    input.focus();
+                    UI.filtrarActivos();
+                }, 220);
             });
 
             // ==============================================================
@@ -8866,8 +9214,8 @@
                 }
                 window.addEventListener('scroll', actualizarBoton, { passive: true });
                 const _cambiarTabOrig = UI.cambiarTab.bind(UI);
-                UI.cambiarTab = function (tab) {
-                    _cambiarTabOrig(tab);
+                UI.cambiarTab = function (...args) {
+                    _cambiarTabOrig(...args);
                     actualizarBoton();
                 };
             })();
@@ -8967,7 +9315,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 288
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 297
     // ====================================================================
 
      - CAMBIOS 
