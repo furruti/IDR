@@ -135,7 +135,8 @@
             max-width: 1300px;
             margin: 0 auto;
             padding: var(--sp-3);
-            padding-bottom: 5rem; /* ── Espacio extra al final de la página ── */
+            padding-bottom: 5rem;
+            /* ── Espacio extra al final de la página ── */
         }
 
         /* ============================================================
@@ -153,6 +154,24 @@
             display: flex;
             align-items: center;
             gap: var(--sp-4);
+        }
+
+        #header-tab-titulo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: var(--fs-md);
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+
+        #header-tab-titulo.visible {
+            opacity: 1;
         }
 
         .header h1 {
@@ -532,7 +551,7 @@
             color: var(--c-white);
             padding: var(--sp-5) var(--sp-6);
             border-radius: var(--radius);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow);
             opacity: 0;
             z-index: 1000;
             display: flex;
@@ -617,7 +636,6 @@
             cursor: pointer;
             background: var(--input-bg);
             gap: var(--sp-3);
-            box-shadow: var(--shadow);
         }
 
         .dispositivo-info {
@@ -1022,6 +1040,7 @@
             display: flex;
             flex-direction: column;
             gap: var(--sp-1);
+            box-shadow: var(--shadow);
         }
 
         .stat-chip-valor {
@@ -1918,7 +1937,8 @@
         .dash-grab-barra-fill {
             height: 100%;
             border-radius: var(--radius-pill);
-            transition: width 0.3s ease;
+            transition: width 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: width;
         }
 
         .tipo-custom-row {
@@ -2427,9 +2447,11 @@
             text-align: center;
             box-shadow: var(--shadow);
             flex: 1;
-            width: 100%;
+            margin: 1rem;
             box-sizing: border-box;
             transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+            min-height: 160px;
+
         }
 
         .dash-chip-main.clickable {
@@ -2794,6 +2816,7 @@
             </svg>
             SCB
         </h1>
+        <span id="header-tab-titulo"></span>
         <div class="header-buttons">
             <button class="icon-btn" id="btn-install-app" title="Instalar Aplicación" style="display: none">
                 <svg class="icon icon-line">
@@ -2991,7 +3014,7 @@
                     </svg>
                     Ajustes
                 </h3>
-                <span class="modal-header-version">v270</span>
+                <span class="modal-header-version">v288</span>
             </div>
 
             <div class="modal-scroll-body">
@@ -3375,7 +3398,7 @@
             </div>
 
             <div class="modal-sticky-footer modal-sticky-footer--col">
-                <div class="btn-group btn-group--no-mt">
+                <div class="btn-group btn-group--no-mt" id="otro-prod-grupo-superior">
                     <button class="btn-edit" onclick="UI.guardarOtroProd()">
                         <svg class="icon icon-line">
                             <use href="#icon-save" />
@@ -3387,8 +3410,9 @@
                         </svg> Eliminar
                     </button>
                 </div>
-                <div class="btn-group btn-group--no-mt">
-                    <button class="btn-cancel" onclick="UI.cerrarOtroProd()">Cancelar</button>
+                <div class="btn-group btn-group--no-mt" id="otro-prod-grupo-inferior">
+                    <button class="btn-cancel" id="btn-cancelar-otro-prod"
+                        onclick="UI.cerrarOtroProd()">Cancelar</button>
                 </div>
             </div>
 
@@ -3663,7 +3687,6 @@
                         rows="2" maxlength="300"></textarea>
                 </div>
             </div>
-
             <div class="modal-sticky-footer">
                 <div class="btn-group btn-group--no-mt">
                     <button class="btn-edit" onclick="UI.guardarNuevoGrabador()">
@@ -4029,16 +4052,6 @@
             'use strict';
 
             // ==============================================================
-            // ESCAPE HTML (Global)
-            // ==============================================================
-            function esc(s) {
-                return s == null ? '' : String(s)
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
-            }
-
-            // ==============================================================
             // SECURITY & UTILS
             // ==============================================================
             const S = (() => {
@@ -4362,7 +4375,7 @@
                     get TIPOS() { return TIPOS; }, guardarTipos, cargarTipos,
                     get edificios() { return _edificios; }, guardarEdificios, cargarEdificios,
                     generarFirma, verificarFirma, sanitizarDisp, sanitizarGrab, sanitizarOtroProd, sanitizarDataTotal,
-                    validarIPv4, validarMAC, normalizarPiso
+                    validarIP, validarIPv4, validarIPv6, validarMAC, normalizarPiso
                 };
             })();
 
@@ -4652,59 +4665,15 @@
                     .replace(/'/g, '&#39;');
             }
 
-            function validarIP(ip) {
-                if (!ip) return true;
-                // ── IPv4 ──
-                if (ip.includes('.') && !ip.includes(':')) {
-                    const partes = ip.split('.');
-                    if (partes.length !== 4) return false;
-                    return partes.every(p => {
-                        if (!/^\d+$/.test(p)) return false;
-                        if (p.length > 1 && p[0] === '0') return false;
-                        const n = Number(p);
-                        return n >= 0 && n <= 255;
-                    });
-                }
-                // ── IPv6 ──
-                return validarIPv6(ip);
-            }
-
-            function validarIPv6(ip) {
-                const raw = ip.split('%')[0]; // quitar zona de enlace (%eth0, %1)
-                if (raw === '::') return true;
-                const sides = raw.split('::');
-                if (sides.length > 2) return false;
-                const grupos = sides.flatMap(s => s ? s.split(':') : []);
-                if (sides.length === 1 && grupos.length !== 8) return false;
-                if (sides.length === 2) {
-                    const totalGrupos = (sides[0] ? sides[0].split(':').length : 0)
-                        + (sides[1] ? sides[1].split(':').length : 0);
-                    if (totalGrupos > 7) return false;
-                }
-                // Notación mixta: último grupo puede ser IPv4 (::ffff:192.168.1.1)
-                const last = grupos[grupos.length - 1];
-                if (last && last.includes('.')) {
-                    const partes = last.split('.');
-                    if (partes.length !== 4) return false;
-                    if (!partes.every(p => /^\d+$/.test(p) && Number(p) <= 255)) return false;
-                    grupos.pop();
-                }
-                return grupos.every(g => /^[0-9A-Fa-f]{1,4}$/.test(g));
-            }
-
-            // Alias — la función de sanitizado del módulo S sigue llamándola validarIPv4
-            function validarIPv4(ip) { return validarIP(ip); }
-
-            function validarMAC(mac) {
-                if (!mac) return true;
-                if (/^sinrelevarn?\d{1,3}$/i.test(mac)) return true;
-                return /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/.test(mac);
+            // Seriales marcados como pendientes de relevar: se permiten duplicados entre sí
+            function esSerialPendiente(serial) {
+                return /^relevar$/i.test(serial.trim());
             }
 
             function validarCampoIP(elementId) {
                 const el = document.getElementById(elementId);
                 const ip = el?.value.trim() || '';
-                if (!validarIP(ip)) {
+                if (!S.validarIP(ip)) {
                     el.classList.add('error');
                     toast(`IP inválida: "${ip}"`, 'error');
                     return false;
@@ -4718,7 +4687,7 @@
                 const raw = el?.value.trim() || '';
                 if (!raw) { el.classList.remove('error'); return true; }
                 const tokens = raw.split(',').map(t => t.trim()).filter(Boolean);
-                const invalidos = tokens.filter(t => !validarMAC(t));
+                const invalidos = tokens.filter(t => !S.validarMAC(t));
                 if (invalidos.length) {
                     el.classList.add('error');
                     toast(`MAC inválida: "${invalidos[0]}"`, 'error');
@@ -5333,10 +5302,28 @@
 
             /* ---------- DASHBOARD ---------- */
             let _dashTipoAbierto = null;
+            let _dashTipoAbiertoPrevio = null; // <-- NUEVA VARIABLE DE MEMORIA
             let _dashCamarasVista = 'forma';
+
+            // ── NUEVO: Función para cambiar la vista de cámaras sin redibujar el resto ──
+            window._setCamarasVista = function (vista) {
+                if (_dashCamarasVista === vista) return;
+                _dashCamarasVista = vista;
+
+                // Recolectamos los datos y dibujamos SOLO el panel de cámaras
+                const disps = _data.dispositivos;
+                const grabs = _data.grabadores;
+                const idsEnProd = new Set([
+                    ...grabs.flatMap(g => g.canales_data.filter(c => c.dispositivoId).map(c => c.dispositivoId)),
+                    ...grabs.filter(g => g.dispositivoId).map(g => g.dispositivoId),
+                    ...(_data.otros_prod || []).filter(o => o.dispositivoId).map(o => o.dispositivoId)
+                ]);
+
+                _renderResumenCamaras(disps, grabs, idsEnProd);
+            };
+
             let _activosColumnas = (() => { try { return parseInt(localStorage.getItem('cctv_activos_cols')) === 1 ? 1 : 2; } catch { return 2; } })();
 
-            // ── CORRECCIÓN 1: Agregar 'edificio-piso' a la lista permitida ──
             let _activosOrden = (() => {
                 try {
                     let v = localStorage.getItem('cctv_activos_orden');
@@ -5420,7 +5407,15 @@
 
             function _toggleTipoDetalle(tipoKey) {
                 _dashTipoAbierto = _dashTipoAbierto === tipoKey ? null : tipoKey;
-                renderDashboard();
+                // Solo re-renderiza el panel de tipos — grabadores y cámaras no cambian
+                const disps = _data.dispositivos;
+                const grabs = _data.grabadores;
+                const idsEnProd = new Set([
+                    ...grabs.flatMap(g => g.canales_data.filter(c => c.dispositivoId).map(c => c.dispositivoId)),
+                    ...grabs.filter(g => g.dispositivoId).map(g => g.dispositivoId),
+                    ...(_data.otros_prod || []).filter(o => o.dispositivoId).map(o => o.dispositivoId)
+                ]);
+                _renderResumenGeneral(disps, idsEnProd);
             }
 
             // Genera los delays escalonados de chips via JS — evita repetir nth-child en CSS
@@ -5531,6 +5526,15 @@
                 const alturaActual = contenedor.offsetHeight;
                 const esPrimeraCarga = alturaActual === 0;
 
+                // ── MAGIA: Evitar congelar la altura y animar si estamos en el mismo panel ──
+                if (_dashTipoAbiertoPrevio === _dashTipoAbierto && !esPrimeraCarga) {
+                    panelIzq.innerHTML = panelGeneralHtml;
+                    panelDer.innerHTML = panelDetalleHtml || '';
+                    return;
+                }
+                _dashTipoAbiertoPrevio = _dashTipoAbierto;
+                // ────────────────────────────────────────────────────────────────────────────
+
                 if (!esPrimeraCarga) {
                     contenedor.style.transition = 'none';
                     contenedor.style.height = alturaActual + 'px';
@@ -5615,7 +5619,8 @@
                     </div>
                 </div>`;
 
-                const htmlLista = grabs.map(g => {
+                // Calculamos los datos de cada grabador para usarlos después en la animación
+                const grabDatos = grabs.map(g => {
                     const ocup = g.canales_data.filter(c => c.dispositivoId).length;
                     const libre = g.canales_n - ocup;
                     const pct = Math.round((ocup / g.canales_n) * 100);
@@ -5623,6 +5628,10 @@
                     if (pct <= 35) colorBarra = 'var(--c-green)';
                     else if (pct <= 65) colorBarra = 'var(--c-blue)';
                     else if (pct <= 85) colorBarra = 'var(--c-orange)';
+                    return { g, ocup, libre, pct, colorBarra };
+                });
+
+                const htmlLista = grabDatos.map(({ g, ocup, libre, pct, colorBarra }) => {
                     return `<div class="dash-grab-row">
                     <div class="dash-grab-row-header">
                         <span class="dash-grab-row-nombre">${esc(g.descripcion)}</span>
@@ -5630,16 +5639,43 @@
                         <span class="dash-grab-row-ip">${g.ip ? esc(g.ip) : ''}</span>
                     </div>
                     <div class="dash-grab-row-stats">
-                        <span>${ocup}/${g.canales_n} canales ocupados · ${libre} libres</span>
-                        <span class="dash-grab-row-pct">${pct}%</span>
+                        <span>${ocup}/${g.canales_n} ocupados · ${libre} libres</span>
+                        <span class="dash-grab-row-pct" data-pct-target="${pct}">0%</span>
                     </div>
                     <div class="dash-grab-barra">
-                        <div class="dash-grab-barra-fill" style="width:${pct}%;background:${colorBarra}"></div>
+                        <div class="dash-grab-barra-fill" style="width:0%;background:${colorBarra}" data-pct-target="${pct}"></div>
                     </div>
                 </div>`;
                 }).join('');
 
                 dashGrabadores.innerHTML = htmlTotales + htmlLista;
+
+                // Animar tras dos frames para que el browser registre width:0 primero
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        // 1. Animar barras de progreso
+                        dashGrabadores.querySelectorAll('.dash-grab-barra-fill').forEach(fill => {
+                            const target = parseInt(fill.dataset.pctTarget, 10) || 0;
+                            fill.style.width = target + '%';
+                        });
+
+                        // 2. Animar texto del porcentaje (contador numérico)
+                        dashGrabadores.querySelectorAll('.dash-grab-row-pct').forEach(span => {
+                            const target = parseInt(span.dataset.pctTarget, 10) || 0;
+                            if (target === 0) { span.textContent = '0%'; return; }
+                            const duration = 900;
+                            const start = performance.now();
+                            function tick(now) {
+                                const elapsed = now - start;
+                                const progress = Math.min(elapsed / duration, 1);
+                                const eased = 1 - Math.pow(1 - progress, 3);
+                                span.textContent = Math.round(eased * target) + '%';
+                                if (progress < 1) requestAnimationFrame(tick);
+                            }
+                            requestAnimationFrame(tick);
+                        });
+                    });
+                });
             }
 
             function _renderResumenCamaras(disps, grabs, idsEnProd) {
@@ -5680,12 +5716,12 @@
                         filas.push({ label: 'Sin forma', ...conteoForma['__sin_forma__'] });
 
                     if (filas.length === 0) {
-                        vistaHtml = `<div class="dash-empty-text">Sin cámaras registradas</div>`;
+                        vistaHtml = `<div class="dash-empty-text anim-in">Sin cámaras registradas</div>`;
                     } else {
                         const col = (txt, color) => `<span class="dash-cam-label-small" style="color:${color}">${txt}</span>`;
                         const val = (n, color) => `<span class="dash-cam-val" style="color:${color}">${n}</span>`;
                         const header = `
-                        <div class="dash-cam-header dash-cam-header--border">
+                        <div class="dash-cam-header dash-cam-header--border anim-in">
                             <span class="dash-cam-row-label"></span>
                             ${col('TOTAL', 'var(--text-disabled)')}
                             ${col('PROD.', 'var(--c-blue)')}
@@ -5695,7 +5731,7 @@
                             ${col('DESAF.', 'var(--text-muted)')}
                         </div>`;
                         const rows = filas.map((f, i) => `
-                        <div class="dash-cam-row${i < filas.length - 1 ? ' dash-cam-row--border' : ''}">
+                        <div class="dash-cam-row anim-in${i < filas.length - 1 ? ' dash-cam-row--border' : ''}" style="animation-delay: ${(i + 1) * 0.03}s; animation-fill-mode: both;">
                             <span class="dash-cam-row-label">${f.label}</span>
                             ${val(f.total, 'var(--text-main)')}
                             ${val(f.prod, 'var(--c-blue)')}
@@ -5726,11 +5762,11 @@
 
                     if (filas.length === 0) {
                         vistaHtml = enProd === 0
-                            ? `<div class="dash-empty-text">Sin cámaras en producción</div>`
-                            : `<div class="dash-empty-text">Ningún canal tiene edificio asignado</div>`;
+                            ? `<div class="dash-empty-text anim-in">Sin cámaras en producción</div>`
+                            : `<div class="dash-empty-text anim-in">Ningún canal tiene edificio asignado</div>`;
                     } else {
                         vistaHtml = filas.map((f, i) => `
-                        <div class="dash-cam-row dash-cam-row--spread${i < filas.length - 1 ? ' dash-cam-row--border' : ''}">
+                        <div class="dash-cam-row dash-cam-row--spread anim-in${i < filas.length - 1 ? ' dash-cam-row--border' : ''}" style="animation-delay: ${i * 0.03}s; animation-fill-mode: both;">
                             <span class="dash-cam-row-label">${esc(f.label)}</span>
                             <span class="dash-cam-val" style="color:var(--text-main)">${f.n}</span>
                         </div>`).join('');
@@ -5755,6 +5791,209 @@
             }
 
             /* ---------- ACTIVOS ---------- */
+            // ==============================================================
+            // HELPERS DE renderActivos (definidos una sola vez)
+            // ==============================================================
+
+            // Construye el mapa de asignaciones y el Set de patrimonios duplicados
+            function _buildAsignaciones() {
+                const asignaciones = {};
+                const pushAsig = (dispId, asig) => {
+                    (asignaciones[dispId] || (asignaciones[dispId] = [])).push(asig);
+                };
+                _data.grabadores.forEach(g => {
+                    if (g.dispositivoId) pushAsig(g.dispositivoId, { tipo: 'grabador', grab: g });
+                    g.canales_data.forEach(c => {
+                        if (c.dispositivoId) pushAsig(c.dispositivoId, { tipo: 'canal', grab: g, slot: c });
+                    });
+                });
+                (_data.otros_prod || []).forEach(o => {
+                    if (o.dispositivoId) pushAsig(o.dispositivoId, { tipo: 'otro_prod', item: o });
+                });
+                return asignaciones;
+            }
+
+            function _buildDupPatrimonios(disps) {
+                const counts = {};
+                disps.forEach(d => {
+                    if (d.patrimonio) {
+                        const k = d.patrimonio.trim().toUpperCase();
+                        if (k) counts[k] = (counts[k] || 0) + 1;
+                    }
+                });
+                return new Set(Object.keys(counts).filter(k => counts[k] > 1));
+            }
+
+            // Peso para ordenar pisos jerárquicamente
+            function _getPisoPeso(p) {
+                if (p === 'SIN ASIGNAR') return 9999;
+                const s = p.trim().toUpperCase();
+                if (s.includes('SS')) return -(parseInt(s.replace(/\D/g, '')) || 1);
+                if (s === 'PB') return 0;
+                if (s.includes('EP')) return (parseInt(s.replace(/\D/g, '')) || 1) * 0.1;
+                if (s === 'TERRAZA' || s === 'AZOTEA' || s === 'TZ') return 1000;
+                const n = parseInt(s);
+                return isNaN(n) ? 500 : n;
+            }
+
+            // Etiqueta de grupo según el modo de orden activo
+            function _getGroupLabel(d, asignaciones) {
+                const ORDEN_ESTADO_MAP = { produccion: 'En producción', disponible: 'Disponibles', averiado: 'Averiados', revisar: 'A revisar', desafectado: 'Desafectados' };
+                if (_activosOrden === 'estado') {
+                    const est = getEstadoEfectivo(d, asignaciones);
+                    return ORDEN_ESTADO_MAP[est] || est.toUpperCase();
+                }
+                if (_activosOrden === 'marca') return (d.marca || 'SIN MARCA').toUpperCase();
+                if (_activosOrden === 'edificio-piso') {
+                    const asig = (asignaciones[d.id] || [])[0];
+                    if (!asig) return 'SIN ASIGNAR';
+                    const edif = asig.tipo === 'canal' ? asig.slot.edificio
+                        : asig.tipo === 'otro_prod' ? asig.item.edificio
+                        : asig.grab.edificio;
+                    return (edif || 'SIN ASIGNAR').toUpperCase();
+                }
+                if (d.tipo === 'camara') return d.forma ? d.forma.replace(/-/g, ' ').toUpperCase() : 'CÁMARA (SIN FORMA)';
+                return (S.TIPOS[d.tipo]?.label || d.tipo).toUpperCase();
+            }
+
+            function _getGroupSortKey(d, asignaciones) {
+                const ORDEN_ESTADO = { produccion: 0, disponible: 1, revisar: 2, averiado: 3, desafectado: 4 };
+                if (_activosOrden === 'estado') return ORDEN_ESTADO[getEstadoEfectivo(d, asignaciones)] ?? 9;
+                if (_activosOrden === 'marca') return (d.marca || 'zzz').trim().toLowerCase();
+                const label = _getGroupLabel(d, asignaciones);
+                return (_activosOrden === 'edificio-piso' && label === 'SIN ASIGNAR') ? 'zzzzz' : label.toLowerCase();
+            }
+
+            // Genera el HTML del bloque de asignación de una tarjeta
+            function _renderAsignInfo(d, asignaciones, tieneMacDuplicada) {
+                const asigs = asignaciones[d.id] || [];
+                if (!asigs.length) return '';
+
+                const isDup = tieneMacDuplicada(d);
+                const badgeProdClass = isDup ? 'badge-estado-revisar' : 'badge-estado-produccion';
+                const hoverTitle = isDup ? 'title="⚠️ MAC Duplicada en Producción"' : '';
+                const ipCopiable = (ip) => `<div class="text-truncate ip-copiable" onclick="UI.copiarAlPortapapeles('${esc(ip)}', event)" title="Copiar IP">${esc(ip)}</div>`;
+
+                const bloques = asigs.map(asig => {
+                    if (asig.tipo === 'canal') return { linea: [esc(asig.grab.descripcion), `CANAL ${asig.slot.canal}`].join(' · '), desc: asig.slot.descripcion || 'EN PRODUCCIÓN', ip: asig.slot.ip || '' };
+                    if (asig.tipo === 'otro_prod') return { linea: '', desc: asig.item.descripcion || 'EN PRODUCCIÓN', ip: asig.item.ip || '' };
+                    return { linea: '', desc: asig.grab.descripcion || 'EN PRODUCCIÓN', ip: asig.grab.ip || '' };
+                });
+
+                if (bloques.length === 1) {
+                    const b = bloques[0];
+                    return (b.desc ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(b.desc)}</span></div>` : '')
+                        + (b.linea ? `<div class="text-truncate">${b.linea}</div>` : '')
+                        + (b.ip ? ipCopiable(b.ip) : '');
+                }
+
+                // Múltiples asignaciones: detectar campos comunes
+                const allDesc = bloques.map(b => b.desc);
+                const allIp   = bloques.map(b => b.ip);
+                const descUnica = allDesc.every(v => v === allDesc[0]) ? allDesc[0] : null;
+                const ipUnica   = allIp.every(v => v === allIp[0])     ? allIp[0]   : null;
+
+                const descComunHtml = (descUnica) ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(descUnica)}</span></div>` : '';
+                const ipComunHtml   = (ipUnica)   ? ipCopiable(ipUnica) : '';
+                const bloquesHtml   = bloques.map(b => {
+                    const lineaH = b.linea ? `<div class="text-truncate">${b.linea}</div>` : '';
+                    const ipH    = (!ipUnica && b.ip) ? ipCopiable(b.ip) : '';
+                    return (lineaH || ipH) ? `<div class="asig-bloque">${lineaH}${ipH}</div>` : '';
+                }).filter(Boolean);
+
+                return descComunHtml
+                    + (bloquesHtml.length ? `<div class="asig-multi">${bloquesHtml.join('<div class="asig-sep"></div>')}</div>` : '')
+                    + ipComunHtml;
+            }
+
+            // Renderiza una tarjeta de dispositivo
+            function _renderItemActivo(d, asignaciones, tieneMacDuplicada, dupPatrimonios) {
+                const ESTADO_BADGE = { averiado: ['Averiado', 'badge-estado-averiado'], revisar: ['A revisar', 'badge-estado-revisar'], desafectado: ['Desafectado', 'badge-estado-desafectado'], disponible: ['Disponible', 'badge-estado-disponible'] };
+                const tc = S.TIPOS[d.tipo] || { emoji: '📦', label: d.tipo };
+                const titulo = d.mac || d.serial || '—';
+                const estadoEfectivo = getEstadoEfectivo(d, asignaciones);
+                const tipoBadgeLabel = (d.tipo === 'camara' && d.forma ? d.forma.replace(/-/g, ' ') : tc.label).toUpperCase();
+
+                const asignInfo = _renderAsignInfo(d, asignaciones, tieneMacDuplicada);
+                const [estLabel, estClase] = ESTADO_BADGE[estadoEfectivo] || [];
+                const estadoBadgeHtml = estLabel ? `<span class="badge ${estClase} text-truncate">${estLabel}</span>` : '';
+                const derechaHtml = estadoBadgeHtml || asignInfo ? `<div class="activo-info-derecha">${estadoBadgeHtml}${asignInfo}</div>` : '';
+
+                const linea3Parts = [
+                    (d.serial && d.mac) ? `S/N: ${esc(d.serial)}` : '',
+                    d.patrimonio ? `<span class="${dupPatrimonios.has(d.patrimonio.trim().toUpperCase()) ? 'pat-dup' : ''}">PAT: ${esc(d.patrimonio)}</span>` : ''
+                ].filter(Boolean);
+
+                return `<div class="dispositivo-item tipo-${esc(d.tipo)} estado-${estadoEfectivo} anim-in" data-disp-id="${esc(d.id)}">
+                    <div class="dispositivo-info">
+                        <div class="dispositivo-nombre">${tc.emoji} ${esc(titulo)} <span class="sep-muted">-</span> ${tipoBadgeLabel}</div>
+                        <div class="dispositivo-meta">${d.modelo ? `<span>${esc(d.modelo)}</span>` : ''}</div>
+                        ${linea3Parts.length ? `<div class="disp-linea3">${linea3Parts.join(' · ')}</div>` : ''}
+                    </div>${derechaHtml}</div>`;
+            }
+
+            // Renderiza los sub-grupos de piso dentro de un edificio
+            function _renderSubgruposPiso(items, gLabel, asignaciones, colClass, renderItem) {
+                const pisos = {};
+                items.forEach(d => {
+                    const asig = (asignaciones[d.id] || [])[0];
+                    let p = 'SIN ASIGNAR';
+                    if (asig) p = (asig.tipo === 'canal' ? asig.slot.piso : asig.tipo === 'otro_prod' ? asig.item.piso : asig.grab.piso) || 'SIN ASIGNAR';
+                    p = S.normalizarPiso(p) || 'SIN ASIGNAR';
+                    (pisos[p] || (pisos[p] = [])).push(d);
+                });
+
+                const sortedPisos = Object.keys(pisos).sort((a, b) => {
+                    const diff = _getPisoPeso(a) - _getPisoPeso(b);
+                    return diff !== 0 ? diff : a.localeCompare(b, undefined, { numeric: true });
+                });
+
+                return sortedPisos.map(p => {
+                    const floorKey = `${gLabel}|${p}`;
+                    const isFloorCollapsed = window.UI._pisosCollapsed.has(floorKey);
+                    return `<div class="sub-grupo-piso" data-floor-key="${esc(floorKey)}" style="margin-bottom: 0.5rem;">
+                        <div class="grupo-piso-header" data-toggle-piso="${esc(floorKey)}" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:0.4rem 0.5rem;border-radius:var(--radius-sm);margin-bottom:0.25rem;">
+                            <span class="section-label" style="margin:0;opacity:0.8;font-size:0.7rem;border-left:2px solid var(--c-orange);padding-left:0.5rem;">
+                                PISO: ${esc(p)} <span style="opacity:0.5;font-weight:normal;margin-left:0.3rem;">(${pisos[p].length} disp.)</span>
+                            </span>
+                            <svg class="nvr-chevron" style="${isFloorCollapsed ? 'transform:rotate(-90deg);' : ''}width:14px;height:14px;stroke:var(--text-muted);" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
+                        </div>
+                        <div class="activos-grid-transition ${colClass}${isFloorCollapsed ? ' collapsed' : ''}">
+                            ${pisos[p].map(renderItem).join('')}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // Registra _toggleGrupoActivos una sola vez
+            if (!window.UI._toggleGrupoActivos) {
+                window.UI._toggleGrupoActivos = function (groupId) {
+                    const col = window.UI._activosCollapsed;
+                    const card = document.querySelector(`.grupo-activos-card[data-grupo="${CSS.escape(groupId)}"]`);
+                    if (!card) return;
+                    const grid = card.querySelector('.activos-grid-transition');
+                    const chevron = card.querySelector('.nvr-chevron');
+                    if (col.has(groupId)) {
+                        col.delete(groupId);
+                        grid.classList.remove('collapsed');
+                        chevron.style.transform = '';
+                        grid.style.maxHeight = grid.scrollHeight + 'px';
+                        grid.addEventListener('transitionend', () => grid.style.maxHeight = '', { once: true });
+                    } else {
+                        col.add(groupId);
+                        grid.style.maxHeight = grid.scrollHeight + 'px';
+                        grid.getBoundingClientRect();
+                        grid.classList.add('collapsed');
+                        chevron.style.transform = 'rotate(-90deg)';
+                        grid.style.maxHeight = '';
+                    }
+                    if (window.UI._guardarColapsados) window.UI._guardarColapsados();
+                };
+            }
+
+            // ==============================================================
+            // renderActivos — orquestador
+            // ==============================================================
             function renderActivos() {
                 const lista = document.getElementById('lista-dispositivos');
                 const disps = _data.dispositivos;
@@ -5762,207 +6001,37 @@
                 lista.classList.toggle('no-anim', !!query);
 
                 if (disps.length === 0) {
-                    lista.innerHTML = `<div class="empty-state">
-                    <svg class="icon icon-line icon--lg-muted"><use href="#icon-camera"/></svg>
-                    Sin dispositivos registrados.<br>Usá el botón <strong>+</strong> para agregar uno.
-                </div>`;
+                    lista.innerHTML = `<div class="empty-state"><svg class="icon icon-line icon--lg-muted"><use href="#icon-camera"/></svg>Sin dispositivos registrados.<br>Usá el botón <strong>+</strong> para agregar uno.</div>`;
                     const contador = document.getElementById('contador-dispositivos');
                     if (contador) contador.textContent = '0';
                     return;
                 }
 
-                /// --- 1. Asignaciones (para conocer el estado real) ---
-                const asignaciones = {};
-                const macCounts = {}; // Para detectar MACs duplicadas
+                // 1. Datos derivados
+                const asignaciones   = _buildAsignaciones();
+                const tieneMacDuplicada = _calcDupMacs();
+                const dupPatrimonios = _buildDupPatrimonios(disps);
+                const dispLabel      = d => d.mac || d.serial || '';
 
-                function registrarMacProd(dispId) {
-                    if (!dispId) return;
-                    const d = _data.dispositivos.find(x => x.id === dispId);
-                    if (d && d.mac) {
-                        d.mac.split(',').forEach(m => {
-                            const k = m.trim().toUpperCase();
-                            // Ignoramos las macs vacías o las que son "SINRELEVAR"
-                            if (k && !k.startsWith('SINRELEVAR')) macCounts[k] = (macCounts[k] || 0) + 1;
-                        });
-                    }
-                }
-
-                function pushAsig(dispId, asig) {
-                    if (!asignaciones[dispId]) asignaciones[dispId] = [];
-                    asignaciones[dispId].push(asig);
-                }
-
-                _data.grabadores.forEach(g => {
-                    if (g.dispositivoId) { pushAsig(g.dispositivoId, { tipo: 'grabador', grab: g }); registrarMacProd(g.dispositivoId); }
-                    g.canales_data.forEach(c => {
-                        if (c.dispositivoId) { pushAsig(c.dispositivoId, { tipo: 'canal', grab: g, slot: c }); registrarMacProd(c.dispositivoId); }
-                    });
-                });
-                (_data.otros_prod || []).forEach(o => {
-                    if (o.dispositivoId) { pushAsig(o.dispositivoId, { tipo: 'otro_prod', item: o }); registrarMacProd(o.dispositivoId); }
-                });
-
-                // Set con las MACs que aparecen más de 1 vez en producción
-                const dupMacs = new Set(Object.keys(macCounts).filter(k => macCounts[k] > 1));
-
-                // Set con los patrimonios que aparecen en más de 1 dispositivo
-                const patCounts = {};
-                _data.dispositivos.forEach(d => {
-                    if (d.patrimonio) {
-                        const k = d.patrimonio.trim().toUpperCase();
-                        if (k) patCounts[k] = (patCounts[k] || 0) + 1;
-                    }
-                });
-                const dupPatrimonios = new Set(Object.keys(patCounts).filter(k => patCounts[k] > 1));
-
-                function tieneMacDuplicada(d) {
-                    if (!d || !d.mac) return false;
-                    return d.mac.split(',').some(m => dupMacs.has(m.trim().toUpperCase()));
-                }
-
-                function getEstadoEfectivo(d) {
-                    return d.estado || (asignaciones[d.id]?.length ? 'produccion' : 'disponible');
-                }
-
-                // --- 2. Lógica de Ordenamiento y Agrupación ---
-                const ordenEstado = { produccion: 0, disponible: 1, revisar: 2, averiado: 3, desafectado: 4 };
-
-                // Define qué título se muestra arriba del grupo
-                function getGroupLabel(d) {
-                    if (_activosOrden === 'estado') {
-                        const est = getEstadoEfectivo(d);
-                        const map = { produccion: 'En producción', disponible: 'Disponibles', averiado: 'Averiados', revisar: 'A revisar', desafectado: 'Desafectados' };
-                        return map[est] || est.toUpperCase();
-                    }
-                    if (_activosOrden === 'marca') {
-                        return (d.marca || 'SIN MARCA').toUpperCase();
-                    }
-                    // ── Agrupación por Edificio ──
-                    if (_activosOrden === 'edificio-piso') {
-                        const asigs = asignaciones[d.id] || [];
-                        const asig = asigs[0]; // Usamos la primera asignación para agrupar
-                        let edif = "SIN ASIGNAR";
-                        if (asig) {
-                            if (asig.tipo === 'canal') edif = asig.slot.edificio || "SIN ASIGNAR";
-                            else if (asig.tipo === 'otro_prod') edif = asig.item.edificio || "SIN ASIGNAR";
-                            else if (asig.tipo === 'grabador') edif = asig.grab.edificio || "SIN ASIGNAR";
-                        }
-                        return edif.toUpperCase();
-                    }
-                    // DEFAULT (Tipo / Forma)
-                    if (d.tipo === 'camara') {
-                        return d.forma ? d.forma.replace(/-/g, ' ').toUpperCase() : 'CÁMARA (SIN FORMA)';
-                    }
-                    return (S.TIPOS[d.tipo]?.label || d.tipo).toUpperCase();
-                }
-
-                // Define la prioridad de ordenamiento (Alfabético puro por el nombre del grupo)
-                function getGroupSortKey(d) {
-                    if (_activosOrden === 'estado') return ordenEstado[getEstadoEfectivo(d)] ?? 9;
-                    if (_activosOrden === 'marca') return (d.marca || 'zzz').trim().toLowerCase();
-                    if (_activosOrden === 'edificio-piso') {
-                        const label = getGroupLabel(d);
-                        return label === "SIN ASIGNAR" ? "zzzzz" : label.toLowerCase();
-                    }
-                    return getGroupLabel(d).toLowerCase();
-                }
-
-                const dispLabel = d => d.mac || d.serial || '';
-
+                // 2. Ordenar
                 let sorted = [...disps].sort((a, b) => {
-                    const keyA = getGroupSortKey(a);
-                    const keyB = getGroupSortKey(b);
-                    // 1. Ordenamos por el Grupo
+                    const keyA = _getGroupSortKey(a, asignaciones);
+                    const keyB = _getGroupSortKey(b, asignaciones);
                     if (keyA !== keyB) {
                         if (typeof keyA === 'number' && typeof keyB === 'number') return keyA - keyB;
                         return String(keyA).localeCompare(String(keyB));
                     }
-                    // 2. Orden secundario: Marca -> Modelo -> MAC/Serial
-                    const mA = (a.marca || '').toLowerCase();
-                    const mB = (b.marca || '').toLowerCase();
+                    const mA = (a.marca || '').toLowerCase(), mB = (b.marca || '').toLowerCase();
                     if (mA !== mB) return mA.localeCompare(mB);
-                    const modA = (a.modelo || '').toLowerCase();
-                    const modB = (b.modelo || '').toLowerCase();
+                    const modA = (a.modelo || '').toLowerCase(), modB = (b.modelo || '').toLowerCase();
                     if (modA !== modB) return modA.localeCompare(modB);
                     return dispLabel(a).localeCompare(dispLabel(b));
                 });
 
-                // --- 3. Búsqueda ---
+                // 3. Filtrar por búsqueda
                 if (query) {
-                    // 1. Mejoramos la extracción para permitir frases entre comillas (Ej: "templo b" 5)
-                    const tokens = (query.match(/"[^"]+"|\S+/g) || []).map(t => t.replace(/"/g, ''));
-                    const tokenRegexes = tokens.map(t => new RegExp('(?<![a-z0-9])' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![a-z0-9])', 'i'));
-
-                    function scoreDispositivo(d) {
-                        const asigD = asignaciones[d.id] || [];
-                        const hayCanal = _busqActivos.has('canal')
-                            ? asigD.filter(a => a.tipo === 'canal').map(a => (a.slot.descripcion || '').toLowerCase()).join(' ')
-                            : '';
-                        const tipoKey = _busqActivos.has('tipo') ? d.tipo.toLowerCase() : '';
-                        const tipoLabel = _busqActivos.has('tipo') ? (S.TIPOS[d.tipo]?.label || '').toLowerCase() : '';
-                        const camposMap = { mac: d.mac, serial: d.serial, marca: d.marca, modelo: d.modelo, patrimonio: d.patrimonio, forma: d.forma };
-                        const campos = Object.entries(camposMap).filter(([k, v]) => v && _busqActivos.has(k)).map(([, v]) => v.toLowerCase());
-
-                        if (_busqActivos.has('ubicacion')) {
-                            // Ubicación propia del dispositivo
-                            const edifDisp = (d.edificio || '').trim();
-                            const pisoDisp = (d.piso || '').trim();
-                            if (edifDisp || pisoDisp) campos.push([edifDisp, pisoDisp].filter(Boolean).join(' ').toLowerCase());
-
-                            // Ubicación de todas las asignaciones
-                            asigD.forEach(a => {
-                                if (a.tipo === 'canal' && a.slot) {
-                                    const edifCanal = (a.slot.edificio || '').trim();
-                                    const pisoCanal = (a.slot.piso || '').trim();
-                                    if (edifCanal || pisoCanal) campos.push([edifCanal, pisoCanal].filter(Boolean).join(' ').toLowerCase());
-                                }
-                                if (a.tipo === 'otro_prod' && a.item) {
-                                    const edifOtro = (a.item.edificio || '').trim();
-                                    const pisoOtro = (a.item.piso || '').trim();
-                                    if (edifOtro || pisoOtro) campos.push([edifOtro, pisoOtro].filter(Boolean).join(' ').toLowerCase());
-                                }
-                            });
-                        }
-
-                        let estadoTextos = [];
-                        if (_busqActivos.has('estado')) {
-                            const estadoEfectivo = getEstadoEfectivo(d);
-                            const ESTADO_ALIAS = { produccion: ['produccion', 'producción', 'operativo'], disponible: ['disponible'], averiado: ['averiado'], revisar: ['revisar', 'a revisar'], desafectado: ['desafectado'] };
-                            estadoTextos = ESTADO_ALIAS[estadoEfectivo] || [estadoEfectivo];
-                        }
-
-                        // ── FAST-PASS: Si la búsqueda completa matchea un campo, gana inmediatamente ──
-                        if (campos.some(c => c.includes(query)) || (hayCanal && hayCanal.includes(query))) {
-                            return 0;
-                        }
-
-                        let total = 0;
-                        for (let ti = 0; ti < tokens.length; ti++) {
-                            const t = tokens[ti];
-                            const re = tokenRegexes[ti];
-
-                            if (tipoKey === t) { total += 0; continue; }
-                            if (tipoLabel === t) { total += 1; continue; }
-
-                            // Regex para coincidencia de palabra exacta
-                            if (re.test(tipoKey) || re.test(tipoLabel)) { total += 2; continue; }
-                            if (campos.some(c => re.test(c))) { total += 3; continue; }
-
-                            // Includes parcial SOLO si la palabra tiene más de 1 letra
-                            if (t.length > 1 && campos.some(c => c.includes(t))) { total += 4; continue; }
-
-                            if (hayCanal && re.test(hayCanal)) { total += 5; continue; }
-                            if (t.length > 1 && hayCanal && hayCanal.includes(t)) { total += 6; continue; }
-
-                            if (estadoTextos.some(s => s === t)) { total += 1; continue; }
-                            if (t.length > 1 && estadoTextos.some(s => s.includes(t))) { total += 2; continue; }
-
-                            return Infinity; // Falló en todo
-                        }
-                        return total;
-                    }
-
-                    sorted = sorted.map(d => ({ d, score: scoreDispositivo(d) }))
+                    const { tokens, tokenRegexes } = _tokenizar(query);
+                    sorted = sorted.map(d => ({ d, score: scoreDispositivo(d, { tokens, tokenRegexes, query, asignaciones }) }))
                         .filter(({ score }) => score < Infinity)
                         .sort((a, b) => a.score - b.score)
                         .map(({ d }) => d);
@@ -5977,268 +6046,45 @@
                 const contador = document.getElementById('contador-dispositivos');
                 if (contador) contador.textContent = query ? `${sorted.length} / ${disps.length}` : sorted.length;
 
-                // --- 4. Creador de Tarjetas ---
-                function renderItem(d) {
-                    const tc = S.TIPOS[d.tipo] || { emoji: '📦', label: d.tipo, badge: 'badge-otro' };
-                    const titulo = d.mac || d.serial || '—';
-                    const subtitulo = d.modelo ? esc(d.modelo) : '';
-                    const estadoEfectivo = getEstadoEfectivo(d);
-                    const estadoClase = `estado-${estadoEfectivo}`;
-                    const tipoBadgeLabel = (d.tipo === 'camara' && d.forma ? d.forma.replace(/-/g, ' ') : tc.label).toUpperCase();
+                // 4. Agrupar y generar HTML
+                const colClass = _activosColumnas === 1 ? 'lista-1col' : 'lista-2col';
+                const renderItem = d => _renderItemActivo(d, asignaciones, tieneMacDuplicada, dupPatrimonios);
 
-                    let asignInfo = '';
-                    const asigs = asignaciones[d.id] || [];
-                    if (asigs.length) {
-                        // ── MAGIA VISUAL: Si está duplicado, usamos la clase que pinta de violeta ──
-                        const isDup = tieneMacDuplicada(d);
-                        const badgeProdClass = isDup ? 'badge-estado-revisar' : 'badge-estado-produccion';
-                        const hoverTitle = isDup ? 'title="⚠️ MAC Duplicada en Producción"' : '';
-
-                        const bloques = asigs.map(asig => {
-                            if (asig.tipo === 'canal') {
-                                // Las cámaras muestran el NVR y Canal abajo, y la descripción en el badge
-                                return {
-                                    linea: [esc(asig.grab.descripcion), `CANAL ${asig.slot.canal}`].join(' · '),
-                                    desc: asig.slot.descripcion || 'EN PRODUCCIÓN',
-                                    ip: asig.slot.ip || '',
-                                };
-                            } else if (asig.tipo === 'otro_prod') {
-                                // Otros y Grabadores solo necesitan la descripción en el badge (y la IP si la hay)
-                                return {
-                                    linea: '',
-                                    desc: asig.item.descripcion || 'EN PRODUCCIÓN',
-                                    ip: asig.item.ip || '',
-                                };
-                            } else {
-                                return {
-                                    linea: '',
-                                    desc: asig.grab.descripcion || 'EN PRODUCCIÓN',
-                                    ip: asig.grab.ip || '',
-                                };
-                            }
-                        });
-
-                        if (bloques.length === 1) {
-                            // ── Una sola asignación: comportamiento unificado ──
-                            const b = bloques[0];
-                            const descHtml = b.desc
-                                ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(b.desc)}</span></div>` : '';
-                            const lineaHtml = b.linea ? `<div class="text-truncate">${b.linea}</div>` : '';
-                            const ipHtml = b.ip ? `<div class="text-truncate ip-copiable" onclick="UI.copiarAlPortapapeles('${esc(b.ip)}', event)" title="Copiar IP">${esc(b.ip)}</div>` : '';
-                            asignInfo = `${descHtml}${lineaHtml}${ipHtml}`;
-                        } else {
-                            // ── Múltiples asignaciones: detectar campos comunes ──
-                            const allDesc = bloques.map(b => b.desc);
-                            const allIp = bloques.map(b => b.ip);
-                            const descUnica = allDesc.every(v => v === allDesc[0]) ? allDesc[0] : null;
-                            const ipUnica = allIp.every(v => v === allIp[0]) ? allIp[0] : null;
-
-                            // Badge de descripción
-                            const descComunHtml = (descUnica && descUnica !== '')
-                                ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(descUnica)}</span></div>` : '';
-                            const ipComunHtml = (ipUnica && ipUnica !== '')
-                                ? `<div class="text-truncate ip-copiable" onclick="UI.copiarAlPortapapeles('${esc(ipUnica)}', event)" title="Copiar IP">${esc(ipUnica)}</div>` : '';
-
-                            // Cada bloque (solo se renderiza si tiene línea o IP)
-                            const bloquesHtml = bloques.map(b => {
-                                const ipBloque = (!ipUnica && b.ip) ? `<div class="text-truncate ip-copiable" onclick="UI.copiarAlPortapapeles('${esc(b.ip)}', event)" title="Copiar IP">${esc(b.ip)}</div>` : '';
-                                const lineaBloque = b.linea ? `<div class="text-truncate">${b.linea}</div>` : '';
-                                if (!lineaBloque && !ipBloque) return ''; // Ignoramos bloques vacíos
-                                return `<div class="asig-bloque">${lineaBloque}${ipBloque}</div>`;
-                            }).filter(Boolean);
-
-                            const asigMultiHtml = bloquesHtml.length > 0 
-                                ? `<div class="asig-multi">${bloquesHtml.join('<div class="asig-sep"></div>')}</div>` 
-                                : '';
-
-                            asignInfo = `${descComunHtml}${asigMultiHtml}${ipComunHtml}`;
-                        }
-                    }
-
-                    const ESTADO_BADGE_INFO = { averiado: { label: 'Averiado', clase: 'badge-estado-averiado' }, revisar: { label: 'A revisar', clase: 'badge-estado-revisar' }, desafectado: { label: 'Desafectado', clase: 'badge-estado-desafectado' }, disponible: { label: 'Disponible', clase: 'badge-estado-disponible' } };
-                    const estadoBadgeInfo = ESTADO_BADGE_INFO[estadoEfectivo];
-                    const estadoBadgeHtml = estadoBadgeInfo ? `<span class="badge ${estadoBadgeInfo.clase} text-truncate">${estadoBadgeInfo.label}</span>` : '';
-                    const derechaHtml = estadoBadgeHtml || asignInfo ? `<div class="activo-info-derecha">${estadoBadgeHtml}${asignInfo}</div>` : '';
-
-                    return `<div class="dispositivo-item tipo-${esc(d.tipo)} ${estadoClase} anim-in" data-disp-id="${esc(d.id)}">
-                    <div class="dispositivo-info">
-                        <div class="dispositivo-nombre">
-                            ${tc.emoji} ${esc(titulo)} <span class="sep-muted">-</span> ${tipoBadgeLabel} 
-                        </div>
-                        <div class="dispositivo-meta">${subtitulo ? `<span>${subtitulo}</span>` : ''}</div>
-                        ${(d.serial && d.mac) || d.patrimonio ? `<div class="disp-linea3">${[d.serial && d.mac ? `S/N: ${esc(d.serial)}` : '', d.patrimonio ? `<span class="${dupPatrimonios.has(d.patrimonio.trim().toUpperCase()) ? 'pat-dup' : ''}">PAT: ${esc(d.patrimonio)}</span>` : ''].filter(Boolean).join(' · ')}</div>` : ''}
-                    </div>${derechaHtml}</div>`;
-                }
-
-                // --- 5. Volcado en HTML con Grupos Colapsables ---
-
-                // Inyectamos el manejador de colapso en UI si no existe
-                if (!window.UI._toggleGrupoActivos) {
-                    window.UI._toggleGrupoActivos = function (groupId) {
-                        const col = window.UI._activosCollapsed;
-                        const card = document.querySelector(`.grupo-activos-card[data-grupo="${CSS.escape(groupId)}"]`);
-                        if (!card) return;
-                        const grid = card.querySelector('.activos-grid-transition');
-                        const chevron = card.querySelector('.nvr-chevron');
-
-                        if (col.has(groupId)) {
-                            col.delete(groupId);
-                            grid.classList.remove('collapsed');
-                            chevron.style.transform = '';
-                            grid.style.maxHeight = grid.scrollHeight + 'px';
-                            grid.addEventListener('transitionend', () => grid.style.maxHeight = '', { once: true });
-                        } else {
-                            col.add(groupId);
-                            grid.style.maxHeight = grid.scrollHeight + 'px';
-                            grid.getBoundingClientRect(); // Forzamos reflow para la animación
-                            grid.classList.add('collapsed');
-                            chevron.style.transform = 'rotate(-90deg)';
-                            grid.style.maxHeight = '';
-                        }
-
-                        // Guardamos la memoria si la opción está activada
-                        if (window.UI._guardarColapsados) window.UI._guardarColapsados();
-                    };
-                }
-
-                // Agrupamos los elementos ya ordenados
                 const grupos = {};
                 sorted.forEach(d => {
-                    const gLabel = getGroupLabel(d);
-                    if (!grupos[gLabel]) grupos[gLabel] = [];
-                    grupos[gLabel].push(d);
+                    const gLabel = _getGroupLabel(d, asignaciones);
+                    (grupos[gLabel] || (grupos[gLabel] = [])).push(d);
                 });
 
-                // Inyectamos estilo CSS local para la animación de las grillas
-                let html = `
-                <style>
-                    .activos-grid-transition { transition: max-height 0.3s ease, opacity 0.25s ease; overflow: hidden; }
-                    .activos-grid-transition.collapsed { max-height: 0 !important; opacity: 0 !important; }
-                </style>`;
-
-                const colClass = _activosColumnas === 1 ? 'lista-1col' : 'lista-2col';
+                let html = `<style>.activos-grid-transition{transition:max-height 0.3s ease,opacity 0.25s ease;overflow:hidden}.activos-grid-transition.collapsed{max-height:0!important;opacity:0!important}</style>`;
 
                 Object.entries(grupos).forEach(([gLabel, items]) => {
                     const isCollapsed = window.UI._activosCollapsed.has(gLabel);
-                    const colStyle = isCollapsed ? ' collapsed' : '';
-                    const chevStyle = isCollapsed ? 'transform: rotate(-90deg)' : '';
+                    const itemsHtml = _activosOrden === 'edificio-piso'
+                        ? _renderSubgruposPiso(items, gLabel, asignaciones, colClass, renderItem)
+                        : `<div class="${colClass}">${items.map(renderItem).join('')}</div>`;
 
-                    let itemsHtml = "";
-
-                    // ── LÓGICA DE SUB-GRUPOS POR PISO ──
-                    if (_activosOrden === 'edificio-piso') {
-                        const pisos = {};
-                        items.forEach(d => {
-                            const asigs = asignaciones[d.id] || [];
-                            const asig = asigs[0]; // primera asignación para determinar piso
-                            let p = "SIN ASIGNAR";
-                            if (asig) {
-                                if (asig.tipo === 'canal') p = asig.slot.piso || "SIN ASIGNAR";
-                                else if (asig.tipo === 'otro_prod') p = asig.item.piso || "SIN ASIGNAR";
-                                else if (asig.tipo === 'grabador') p = asig.grab.piso || "SIN ASIGNAR";
-                            }
-                            p = S.normalizarPiso(p) || "SIN ASIGNAR";
-
-                            if (!pisos[p]) pisos[p] = [];
-                            pisos[p].push(d);
-                        });
-
-                        // ── ORDENAMIENTO JERÁRQUICO DE PISOS ──
-                        function getPisoPeso(p) {
-                            if (p === "SIN ASIGNAR") return 9999; // Siempre al final
-
-                            const s = p.trim().toUpperCase();
-
-                            // 1. Subsuelos (ej: "1SS", "SS2", "SS") -> Pesos negativos
-                            if (s.includes('SS')) {
-                                const num = parseInt(s.replace(/\D/g, '')) || 1;
-                                return -num; // 2SS = -2, 1SS = -1
-                            }
-
-                            // 2. Planta Baja
-                            if (s === 'PB') return 0;
-
-                            // 3. Entre Pisos (ej: "EP", "EP1", "EP2") -> Decimales bajos
-                            if (s.includes('EP')) {
-                                const num = parseInt(s.replace(/\D/g, '')) || 1;
-                                return 0 + (num * 0.1); // EP = 0.1, EP2 = 0.2
-                            }
-
-                            // 4. Terraza / Azotea (Preparado para cuando lo agregues)
-                            if (s === 'TERRAZA' || s === 'AZOTEA' || s === 'TZ') return 1000;
-
-                            // 5. Pisos numéricos normales (ej: "1", "2", "-1")
-                            const numExacto = parseInt(s);
-                            if (!isNaN(numExacto)) return numExacto;
-
-                            // 6. Cualquier otra letra (se agrupa después de la terraza)
-                            return 500;
-                        }
-
-                        // Ordenamos usando el "peso" de cada piso
-                        const sortedPisos = Object.keys(pisos).sort((a, b) => {
-                            const pesoA = getPisoPeso(a);
-                            const pesoB = getPisoPeso(b);
-
-                            // Si tienen distinto peso, los ordenamos de menor a mayor
-                            if (pesoA !== pesoB) return pesoA - pesoB;
-
-                            // Si pesan lo mismo (ej: dos pisos con letras), orden alfabético
-                            return a.localeCompare(b, undefined, { numeric: true });
-                        });
-                        // ──────────────────────────────────────────────
-
-                        itemsHtml = sortedPisos.map(p => {
-                            const floorKey = `${gLabel}|${p}`;
-                            const isFloorCollapsed = window.UI._pisosCollapsed.has(floorKey);
-                            const floorColStyle = isFloorCollapsed ? ' collapsed' : '';
-                            const floorChevStyle = isFloorCollapsed ? 'transform: rotate(-90deg)' : '';
-
-                            return `
-                            <div class="sub-grupo-piso" data-floor-key="${esc(floorKey)}" style="margin-bottom: 0.5rem;">
-                                <div class="grupo-piso-header" data-toggle-piso="${esc(floorKey)}" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); margin-bottom: 0.25rem;">
-                                    <span class="section-label" style="margin: 0; opacity: 0.8; font-size: 0.7rem; border-left: 2px solid var(--c-orange); padding-left: 0.5rem;">
-                                        PISO: ${esc(p)} <span style="opacity: 0.5; font-weight: normal; margin-left: 0.3rem;">(${pisos[p].length} disp.)</span>
-                                    </span>
-                                    <svg class="nvr-chevron" style="${floorChevStyle}; width: 14px; height: 14px; stroke: var(--text-muted);" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
-                                </div>
-                                <div class="activos-grid-transition ${colClass}${floorColStyle}">
-                                    ${pisos[p].map(renderItem).join('')}
-                                </div>
-                            </div>`;
-                        }).join('');
-                    } else {
-                        // Lógica estándar para el resto de los modos
-                        itemsHtml = `<div class="${colClass}">${items.map(renderItem).join('')}</div>`;
-                    }
-
-                    html += `
-    <div class="grupo-activos-card" data-grupo="${esc(gLabel)}">
+                    html += `<div class="grupo-activos-card" data-grupo="${esc(gLabel)}">
         <div class="grupo-activos-header" data-toggle-grupo="${esc(gLabel)}">
             <span class="grupo-activos-header-label">${esc(gLabel)} <span class="badge badge-otro badge--grupo-count">${items.length}</span></span>
-            <svg class="nvr-chevron" style="${chevStyle}; stroke: var(--c-orange);" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
+            <svg class="nvr-chevron" style="${isCollapsed ? 'transform:rotate(-90deg);' : ''}stroke:var(--c-orange);" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
         </div>
-        <div class="activos-grid-transition${colStyle}">
-            ${itemsHtml}
-        </div>
+        <div class="activos-grid-transition${isCollapsed ? ' collapsed' : ''}">${itemsHtml}</div>
     </div>`;
                 });
 
                 lista.innerHTML = html;
 
-                // Delegación permanente (se registra una sola vez en el contenedor)
+                // 5. Delegación de eventos (se registra una sola vez)
                 if (!lista._delegRegistrada) {
                     lista._delegRegistrada = true;
-                    lista.addEventListener('click', function (e) {
+                    lista.addEventListener('click', e => {
                         const item = e.target.closest('.dispositivo-item[data-disp-id]');
                         if (item) { UI.abrirEditarDispositivo(item.dataset.dispId); return; }
-
                         const headerGrupo = e.target.closest('.grupo-activos-header[data-toggle-grupo]');
                         if (headerGrupo) { UI._toggleGrupoActivos(headerGrupo.dataset.toggleGrupo); return; }
-
-                        // ── Soporte para colapsar pisos ──
                         const headerPiso = e.target.closest('.grupo-piso-header[data-toggle-piso]');
-                        if (headerPiso) { UI._togglePisoActivos(headerPiso.dataset.togglePiso); return; }
+                        if (headerPiso) { UI._togglePisoActivos(headerPiso.dataset.togglePiso); }
                     });
                 }
             }
@@ -6248,30 +6094,7 @@
                 const lista = document.getElementById('lista-grabadores');
                 const grabs = [..._data.grabadores].sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
 
-                // ── CALCULAR MACS DUPLICADAS DE FORMA GLOBAL ──
-                const macCounts = {};
-                function registrarMacProd(dispId) {
-                    if (!dispId) return;
-                    const d = _data.dispositivos.find(x => x.id === dispId);
-                    if (d && d.mac) {
-                        d.mac.split(',').forEach(m => {
-                            const k = m.trim().toUpperCase();
-                            if (k && !k.startsWith('SINRELEVAR')) macCounts[k] = (macCounts[k] || 0) + 1;
-                        });
-                    }
-                }
-                grabs.forEach(g => {
-                    registrarMacProd(g.dispositivoId);
-                    g.canales_data.forEach(c => registrarMacProd(c.dispositivoId));
-                });
-                (_data.otros_prod || []).forEach(o => registrarMacProd(o.dispositivoId));
-
-                const dupMacs = new Set(Object.keys(macCounts).filter(k => macCounts[k] > 1));
-                function tieneMacDuplicada(d) {
-                    if (!d || !d.mac) return false;
-                    return d.mac.split(',').some(m => dupMacs.has(m.trim().toUpperCase()));
-                }
-                // ──────────────────────────────────────────────
+                const tieneMacDuplicada = _calcDupMacs();
 
                 if (grabs.length === 0) {
                     lista.innerHTML = `<div class="empty-state">
@@ -6424,6 +6247,7 @@
             let _estadoEditando = '';
             let _editandoGrabId = null;
             let _editandoOtroProdId = null;
+            let _snapshotOtroProd = null;
             let _snapshotDisp = null;
             let _snapshotGrab = null;
             let _snapshotCanal = null;
@@ -6472,6 +6296,14 @@
                 return new Set();
             })();
 
+            const ESTADO_ALIAS = {
+                produccion: ['produccion', 'producción', 'operativo'],
+                disponible: ['disponible'],
+                averiado: ['averiado'],
+                revisar: ['revisar', 'a revisar'],
+                desafectado: ['desafectado'],
+            };
+
             const BUSQ_CAMPOS = [
                 { id: 'tipo', label: 'Tipo de dispositivo' },
                 { id: 'mac', label: 'MAC' },
@@ -6480,11 +6312,102 @@
                 { id: 'modelo', label: 'Modelo' },
                 { id: 'patrimonio', label: 'Patrimonio' },
                 { id: 'forma', label: 'Forma (cámara)' },
-                { id: 'canal', label: 'Descripción de canal' },
+                { id: 'canal', label: 'Descripción' },
                 { id: 'estado', label: 'Estado' },
                 { id: 'ubicacion', label: 'Ubicación (Edificio / Piso)' },
             ];
             const KEY_BUSQ = 'cctv_busq_activos';
+
+            function getEstadoEfectivo(d, asignaciones) {
+                return d.estado || (asignaciones[d.id]?.length ? 'produccion' : 'disponible');
+            }
+
+            function _tokenizar(query) {
+                const tokens = (query.match(/"[^"]+"|\S+/g) || []).map(t => t.replace(/"/g, ''));
+                const tokenRegexes = tokens.map(t => new RegExp('(?<![a-z0-9])' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![a-z0-9])', 'i'));
+                return { tokens, tokenRegexes };
+            }
+
+            function scoreDispositivo(d, { tokens, tokenRegexes, query, asignaciones }) {
+                const asigD = asignaciones[d.id] || [];
+                const hayCanal = _busqActivos.has('canal')
+                    ? asigD.map(a => {
+                        if (a.tipo === 'canal') return (a.slot.descripcion || '').toLowerCase();
+                        if (a.tipo === 'otro_prod') return (a.item.descripcion || '').toLowerCase();
+                        if (a.tipo === 'grabador') return (a.grab.descripcion || '').toLowerCase();
+                        return '';
+                    }).filter(Boolean).join(' ')
+                    : '';
+                const tipoKey = _busqActivos.has('tipo') ? d.tipo.toLowerCase() : '';
+                const tipoLabel = _busqActivos.has('tipo') ? (S.TIPOS[d.tipo]?.label || '').toLowerCase() : '';
+                const camposMap = { mac: d.mac, serial: d.serial, marca: d.marca, modelo: d.modelo, patrimonio: d.patrimonio, forma: d.forma };
+                const campos = Object.entries(camposMap).filter(([k, v]) => v && _busqActivos.has(k)).map(([, v]) => v.toLowerCase());
+
+                if (_busqActivos.has('ubicacion')) {
+                    const edifDisp = (d.edificio || '').trim();
+                    const pisoDisp = (d.piso || '').trim();
+                    if (edifDisp || pisoDisp) campos.push([edifDisp, pisoDisp].filter(Boolean).join(' ').toLowerCase());
+                    asigD.forEach(a => {
+                        if (a.tipo === 'canal' && a.slot) {
+                            const edifCanal = (a.slot.edificio || '').trim();
+                            const pisoCanal = (a.slot.piso || '').trim();
+                            if (edifCanal || pisoCanal) campos.push([edifCanal, pisoCanal].filter(Boolean).join(' ').toLowerCase());
+                        }
+                        if (a.tipo === 'otro_prod' && a.item) {
+                            const edifOtro = (a.item.edificio || '').trim();
+                            const pisoOtro = (a.item.piso || '').trim();
+                            if (edifOtro || pisoOtro) campos.push([edifOtro, pisoOtro].filter(Boolean).join(' ').toLowerCase());
+                        }
+                    });
+                }
+
+                let estadoTextos = [];
+                if (_busqActivos.has('estado')) {
+                    const estadoEfectivo = getEstadoEfectivo(d, asignaciones);
+                    estadoTextos = ESTADO_ALIAS[estadoEfectivo] || [estadoEfectivo];
+                }
+
+                if (campos.some(c => c.includes(query)) || (hayCanal && hayCanal.includes(query))) return 0;
+
+                let total = 0;
+                for (let ti = 0; ti < tokens.length; ti++) {
+                    const t = tokens[ti];
+                    const re = tokenRegexes[ti];
+                    if (tipoKey === t) { total += 0; continue; }
+                    if (tipoLabel === t) { total += 1; continue; }
+                    if (re.test(tipoKey) || re.test(tipoLabel)) { total += 2; continue; }
+                    if (campos.some(c => re.test(c))) { total += 3; continue; }
+                    if (t.length > 1 && campos.some(c => c.includes(t))) { total += 4; continue; }
+                    if (hayCanal && re.test(hayCanal)) { total += 5; continue; }
+                    if (t.length > 1 && hayCanal && hayCanal.includes(t)) { total += 6; continue; }
+                    if (estadoTextos.some(s => s === t)) { total += 1; continue; }
+                    if (t.length > 1 && estadoTextos.some(s => s.includes(t))) { total += 2; continue; }
+                    return Infinity;
+                }
+                return total;
+            }
+
+            function _calcDupMacs() {
+                const macCounts = {};
+                function _contarMac(dispId) {
+                    if (!dispId) return;
+                    const d = _data.dispositivos.find(x => x.id === dispId);
+                    if (d && d.mac) {
+                        d.mac.split(',').forEach(m => {
+                            const k = m.trim().toUpperCase();
+                            if (k && !k.startsWith('SINRELEVAR')) macCounts[k] = (macCounts[k] || 0) + 1;
+                        });
+                    }
+                }
+                const grabs = _data.grabadores;
+                grabs.forEach(g => {
+                    _contarMac(g.dispositivoId);
+                    g.canales_data.forEach(c => _contarMac(c.dispositivoId));
+                });
+                (_data.otros_prod || []).forEach(o => _contarMac(o.dispositivoId));
+                const dupMacs = new Set(Object.keys(macCounts).filter(k => macCounts[k] > 1));
+                return (d) => d?.mac?.split(',').some(m => dupMacs.has(m.trim().toUpperCase())) ?? false;
+            }
             const _busqActivos = (() => {
                 try {
                     const saved = JSON.parse(localStorage.getItem(KEY_BUSQ) || 'null');
@@ -6498,6 +6421,48 @@
 
             function _guardarBusqActivos() {
                 try { localStorage.setItem(KEY_BUSQ, JSON.stringify([..._busqActivos])); } catch (_) { }
+            }
+
+            function _forzarFiltros(...ids) {
+                if (ids.every(id => _busqActivos.has(id))) return;
+                if (!window.UI._filtrosPrevios) window.UI._filtrosPrevios = new Set(_busqActivos);
+                ids.forEach(id => _busqActivos.add(id));
+                _guardarBusqActivos();
+                _sincFiltrosUI();
+            }
+
+            function _restaurarColapsos() {
+                if (window.UI._estadoColapsadoPrevio) {
+                    window.UI._activosCollapsed = new Set(window.UI._estadoColapsadoPrevio);
+                    window.UI._estadoColapsadoPrevio = null;
+                }
+                if (window.UI._estadoPisosPrevio) {
+                    window.UI._pisosCollapsed = new Set(window.UI._estadoPisosPrevio);
+                    window.UI._estadoPisosPrevio = null;
+                }
+            }
+
+            function _expandirTodosLosGrupos() {
+                if (!window.UI._activosCollapsed) window.UI._activosCollapsed = new Set();
+                if (!window.UI._pisosCollapsed) window.UI._pisosCollapsed = new Set();
+                if (!window.UI._estadoColapsadoPrevio) {
+                    window.UI._estadoColapsadoPrevio = new Set(window.UI._activosCollapsed);
+                }
+                if (!window.UI._estadoPisosPrevio) {
+                    window.UI._estadoPisosPrevio = new Set(window.UI._pisosCollapsed);
+                }
+                window.UI._activosCollapsed.clear();
+                window.UI._pisosCollapsed.clear();
+            }
+
+            function _sincFiltrosUI() {
+                const btnAll = document.getElementById('btn-toggle-all-filtros');
+                if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
+                const btnFiltros = document.getElementById('btn-filtros-busqueda');
+                if (btnFiltros) btnFiltros.classList.toggle('tiene-desactivados', _busqActivos.size < BUSQ_CAMPOS.length);
+                document.querySelectorAll('[id^="filtro-cb-"]').forEach(cb => {
+                    cb.checked = _busqActivos.has(cb.id.replace('filtro-cb-', ''));
+                });
             }
 
             const UI = {
@@ -6516,7 +6481,7 @@
                         event.stopPropagation(); // Evita que se abra el modal de editar
                     }
                     if (!texto) return;
-                    
+
                     // Fallback para navegadores antiguos o sin HTTPS
                     if (!navigator.clipboard || !window.isSecureContext) {
                         const textArea = document.createElement("textarea");
@@ -6535,7 +6500,7 @@
                         textArea.remove();
                         return;
                     }
-                    
+
                     // API Moderna (Recomendada)
                     navigator.clipboard.writeText(texto).then(() => {
                         toast(`IP copiada: ${texto}`, 'success');
@@ -6626,10 +6591,7 @@
                             </span>
                         </label>`).join('');
 
-                    // Actualizamos el texto al abrir el modal
-                    const btnAll = document.getElementById('btn-toggle-all-filtros');
-                    if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
-
+                    _sincFiltrosUI();
                     MM.abrir('modal-filtros-busqueda');
                 },
 
@@ -6642,10 +6604,7 @@
                     else _busqActivos.delete(id);
                     _guardarBusqActivos();
                     window.UI._filtrosPrevios = null;
-                    // Actualizamos el texto si tocás los checks individualmente
-                    const btnAll = document.getElementById('btn-toggle-all-filtros');
-                    if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
-
+                    _sincFiltrosUI();
                     renderActivos();
                 },
 
@@ -6659,16 +6618,9 @@
                         BUSQ_CAMPOS.forEach(f => _busqActivos.add(f.id)); // Si no hay ninguno, los activa todos
                     }
 
-                    document.querySelectorAll('[id^="filtro-cb-"]').forEach(cb => {
-                        cb.checked = _busqActivos.has(cb.id.replace('filtro-cb-', ''));
-                    });
-
-                    // Cambiamos el texto del botón al tocarlo
-                    const btnAll = document.getElementById('btn-toggle-all-filtros');
-                    if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
-
                     _guardarBusqActivos();
                     window.UI._filtrosPrevios = null;
+                    _sincFiltrosUI();
                     renderActivos();
                 },
 
@@ -6679,13 +6631,7 @@
                         window.UI._filtrosPrevios = null; // Borramos la foto
                         _guardarBusqActivos();
 
-                        document.querySelectorAll('[id^="filtro-cb-"]').forEach(cb => {
-                            cb.checked = _busqActivos.has(cb.id.replace('filtro-cb-', ''));
-                        });
-                        const btnFiltros = document.getElementById('btn-filtros-busqueda');
-                        if (btnFiltros) btnFiltros.classList.toggle('tiene-desactivados', _busqActivos.size < BUSQ_CAMPOS.length);
-                        const btnAll = document.getElementById('btn-toggle-all-filtros');
-                        if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
+                        _sincFiltrosUI();
                     }
                 },
 
@@ -6996,7 +6942,7 @@
                     toast('Edificio eliminado', 'success');
                 },
 
-                cambiarTab(tab) {
+                cambiarTab(tab, mantenerBusqueda = false) {
                     // Si el usuario toca la pestaña en la que ya está parado...
                     if (_tabActual === tab) {
                         let limpioAlgo = false;
@@ -7030,29 +6976,20 @@
                     const tieneBusqueda = inputBusq && inputBusq.value.trim() !== '';
                     const tieneSnapshot = window.UI._estadoColapsadoPrevio || window.UI._estadoPisosPrevio;
 
-                    if (tieneBusqueda || tieneSnapshot) {
+                    // ── MAGIA: Si mantenerBusqueda es true, saltamos la limpieza ──
+                    if (!mantenerBusqueda && (tieneBusqueda || tieneSnapshot)) {
                         if (inputBusq) inputBusq.value = '';
                         const btnX = document.getElementById('btn-limpiar-busqueda');
                         if (btnX) btnX.style.display = 'none';
 
-                        // Restauramos la "foto" de los edificios
-                        if (window.UI._estadoColapsadoPrevio) {
-                            window.UI._activosCollapsed = new Set(window.UI._estadoColapsadoPrevio);
-                            window.UI._estadoColapsadoPrevio = null;
-                        }
-
-                        // Restauramos la "foto" de los pisos
-                        if (window.UI._estadoPisosPrevio) {
-                            window.UI._pisosCollapsed = new Set(window.UI._estadoPisosPrevio);
-                            window.UI._estadoPisosPrevio = null;
-                        }
+                        _restaurarColapsos();
 
                         UI._restaurarFiltrosPrevios();
                         // Renderizamos para que al volver la pestaña esté colapsada correctamente
                         setTimeout(() => renderActivos(), 200);
                     }
 
-                    if (inputBusq) inputBusq.blur();
+                    if (!mantenerBusqueda && inputBusq) inputBusq.blur();
                     // ────────────────────────────────────────────────────────────────────────────
 
                     ['dashboard', 'activos', 'produccion'].forEach(t => {
@@ -7084,32 +7021,11 @@
                 },
 
                 irAActivosConFiltro(tipo, estado) {
-                    const ESTADO_QUERY = { produccion: 'produccion', disponible: 'disponible', averiado: 'averiado', revisar: 'revisar', desafectado: 'desafectado' };
                     const tipoLabel = S.TIPOS[tipo]?.label?.toLowerCase() || tipo;
-                    const estadoQ = ESTADO_QUERY[estado] || estado;
+                    const estadoQ = estado || '';
                     const query = [tipoLabel, estadoQ].filter(Boolean).join(' ');
 
-                    // ── OVERRIDE TEMPORAL DE FILTROS ──
-                    if (!_busqActivos.has('tipo') || !_busqActivos.has('estado')) {
-                        // Sacamos una "foto" de cómo estaban los filtros originales
-                        if (!window.UI._filtrosPrevios) {
-                            window.UI._filtrosPrevios = new Set(_busqActivos);
-                        }
-                        // Forzamos los necesarios para esta búsqueda
-                        _busqActivos.add('tipo');
-                        _busqActivos.add('estado');
-                        _guardarBusqActivos();
-
-                        // Actualizamos checkboxes visuales
-                        const cbTipo = document.getElementById('filtro-cb-tipo');
-                        if (cbTipo) cbTipo.checked = true;
-                        const cbEstado = document.getElementById('filtro-cb-estado');
-                        if (cbEstado) cbEstado.checked = true;
-                        const btnFiltros = document.getElementById('btn-filtros-busqueda');
-                        if (btnFiltros) btnFiltros.classList.toggle('tiene-desactivados', _busqActivos.size < BUSQ_CAMPOS.length);
-                        const btnAll = document.getElementById('btn-toggle-all-filtros');
-                        if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
-                    }
+                    _forzarFiltros('tipo', 'estado');
 
                     if (_dashTipoAbierto) { _dashTipoAbierto = null; setTimeout(() => renderDashboard(), 200); }
                     ['dashboard', 'activos', 'produccion'].forEach(t => {
@@ -7124,23 +7040,7 @@
                     const btnX = document.getElementById('btn-limpiar-busqueda');
                     if (input) { input.value = query; if (btnX) btnX.style.display = query ? '' : 'none'; }
 
-                    // ── MAGIA DE LA FOTO: Expandimos todo al saltar desde el Dashboard ──
-                    if (!window.UI._activosCollapsed) window.UI._activosCollapsed = new Set();
-                    if (!window.UI._estadoColapsadoPrevio) {
-                        window.UI._estadoColapsadoPrevio = new Set(window.UI._activosCollapsed);
-                    }
-                    window.UI._activosCollapsed.clear();
-
-                    // ── MAGIA DE LA FOTO (PISOS): Hacemos lo mismo para los sub-grupos ──
-                    if (!window.UI._pisosCollapsed) window.UI._pisosCollapsed = new Set();
-                    if (!window.UI._estadoPisosPrevio) {
-                        window.UI._estadoPisosPrevio = new Set(window.UI._pisosCollapsed);
-                    }
-                    window.UI._pisosCollapsed.clear();
-                    // ────────────────────────────────────────────────────────────────────
-                    // ────────────────────────────────────────────────────────────────────
-
-                    renderActivos();
+                    _expandirTodosLosGrupos();
 
                     if (panelSaliente && panelSaliente !== panelEntrante) {
                         panelSaliente.classList.add('tab-saliendo');
@@ -7153,9 +7053,11 @@
                             panelEntrante.addEventListener('animationend', () => {
                                 panelEntrante.classList.remove('tab-entrando');
                             }, { once: true });
+                            renderActivos();
                         }, 180);
                     } else {
                         panelEntrante.style.display = '';
+                        renderActivos();
                     }
                     setTimeout(() => input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 250);
                 },
@@ -7169,34 +7071,19 @@
                     // Mostramos u ocultamos la "X" al instante
                     if (btnX) btnX.style.display = query ? '' : 'none';
 
+                    if (query && _tabActual !== 'activos') {
+                        UI.cambiarTab('activos', true);
+                    }
+
                     // 1. Cancelamos la búsqueda anterior si el usuario sigue escribiendo
                     if (_busqTimer) clearTimeout(_busqTimer);
 
                     // 2. Programamos el renderizado para dentro de 300ms
                     _busqTimer = setTimeout(() => {
-                        // Nos aseguramos de que los Sets existan
-                        if (!window.UI._activosCollapsed) window.UI._activosCollapsed = new Set();
-                        if (!window.UI._pisosCollapsed) window.UI._pisosCollapsed = new Set();
-
                         if (query.trim()) {
-                            // Si empezamos a buscar y no habíamos guardado el estado, le sacamos una "foto"
-                            if (!window.UI._estadoColapsadoPrevio) {
-                                window.UI._estadoColapsadoPrevio = new Set(window.UI._activosCollapsed);
-                                window.UI._estadoPisosPrevio = new Set(window.UI._pisosCollapsed); // ── FOTO PISOS ──
-                            }
-                            // Forzamos a expandir todo (vaciando el set de colapsados)
-                            window.UI._activosCollapsed.clear();
-                            window.UI._pisosCollapsed.clear(); // ── EXPANDIR PISOS ──
+                            _expandirTodosLosGrupos();
                         } else {
-                            // Si borró el texto a mano (quedó vacío), restauramos la foto
-                            if (window.UI._estadoColapsadoPrevio) {
-                                window.UI._activosCollapsed = new Set(window.UI._estadoColapsadoPrevio);
-                                window.UI._estadoColapsadoPrevio = null;
-                            }
-                            if (window.UI._estadoPisosPrevio) { // ── RESTAURAR PISOS ──
-                                window.UI._pisosCollapsed = new Set(window.UI._estadoPisosPrevio);
-                                window.UI._estadoPisosPrevio = null;
-                            }
+                            _restaurarColapsos();
                             UI._restaurarFiltrosPrevios();
                         }
 
@@ -7213,17 +7100,7 @@
                     document.getElementById('btn-limpiar-busqueda').style.display = 'none';
                     input.focus();
 
-                    // Restauramos la foto guardada (cuando toca la "X")
-                    if (window.UI._estadoColapsadoPrevio) {
-                        if (!window.UI._activosCollapsed) window.UI._activosCollapsed = new Set();
-                        window.UI._activosCollapsed = new Set(window.UI._estadoColapsadoPrevio);
-                        window.UI._estadoColapsadoPrevio = null;
-                    }
-                    if (window.UI._estadoPisosPrevio) { // ── RESTAURAR PISOS ──
-                        if (!window.UI._pisosCollapsed) window.UI._pisosCollapsed = new Set();
-                        window.UI._pisosCollapsed = new Set(window.UI._estadoPisosPrevio);
-                        window.UI._estadoPisosPrevio = null;
-                    }
+                    _restaurarColapsos();
                     UI._restaurarFiltrosPrevios();
                     renderActivos();
                 },
@@ -7303,9 +7180,9 @@
                         }
                     }
 
-                    if (serial) {
+                    if (serial && !esSerialPendiente(serial)) {
                         const serialNorm = serial.toUpperCase();
-                        const dupSerial = otrosDisps.find(x => x.serial && x.serial.toUpperCase() === serialNorm);
+                        const dupSerial = otrosDisps.find(x => x.serial && x.serial.toUpperCase() === serialNorm && !esSerialPendiente(x.serial));
                         if (dupSerial) {
                             document.getElementById(`${prefijo}-serial`).classList.add('error');
                             const label = [dupSerial.marca, dupSerial.modelo].filter(Boolean).join(' ') || dupSerial.mac || dupSerial.id;
@@ -7421,6 +7298,7 @@
                         serial: d.serial || '',
                         mac: d.mac || '',
                         patrimonio: d.patrimonio || '',
+                        firmware: d.firmware || '',
                         forma: d.forma || '',
                         canales: String(d.canales || 16),
                     };
@@ -7515,9 +7393,9 @@
                         }
                     }
 
-                    if (serial) {
+                    if (serial && !esSerialPendiente(serial)) {
                         const serialNorm = serial.toUpperCase();
-                        const dupSerial = otrosDisps.find(x => x.serial && x.serial.toUpperCase() === serialNorm);
+                        const dupSerial = otrosDisps.find(x => x.serial && x.serial.toUpperCase() === serialNorm && !esSerialPendiente(x.serial));
                         if (dupSerial) {
                             document.getElementById(`${prefijo}-serial`).classList.add('error');
                             const label = [dupSerial.marca, dupSerial.modelo].filter(Boolean).join(' ') || dupSerial.mac || dupSerial.id;
@@ -7806,8 +7684,8 @@
                     if (!_editandoGrabId) return;
                     const g = _data.grabadores.find(x => x.id === _editandoGrabId);
                     const ocupados = g ? g.canales_data.filter(c => c.dispositivoId).length : 0;
-                    const avisoExtra = ocupados > 0 
-                        ? `\n¡Atención! Tiene ${ocupados} canal${ocupados === 1 ? '' : 'es'} ocupado${ocupados === 1 ? '' : 's'}. Las cámaras quedarán libres.` 
+                    const avisoExtra = ocupados > 0
+                        ? `\n¡Atención! Tiene ${ocupados} canal${ocupados === 1 ? '' : 'es'} ocupado${ocupados === 1 ? '' : 's'}. Las cámaras quedarán libres.`
                         : '';
 
                     const ok = await confirmarModal(`¿Eliminar el grabador "${g?.descripcion}"?${avisoExtra}`);
@@ -8109,6 +7987,7 @@
                 // ---- Otros Dispositivos en Producción ----
                 abrirNuevoOtroProd() {
                     _editandoOtroProdId = null;
+                    _snapshotOtroProd = null;
                     document.getElementById('otro-prod-descripcion').value = '';
                     document.getElementById('otro-prod-ip').value = '';
                     document.getElementById('otro-prod-puerto').value = '';
@@ -8116,14 +7995,14 @@
                     document.getElementById('otro-prod-piso').value = '';
                     document.getElementById('otro-prod-rack').value = '';
                     document.getElementById('otro-prod-comentarios').value = '';
-
                     document.getElementById('sel-otro-prod-dispositivo').value = '';
                     document.getElementById('otro-prod-disp-input').value = '';
                     document.getElementById('otro-prod-disp-input').classList.remove('error');
                     document.getElementById('otro-prod-disp-dropdown').style.display = 'none';
                     document.getElementById('btn-ver-activo-otro-prod').style.display = 'none';
                     document.getElementById('btn-eliminar-otro-prod').style.display = 'none';
-
+                    document.getElementById('otro-prod-grupo-superior').appendChild(document.getElementById('btn-cancelar-otro-prod'));
+                    document.getElementById('otro-prod-grupo-inferior').style.display = 'none';
                     // Calculamos los que ya están en uso global
                     const grabs = _data.grabadores;
                     const idsOcupados = [
@@ -8164,7 +8043,8 @@
                     document.getElementById('otro-prod-disp-dropdown').style.display = 'none';
                     document.getElementById('btn-ver-activo-otro-prod').style.display = o.dispositivoId ? '' : 'none';
                     document.getElementById('btn-eliminar-otro-prod').style.display = '';
-
+                    document.getElementById('otro-prod-grupo-inferior').appendChild(document.getElementById('btn-cancelar-otro-prod'));
+                    document.getElementById('otro-prod-grupo-inferior').style.display = '';
                     const grabs = _data.grabadores;
                     const idsOcupados = [
                         ...grabs.flatMap(g => g.canales_data.filter(c => c.dispositivoId).map(c => c.dispositivoId)),
@@ -8174,11 +8054,23 @@
                     _canalDispOcupados = new Set(idsOcupados);
 
                     MM.abrir('modal-otro-prod');
+
+                    _snapshotOtroProd = {
+                        dispositivoId: o.dispositivoId || '',
+                        descripcion: o.descripcion || '',
+                        ip: o.ip || '',
+                        puerto: o.puerto || '',
+                        edificio: o.edificio || '',
+                        piso: o.piso || '',
+                        rack: o.rack || '',
+                        comentarios: o.comentarios || '',
+                    };
                 },
 
                 cerrarOtroProd() {
                     MM.cerrar('modal-otro-prod');
                     _editandoOtroProdId = null;
+                    _snapshotOtroProd = null;
                 },
 
                 guardarOtroProd() {
@@ -8210,6 +8102,19 @@
                     if (!_data.otros_prod) _data.otros_prod = [];
 
                     if (_editandoOtroProdId) {
+                        const nuevoSnapOtro = {
+                            dispositivoId: datos.dispositivoId || '',
+                            descripcion: datos.descripcion || '',
+                            ip: datos.ip || '',
+                            puerto: datos.puerto || '',
+                            edificio: datos.edificio || '',
+                            piso: datos.piso || '',
+                            rack: datos.rack || '',
+                            comentarios: datos.comentarios || '',
+                        };
+                        if (JSON.stringify(nuevoSnapOtro) === JSON.stringify(_snapshotOtroProd)) {
+                            toast('Sin cambios', 'info'); MM.cerrar('modal-otro-prod'); _editandoOtroProdId = null; _snapshotOtroProd = null; return;
+                        }
                         const idx = _data.otros_prod.findIndex(x => x.id === _editandoOtroProdId);
                         if (idx !== -1) _data.otros_prod[idx] = S.sanitizarOtroProd(datos);
                         toast('Actualizado', 'success');
@@ -8590,16 +8495,16 @@
                 // Busca el input de piso deduciendo el ID a partir del select de edificio
                 const inputPisoId = selectId.replace('-edificio', '-piso');
                 const inputPiso = document.getElementById(inputPisoId);
-                
+
                 function _validarEstadoPiso() {
                     if (!inputPiso) return;
-                    
+
                     const sinEdificio = !sel.value || sel.value === '__agregar__';
                     inputPiso.disabled = sinEdificio;
-                    
+
                     if (sinEdificio) {
                         inputPiso.value = ''; // Borra datos fantasma si se quita el edificio
-                        
+
                         // Guardamos el placeholder original y mostramos un aviso
                         if (!inputPiso.hasAttribute('data-ph')) {
                             inputPiso.setAttribute('data-ph', inputPiso.placeholder);
@@ -8652,9 +8557,9 @@
                     } else {
                         seleccionado = sel.value;
                     }
-                    
+
                     // Validar al instante cuando el usuario cambia de opción
-                    _validarEstadoPiso(); 
+                    _validarEstadoPiso();
                 };
             }
 
@@ -8770,6 +8675,7 @@
                             'modal-nuevo-grab': () => UI.guardarNuevoGrabador(),
                             'modal-editar-grab': () => UI.guardarEdicionGrabador(),
                             'modal-canal': () => UI.guardarAsignacionCanal(),
+                            'modal-otro-prod': () => UI.guardarOtroProd(),
                             'modal-tipos-dispositivo': () => UI.agregarTipoCustom(),
                             'modal-edificios': () => UI.agregarEdificio(),
                             'modal-confirmar': () => document.getElementById('modal-confirmar-ok')?.click(),
@@ -8803,7 +8709,7 @@
                 const esCaracterValido = e.key.length === 1 && /^[a-zA-Z0-9:]$/.test(e.key);
 
                 if ((esCaracterValido || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                    if (_tabActual !== 'activos') UI.cambiarTab('activos');
+                    if (_tabActual !== 'activos') UI.cambiarTab('activos', true);
                     const input = document.getElementById('input-busqueda');
                     input.focus();
                 }
@@ -8926,26 +8832,36 @@
             })();
 
             // ==============================================================
-            // BOTÓN SCROLL TOP
+            // BOTÓN SCROLL TOP + TÍTULO DE PESTAÑA EN HEADER
             // ==============================================================
             (() => {
                 const btn = document.getElementById('btn-scroll-top');
-                if (!btn) return;
+                const tituloEl = document.getElementById('header-tab-titulo');
+                const LABELS = { dashboard: 'Dashboard', activos: 'Activos', produccion: 'Producción' };
+
                 function actualizarBoton() {
                     const enPanel = _tabActual === 'activos' || _tabActual === 'produccion';
                     const scrollSuficiente = window.scrollY > window.innerHeight * 0.85;
-                    if (enPanel && scrollSuficiente) {
-                        btn.style.display = '';
-                        requestAnimationFrame(() => {
-                            btn.style.opacity = '1';
-                            btn.style.transform = 'translateY(0)';
-                        });
-                    } else {
-                        btn.style.opacity = '0';
-                        btn.style.transform = 'translateY(8px)';
-                        setTimeout(() => {
-                            if (btn.style.opacity === '0') btn.style.display = 'none';
-                        }, 260);
+                    if (btn) {
+                        if (enPanel && scrollSuficiente) {
+                            btn.style.display = '';
+                            requestAnimationFrame(() => {
+                                btn.style.opacity = '1';
+                                btn.style.transform = 'translateY(0)';
+                            });
+                        } else {
+                            btn.style.opacity = '0';
+                            btn.style.transform = 'translateY(8px)';
+                            setTimeout(() => {
+                                if (btn.style.opacity === '0') btn.style.display = 'none';
+                            }, 260);
+                        }
+                    }
+                    if (tituloEl) {
+                        const tabsEl = document.querySelector('.tabs');
+                        const tabsOcultas = tabsEl ? tabsEl.getBoundingClientRect().bottom < 0 : window.scrollY > 80;
+                        tituloEl.textContent = LABELS[_tabActual] || '';
+                        tituloEl.classList.toggle('visible', tabsOcultas);
                     }
                 }
                 window.addEventListener('scroll', actualizarBoton, { passive: true });
@@ -8968,11 +8884,6 @@
             window.GistSync = GistSync;
             window.MM = MM
             window._toggleTipoDetalle = _toggleTipoDetalle;
-            window._setCamarasVista = function (vista) {
-                if (_dashCamarasVista === vista) return;
-                _dashCamarasVista = vista;
-                renderDashboard();
-            };
 
             // Aplicamos la pestaña guardada AL INSTANTE
             ['dashboard', 'activos', 'produccion'].forEach(t => {
@@ -9056,7 +8967,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 269
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 288
     // ====================================================================
 
      - CAMBIOS 
