@@ -40,7 +40,8 @@
     ; (() => {
         try {
             const t = localStorage.getItem('cctvs:cctv_tema');
-            if (t === 'true' || t === null) document.body.classList.add('dark-mode');
+            if (t === 'true' || t === null) document.documentElement.classList.add('dark-mode');
+            document.body.classList.remove('dark-mode'); 
             const saved = JSON.parse(localStorage.getItem('cctvs:cctv_tab') || 'null');
             const tab = (saved && saved.tab && (Date.now() - saved.ts) < 3600000) ? saved.tab : 'dashboard';
             document.body.setAttribute('data-tab-inicial', tab);
@@ -1273,10 +1274,9 @@
             _actualizarBotonesAjustes();
         }
 
-        async function verificarAlAbrir() {
-            // QUITAMOS LA VALIDACIÓN DEL TOKEN !_cfg.token
+       async function verificarAlAbrir() {
             if (!_cfg.auto || !_cfg.gistId) return;
-
+            await new Promise(resolve => setTimeout(resolve, DEBOUNCE_MS));
             _spinStart();
             try {
                 const headers = {};
@@ -3022,6 +3022,62 @@
         });
     }
 
+    // Función auxiliar para dibujar las tablas del reporte
+    function _generarSeccionTabla(titulo, items, asignaciones) {
+        const rowsHtml = items.map(d => {
+            const mac = d.mac || '—';
+            const serial = d.serial || '—';
+            const tipoForma = d.tipo === 'camara' && d.forma ? d.forma.replace(/-/g, ' ') : (S.TIPOS[d.tipo]?.label || d.tipo);
+
+            const patRaw = (d.patrimonio || '').trim().toLowerCase();
+            let patrimonio = 'No relevado';
+            if (patRaw === 'no') {
+                patrimonio = 'Sin patrimonio';
+            } else if (patRaw !== '') {
+                patrimonio = d.patrimonio;
+            }
+
+            const estadoEfectivo = getEstadoEfectivo(d, asignaciones);
+            let estado = '';
+            if (estadoEfectivo === 'produccion') {
+                const asigs = asignaciones[d.id] || [];
+                estado = asigs.map(a => {
+                    if (a.tipo === 'canal') return a.slot.descripcion || 'En producción';
+                    if (a.tipo === 'otro_prod') return a.item.descripcion || 'En producción';
+                    return a.grab.descripcion || 'En producción';
+                }).join(' / ') || 'En producción';
+            } else {
+                estado = ESTADO_LABEL[estadoEfectivo] || estadoEfectivo;
+            }
+
+            return `<tr>
+                <td><strong>${esc(mac)}</strong></td>
+                <td>${esc(serial)}</td>
+                <td>${esc(tipoForma).toUpperCase()}</td>
+                <td>${esc(patrimonio).toUpperCase()}</td>
+                <td>${esc(estado)}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <section>
+            <h2>${esc(titulo)}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>MAC</th>
+                        <th>Serial</th>
+                        <th>Tipo / Forma</th>
+                        <th>Patrimonio</th>
+                        <th>Estado / Descripcion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+        </section>`;
+    }
 
     // ════════════════════════════════════════════════════════════════════════════
     // § UI — controlador de interfaz (modales, tabs, acciones del usuario)
@@ -3029,7 +3085,8 @@
     const UI = {
 
         alternarTema() {
-            const oscuro = document.body.classList.toggle('dark-mode');
+            document.body.classList.remove('dark-mode');
+            const oscuro = document.documentElement.classList.toggle('dark-mode');
             localStorage.setItem(LS.TEMA, String(oscuro));
             const use = document.querySelector('#icono-tema use');
             if (use) use.setAttribute('href', oscuro ? '#icon-sun' : '#icon-moon');
@@ -3081,7 +3138,7 @@
         },
 
         abrirAjustes() {
-            const oscuro = document.body.classList.contains('dark-mode');
+            const oscuro = document.documentElement.classList.contains('dark-mode');
             const use = document.querySelector('#icono-tema use');
             if (use) use.setAttribute('href', oscuro ? '#icon-sun' : '#icon-moon');
 
@@ -5069,7 +5126,7 @@
 
             const asignaciones = _buildAsignaciones();
             const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
-            
+
             // ─── 1. GENERAR EL RESUMEN GENERAL ───
             let totalDispositivos = 0;
             const filasResumen = seleccionados.map(gLabel => {
@@ -5083,7 +5140,7 @@
 
             const htmlResumen = `
             <section>
-                <h2>Resumen de Agrupamiento</h2>
+                <h2>Resumen de bloques</h2>
                 <table>
                     <thead>
                         <tr>
@@ -5105,62 +5162,31 @@
 
             // ─── 2. GENERAR EL DETALLE POR BLOQUES ───
             let htmlSecciones = '';
+            
             seleccionados.forEach(gLabel => {
                 const items = grupos[gLabel] || [];
-                const rowsHtml = items.map(d => {
-                    const mac = d.mac || '—';
-                    const serial = d.serial || '—';
-                    const tipoForma = d.tipo === 'camara' && d.forma ? d.forma.replace(/-/g, ' ') : (S.TIPOS[d.tipo]?.label || d.tipo);
 
-                    const patRaw = (d.patrimonio || '').trim().toLowerCase();
-                    let patrimonio = 'No relevado';
+                if (_activos.orden === 'edificio-piso') {
+                    // Si el orden principal es Edificio, agrupamos internamente por Piso
+                    const pisos = {};
+                    items.forEach(d => {
+                        const asig = (asignaciones[d.id] || [])[0];
+                        let p = 'SIN ASIGNAR';
+                        if (asig) p = (asig.tipo === 'canal' ? asig.slot.piso : asig.tipo === 'otro_prod' ? asig.item.piso : asig.grab.piso) || 'SIN ASIGNAR';
+                        p = S.normalizarPiso(p) || 'SIN ASIGNAR';
+                        (pisos[p] || (pisos[p] = [])).push(d);
+                    });
 
-                    if (patRaw === 'no') {
-                        patrimonio = 'Sin patrimonio';
-                    } else if (patRaw !== '') {
-                        patrimonio = d.patrimonio;
-                    }
-
-                    const estadoEfectivo = getEstadoEfectivo(d, asignaciones);
-                    let estado = '';
-                    if (estadoEfectivo === 'produccion') {
-                        const asigs = asignaciones[d.id] || [];
-                        estado = asigs.map(a => {
-                            if (a.tipo === 'canal') return a.slot.descripcion || 'En producción';
-                            if (a.tipo === 'otro_prod') return a.item.descripcion || 'En producción';
-                            return a.grab.descripcion || 'En producción';
-                        }).join(' / ') || 'En producción';
-                    } else {
-                        estado = ESTADO_LABEL[estadoEfectivo] || estadoEfectivo;
-                    }
-
-                    return `<tr>
-                        <td><strong>${esc(mac)}</strong></td>
-                        <td>${esc(serial)}</td>
-                        <td>${esc(tipoForma).toUpperCase()}</td>
-                        <td>${esc(patrimonio).toUpperCase()}</td>
-                        <td>${esc(estado)}</td>
-                    </tr>`;
-                }).join('');
-
-                htmlSecciones += `
-                <section>
-                    <h2>Bloque: ${esc(gLabel)}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>MAC</th>
-                                <th>Serial</th>
-                                <th>Tipo / Forma</th>
-                                <th>Patrimonio</th>
-                                <th>Estado / Descripcion</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-                </section>`;
+                    // Ordenamos los pisos y generamos una tabla por cada uno usando la función auxiliar
+                    Object.keys(pisos).sort((a, b) => _getPisoPeso(a) - _getPisoPeso(b)).forEach(piso => {
+                        const tituloSeccion = `${gLabel} — Piso: ${piso}`;
+                        htmlSecciones += _generarSeccionTabla(tituloSeccion, pisos[piso], asignaciones);
+                    });
+                } else {
+                    // Comportamiento normal para el resto de los agrupamientos (Marca, Modelo, Patrimonio, etc.)
+                    const tituloSeccion = `Bloque: ${gLabel}`;
+                    htmlSecciones += _generarSeccionTabla(tituloSeccion, items, asignaciones);
+                }
             });
 
             // ─── 3. ENSAMBLAR EL HTML COMPLETO ───
