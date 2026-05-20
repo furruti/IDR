@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self';
         script-src 'self';
-        style-src 'self' 'unsafe-inline';
+        style-src 'self';
         img-src 'self' data: blob:;
         font-src 'self' data:;
         connect-src 'self' https://api.github.com; 
@@ -17,13 +17,15 @@
         upgrade-insecure-requests;">
     <meta name="referrer" content="no-referrer">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="./icon.svg">
+    <script src="./flash.js"></script>
     <link rel="stylesheet" href="./styles.css">
     <script src="./app.js" defer></script>
 
-    <title>CCTVS</title>
+    <title>SGC</title>
 
 </head>
 
@@ -215,6 +217,27 @@
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path class="icon-lock-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </symbol>
+        <symbol id="icon-expand-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="7 4 4 4 4 7"></polyline>
+            <polyline points="17 4 20 4 20 7"></polyline>
+            <polyline points="7 20 4 20 4 17"></polyline>
+            <polyline points="17 20 20 20 20 17"></polyline>
+        </symbol>
+        <symbol id="icon-collapse-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 9 4 4 9 4"></polyline>
+            <polyline points="20 9 20 4 15 4"></polyline>
+            <polyline points="4 15 4 20 9 20"></polyline>
+            <polyline points="20 15 20 20 15 20"></polyline>
+        </symbol>
+        <symbol id="icon-collapse-floors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 9 4 4 9 4"></polyline>
+            <polyline points="20 9 20 4 15 4"></polyline>
+            <line x1="4" y1="20" x2="20" y2="20"></line>
+            <line x1="4" y1="15" x2="20" y2="15"></line>
+        </symbol>
     </svg>
 
     <header class="header">
@@ -222,11 +245,11 @@
             <svg class="icon icon-line">
                 <use href="#icon-camera" />
             </svg>
-            CCTVS
+            SGC
         </h1>
         <span id="header-tab-titulo"></span>
         <div class="header-buttons">
-            <button class="icon-btn" id="btn-install-app" title="Instalar Aplicación" style="display: none;">
+            <button class="icon-btn hidden" id="btn-install-app" title="Instalar Aplicación">
                 <svg class="icon icon-line">
                     <use href="#icon-download" />
                 </svg>
@@ -280,25 +303,46 @@
                 <svg class="icon icon-line icon-search-lupa">
                     <use href="#icon-search" />
                 </svg>
-                <button id="btn-limpiar-busqueda" style="display: none;">
+                <button id="btn-limpiar-busqueda" class="hidden">
                     <svg class="icon icon-line">
                         <use href="#icon-cancelar" />
                     </svg>
                 </button>
-                <button id="btn-filtros-busqueda" title="Personalizar búsqueda">
-                    <svg class="icon icon-line">
-                        <use href="#icon-filter" />
-                    </svg>
-                </button>
+
+                <div id="btn-filtros-wrap" class="filtros-wrap">
+                    <button id="btn-filtros-busqueda" title="Personalizar búsqueda">
+                        <svg class="icon icon-line">
+                            <use href="#icon-filter" />
+                        </svg>
+                    </button>
+                    <div id="dropdown-filtros" class="combobox-dropdown hidden">
+                        <div class="filtro-dropdown-header">
+                            <span class="filtro-dropdown-title">Campos</span>
+                            <button id="btn-toggle-all-filtros" class="filtro-dropdown-desactivar">Desactivar
+                                todo</button>
+                        </div>
+                        <div id="filtros-busqueda-lista"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="panel-dashboard" class="tab-panel">
 
             <div class="card" id="card-resumen-general">
-                <h2><svg class="icon icon-line">
-                        <use href="#icon-grid" />
-                    </svg> Ecosistema de vigilancia</h2>
+                <h2 class="card-header-toggle">
+                    <span class="titulo-fijo">
+                        <svg class="icon icon-line">
+                            <use href="#icon-grid" />
+                        </svg> Infraestructura
+                    </span>
+                    <div id="dash-l2-vista-toggle" class="dash-l2-vista-toggle hidden">
+                        <button class="dash-l2-vista-btn activa" data-action="l2-vista"
+                            data-vista="forma">Forma</button>
+                        <button class="dash-l2-vista-btn" data-action="l2-vista"
+                            data-vista="edificio">Edificios</button>
+                    </div>
+                </h2>
                 <div id="dash-disp-tree"></div>
             </div>
 
@@ -345,20 +389,36 @@
                     Dispositivos
                     <span id="contador-dispositivos" class="contador-badge"></span>
 
+                    <button id="btn-expandir-todo" class="icon-btn btn-inline" title="Expandir todo">
+                        <svg class="icon icon-line">
+                            <use href="#icon-expand-all" />
+                        </svg>
+                    </button>
                     <div id="btn-vista-activos-wrap">
                         <button class="icon-btn btn-inline" title="Opciones de vista">
                             <svg class="icon icon-line">
                                 <use href="#icon-sliders" />
                             </svg>
                         </button>
-                        <div id="dropdown-vista-activos" class="combobox-dropdown">
+                        <div id="dropdown-vista-activos" class="combobox-dropdown hidden">
+                            <div class="filtro-dropdown-header">
+                                <span class="filtro-dropdown-title">Agrupar por</span>
+                            </div>
                             <div class="canal-disp-item" data-orden="edificio-piso">Edificio /
                                 Piso</div>
                             <div class="canal-disp-item" data-orden="estado">Estado</div>
-                            <div class="canal-disp-item" data-orden="marca">Marca / Modelo</div>
+                            <div class="canal-disp-item" data-orden="marca">Marca</div>
+                            <div class="canal-disp-item" data-orden="modelo">Modelo</div>
+                            <div class="canal-disp-item" data-orden="patrimonio">Patrimonio</div>
                             <div class="canal-disp-item" data-orden="forma">Tipo / Forma</div>
                         </div>
                     </div>
+                    <button id="btn-reporte-agrupamiento" class="icon-btn btn-inline"
+                        title="Exportar Sumario de Agrupamiento Actual">
+                        <svg class="icon icon-line">
+                            <use href="#icon-report" />
+                        </svg>
+                    </button>
 
                     <button class="icon-btn btn-edit btn-inline" title="Agregar dispositivo">
                         <svg class="icon icon-line">
@@ -412,7 +472,7 @@
                     </svg>
                     Ajustes
                 </h3>
-                <span class="modal-header-version">v304</span>
+                <span class="modal-header-version">260520</span>
             </div>
 
             <div class="modal-scroll-body">
@@ -434,15 +494,6 @@
                                 <use href="#icon-building" />
                             </svg>
                             Edificios
-                            <svg class="icon icon-line btn-ajustes-chevron">
-                                <use href="#icon-chevron-right" />
-                            </svg>
-                        </button>
-                        <button class="btn-ajustes">
-                            <svg class="icon icon-line">
-                                <use href="#icon-report" />
-                            </svg>
-                            Reporte
                             <svg class="icon icon-line btn-ajustes-chevron">
                                 <use href="#icon-chevron-right" />
                             </svg>
@@ -473,13 +524,13 @@
                             </svg>
                         </button>
                         <button id="btn-ajustes-gist-subir" class="icon-btn btn-gist-action" title="Subir a Gist"
-                            style="display: none;">
+                            class="hidden">
                             <svg class="icon icon-line">
                                 <use href="#icon-cloud-up" />
                             </svg>
                         </button>
                         <button id="btn-ajustes-gist-bajar" class="icon-btn btn-gist-action" title="Bajar de Gist"
-                            style="display: none;">
+                            class="hidden">
                             <svg class="icon icon-line">
                                 <use href="#icon-cloud-down" />
                             </svg>
@@ -537,98 +588,32 @@
         </div>
     </div>
 
-    <div class="modal" id="modal-reporte">
+    <div class="modal" id="modal-reporte-agrupamiento">
         <div class="modal-content modal-content--flex sm2">
             <div class="modal-header modal-sticky-header">
                 <h3>
                     <svg class="icon icon-line">
                         <use href="#icon-report" />
                     </svg>
-                    Generar Reporte
+                    Sumario de Vista Actual
                 </h3>
             </div>
 
             <div class="modal-scroll-body">
-                <div class="section-label section-label--mb">Secciones a incluir</div>
-
-                <div class="reporte-opciones-lista">
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-activos-totales" checked>
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Activos totales por tipo</span>
-                            <span class="reporte-opcion-desc">Resumen general de dispositivos agrupados por
-                                categoría</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-edificios" checked>
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Edificios con totales</span>
-                            <span class="reporte-opcion-desc">Lista de edificios y cantidad de dispositivos en cada
-                                uno</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-formas" checked>
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Cámaras por forma</span>
-                            <span class="reporte-opcion-desc">Distribución de cámaras según tipo de chasis (domo,
-                                bullet, turret…)</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-cam-edificio" checked>
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Cámaras por edificio y piso</span>
-                            <span class="reporte-opcion-desc">Desglose detallado de cámaras ubicadas en cada piso</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-modelos" checked>
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Cantidad por modelo</span>
-                            <span class="reporte-opcion-desc">Ranking de modelos más utilizados en el inventario</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-estados" checked>
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Estado de dispositivos</span>
-                            <span class="reporte-opcion-desc">Activos operativos, averiados, en revisión y
-                                desafectados</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-marcas">
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Distribución por marca</span>
-                            <span class="reporte-opcion-desc">Cantidad de dispositivos por fabricante</span>
-                        </span>
-                    </label>
-                    <label class="reporte-opcion">
-                        <input type="checkbox" id="rpt-grabadores">
-                        <span class="reporte-opcion-texto">
-                            <span class="reporte-opcion-titulo">Lista de grabadores</span>
-                            <span class="reporte-opcion-desc">NVR/DVR con capacidad de canales y ubicación</span>
-                        </span>
-                    </label>
+                <div class="section-label section-label--mb">Grupos de la vista a incluir en el HTML</div>
+                <div id="reporte-agrupamiento-lista" class="reporte-opciones-lista">
                 </div>
             </div>
 
             <div class="modal-sticky-footer">
                 <div class="btn-group btn-group--no-mt">
-                    <button class="btn-edit btn-full" id="btn-generar-reporte">
+                    <button class="btn-edit btn-flex" id="btn-generar-reporte-agrupamiento">
                         <svg class="icon icon-line">
-                            <use href="#icon-report" />
+                            <use href="#icon-download" />
                         </svg>
-                        Generar
+                        Descargar HTML
                     </button>
-                    <button class="btn-cancel">
-                        <svg class="icon icon-line">
-                            <use href="#icon-undo" />
-                        </svg>
-                        Volver
-                    </button>
+                    <button class="btn-cancel btn-flex">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -738,8 +723,8 @@
                     <div class="gist-input-row">
                         <input type="text" id="gist-id" placeholder="Dejar vacío para crear uno nuevo"
                             autocomplete="off" spellcheck="false">
-                        <a id="gist-link-btn" class="icon-btn gist-eye-btn icon-link" target="_blank"
-                            title="Abrir en GitHub" style="display: none;">
+                        <a id="gist-link-btn" class="icon-btn gist-eye-btn icon-link hidden" target="_blank"
+                            title="Abrir en GitHub">
                             <svg class="icon icon-line icon--md">
                                 <use href="#icon-external-link" />
                             </svg>
@@ -820,7 +805,7 @@
         </div>
     </div>
 
-    <button id="btn-scroll-top" title="Ir arriba" style="display: none;">
+    <button id="btn-scroll-top" title="Ir arriba" class="hidden">
         <svg class="icon icon-line icon--scroll-top">
             <use href="#icon-chevron-up" />
         </svg>
@@ -920,8 +905,8 @@
                                 <div id="editar-otro-prod-disp-dropdown" class="combobox-dropdown"></div>
                             </div>
                         </div>
-                        <button id="btn-ver-activo-otro-prod" class="icon-btn btn-backup btn-ver-activo"
-                            title="Ver activo" style="display: none;">
+                        <button id="btn-ver-activo-otro-prod" class="icon-btn btn-backup btn-ver-activo hidden"
+                            title="Ver activo">
                             <svg class="icon icon-line">
                                 <use href="#icon-external-link" />
                             </svg>
@@ -993,7 +978,7 @@
                             <option value="">Seleccionar…</option>
                         </select>
                     </div>
-                    <div class="form-group" id="nuevo-disp-forma-group" style="display: none;">
+                    <div class="form-group hidden" id="nuevo-disp-forma-group">
                         <label>Forma</label>
                         <select id="nuevo-disp-forma">
                             <option value="">Seleccionar…</option>
@@ -1005,7 +990,7 @@
                             <option value="domo-ptz">Domo PTZ</option>
                         </select>
                     </div>
-                    <div class="form-group" id="nuevo-disp-canales-group" style="display: none;">
+                    <div class="form-group hidden" id="nuevo-disp-canales-group">
                         <label>Cantidad de canales *</label>
                         <input type="number" id="nuevo-disp-canales" placeholder="Ej: 16" min="1" max="256" value="16">
                     </div>
@@ -1080,7 +1065,7 @@
                             <option value="">Seleccionar…</option>
                         </select>
                     </div>
-                    <div class="form-group" id="editar-disp-forma-group" style="display: none;">
+                    <div class="form-group hidden" id="editar-disp-forma-group">
                         <label>Forma</label>
                         <select id="editar-disp-forma">
                             <option value="">Seleccionar…</option>
@@ -1092,7 +1077,7 @@
                             <option value="domo-ptz">Domo PTZ</option>
                         </select>
                     </div>
-                    <div class="form-group" id="editar-disp-canales-group" style="display: none;">
+                    <div class="form-group hidden" id="editar-disp-canales-group">
                         <label>Cantidad de canales *</label>
                         <input type="number" id="editar-disp-canales" placeholder="Ej: 16" min="1" max="256" value="16">
                     </div>
@@ -1115,8 +1100,8 @@
                             <label>MAC</label>
                             <input type="text" id="editar-disp-mac" placeholder="Ej: AA:BB:CC:DD:EE:FF" maxlength="17">
                         </div>
-                        <button id="btn-editar-asignacion" class="icon-btn btn-backup btn-ver-activo"
-                            title="Ver asignación" style="display: none;">
+                        <button id="btn-editar-asignacion" class="icon-btn btn-backup btn-ver-activo hidden"
+                            title="Ver asignación">
                             <svg class="icon icon-line">
                                 <use href="#icon-external-link" />
                             </svg>
@@ -1270,7 +1255,7 @@
                         </select>
                     </div>
                     <button id="btn-ver-activo-grab" class="icon-btn btn-backup btn-ver-activo" title="Ver activo"
-                        style="display: none;">
+                        class="hidden">
                         <svg class="icon icon-line">
                             <use href="#icon-external-link" />
                         </svg>
@@ -1360,7 +1345,7 @@
                             </div>
                         </div>
                         <button id="btn-ver-activo-canal" class="icon-btn btn-backup btn-ver-activo" title="Ver activo"
-                            style="display: none;">
+                            class="hidden">
                             <svg class="icon icon-line">
                                 <use href="#icon-external-link" />
                             </svg>
@@ -1438,7 +1423,7 @@
                 </svg>
                 <p id="importar-dropzone-label" class="dropzone-label">Seleccioná o arrastrá un archivo .json</p>
             </div>
-            <input type="file" id="file-import" accept=".json,application/json" style="display: none;">
+            <input type="file" id="file-import" accept=".json,application/json" class="hidden">
 
             <div class="importar-actions">
                 <div class="btn-group btn-group--no-mt">
@@ -1462,29 +1447,6 @@
         </div>
     </div>
 
-    <div class="modal" id="modal-filtros-busqueda">
-        <div class="modal-content sm">
-            <div class="modal-filtros-sticky-header">
-                <h3>
-                    <svg class="icon icon-line">
-                        <use href="#icon-search" />
-                    </svg>
-                    Campos de búsqueda
-                </h3>
-                <div class="modal-filtros-header">
-                    <p class="modal-filtros-desc">Campos a filtrar</p>
-                    <button id="btn-toggle-all-filtros" class="btn-toggle-all">
-                        Desactivar todo
-                    </button>
-                </div>
-            </div>
-            <div id="filtros-busqueda-lista" class="filtros-lista"></div>
-            <div class="modal-filtros-sticky-footer">
-                <button class="btn-cancel">Cerrar</button>
-            </div>
-        </div>
-    </div>
-
     <div class="modal" id="modal-confirmar">
         <div class="modal-content sm">
             <h3><svg class="icon icon-line">
@@ -1503,12 +1465,22 @@
         </div>
     </div>
 
+    <div class="modal" id="modal-picker">
+        <div class="modal-content sm">
+            <h3 id="modal-picker-titulo"></h3>
+            <div id="modal-picker-opciones" class="btn-group btn-group--col"></div>
+            <div class="btn-group mt-sp3">
+                <button class="btn-cancel" id="modal-picker-cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>
 
 <!--// ====================================================================
-    //              NOTAS SISTEMA LUSHIBOSCA CCTVS VERSION 304
+    //              NOTAS SISTEMA LUSHIBOSCA SGC VERSION 260520.1400
     // ====================================================================
     
       - CAMBIOS:

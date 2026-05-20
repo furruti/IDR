@@ -1,11 +1,12 @@
-const CACHE_NAME = 'CCTVS-V300-cache';
+const CACHE_NAME = 'CCTVS-260520.1554-cache';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
   './app.js',
-  './styles.css'
+  './styles.css',
+  './flash.js'
 ];
 
 // Instalación
@@ -15,8 +16,8 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('Abriendo cache');
         return cache.addAll(urlsToCache).catch(err => {
-          console.error('CRÍTICO: Falló la carga de archivos en el install:', err);
-          throw err;
+            console.error('CRÍTICO: Falló la carga de archivos en el install:', err);
+            throw err; 
         });
       })
   );

@@ -2,13 +2,46 @@
     'use strict';
 
     // ════════════════════════════════════════════════════════════════════════════
+    // § MIGRACIÓN localStorage — renombra claves viejas (sin prefijo) a nuevas
+    // Corre una sola vez; se marca con la clave 'cctvs:migrated_v1'
+    // ════════════════════════════════════════════════════════════════════════════
+    ; (() => {
+        try {
+            if (!localStorage.getItem('cctvs:migrated_v1')) {
+                const migraciones = [
+                    ['cctv_tema', 'cctvs:cctv_tema'],
+                    ['cctv_tab', 'cctvs:cctv_tab'],
+                    ['cctv_activos_orden', 'cctvs:cctv_activos_orden'],
+                    ['cctv_activos_recordar', 'cctvs:cctv_activos_recordar'],
+                    ['cctv_act_collapsed', 'cctvs:cctv_act_collapsed'],
+                    ['cctv_pisos_collapsed', 'cctvs:cctv_pisos_collapsed'],
+                    ['cctv_tipos_custom', 'cctvs:cctv_tipos_custom'],
+                    ['cctv_edificios', 'cctvs:cctv_edificios'],
+                    ['cctv_data_v1', 'cctvs:cctv_data_v1'],
+                    ['cctv_gist_cfg', 'cctvs:cctv_gist_cfg'],
+                    ['cctv_grab_expanded', 'cctvs:cctv_grab_expanded'],
+                    ['cctv_busq_activos', 'cctvs:cctv_busq_activos'],
+                ];
+                migraciones.forEach(([vieja, nueva]) => {
+                    const val = localStorage.getItem(vieja);
+                    if (val !== null) {
+                        localStorage.setItem(nueva, val);
+                        localStorage.removeItem(vieja);
+                    }
+                });
+                localStorage.setItem('cctvs:migrated_v1', '1');
+            }
+        } catch (_) { }
+    })();
+
+    // ════════════════════════════════════════════════════════════════════════════
     // § BOOT — dark-mode y tab inicial (síncrono, antes del parse completo)
     // ════════════════════════════════════════════════════════════════════════════
     ; (() => {
         try {
-            const t = localStorage.getItem('cctv_tema');
+            const t = localStorage.getItem('cctvs:cctv_tema');
             if (t === 'true' || t === null) document.body.classList.add('dark-mode');
-            const saved = JSON.parse(localStorage.getItem('cctv_tab') || 'null');
+            const saved = JSON.parse(localStorage.getItem('cctvs:cctv_tab') || 'null');
             const tab = (saved && saved.tab && (Date.now() - saved.ts) < 3600000) ? saved.tab : 'dashboard';
             document.body.setAttribute('data-tab-inicial', tab);
         } catch (_) { }
@@ -18,20 +51,24 @@
     // § CONSTANTES — literales compartidos entre módulos
     // ════════════════════════════════════════════════════════════════════════════
 
+    // Prefijo global de la app — evita colisiones en localStorage cuando se hostea
+    // en un dominio compartido (ej: GitHub Pages con múltiples apps)
+    const APP_KEY = 'cctvs';
+
     // Tabs de la aplicación
     const TABS = ['dashboard', 'activos', 'produccion'];
 
     // Tiempo de expiración de estado guardado en localStorage
     const UNA_HORA = 60 * 60 * 1000;
 
-    // Claves localStorage
+    // Claves localStorage — todas prefijadas con APP_KEY para evitar colisiones
     const LS = {
-        TEMA: 'cctv_tema',
-        TAB: 'cctv_tab',
-        ACTIVOS_ORDEN: 'cctv_activos_orden',
-        ACTIVOS_RECORDAR: 'cctv_activos_recordar',
-        ACTIVOS_COLLAPSED: 'cctv_act_collapsed',
-        PISOS_COLLAPSED: 'cctv_pisos_collapsed',
+        TEMA: `${APP_KEY}:cctv_tema`,
+        TAB: `${APP_KEY}:cctv_tab`,
+        ACTIVOS_ORDEN: `${APP_KEY}:cctv_activos_orden`,
+        ACTIVOS_RECORDAR: `${APP_KEY}:cctv_activos_recordar`,
+        ACTIVOS_COLLAPSED: `${APP_KEY}:cctv_act_collapsed`,
+        PISOS_COLLAPSED: `${APP_KEY}:cctv_pisos_collapsed`,
     };
 
     // Formas de cámara (orden canónico)
@@ -149,9 +186,11 @@
             camara: { label: 'Cámara', emoji: '📹', badge: 'badge-camara', dot: 'var(--c-blue)', builtin: true },
             nvr: { label: 'NVR', emoji: '📟', badge: 'badge-nvr', dot: 'var(--c-green)', builtin: true },
             dvr: { label: 'DVR', emoji: '📼', badge: 'badge-dvr', dot: 'var(--c-orange)', builtin: true },
+            analitica: { label: 'Analítica', emoji: '🧠', badge: 'badge-analitica', dot: 'var(--c-purple)', builtin: true },
+            encoder: { label: 'Encoder', emoji: '🔌', badge: 'badge-encoder', dot: 'var(--c-teal)', builtin: true },
         };
 
-        const KEY_TIPOS = 'cctv_tipos_custom';
+        const KEY_TIPOS = `${APP_KEY}:cctv_tipos_custom`;
         let TIPOS = { ...TIPOS_BUILTIN };
 
         function cargarTipos() {
@@ -177,7 +216,7 @@
         }
         cargarTipos();
 
-        const KEY_EDIFICIOS = 'cctv_edificios';
+        const KEY_EDIFICIOS = `${APP_KEY}:cctv_edificios`;
         let _edificios = [];
 
         function cargarEdificios() {
@@ -483,6 +522,44 @@
         });
     }
 
+    // Muestra un picker modal con opciones tipo botón.
+    // onElegir(idx): se llama con el índice elegido.
+    // onCancelar(): se llama al cancelar (Escape o botón) — debe reabrir el modal padre.
+    function pickerModal(titulo, opciones, onElegir, onCancelar) {
+        document.getElementById('modal-picker-titulo').textContent = titulo;
+        const contenedor = document.getElementById('modal-picker-opciones');
+        const can = document.getElementById('modal-picker-cancel');
+
+        function _cerrarYCancelar() {
+            MM.cerrar('modal-picker');
+            setTimeout(() => onCancelar(), 150);
+        }
+
+        contenedor.innerHTML = opciones.map((op, i) => `
+            <button class="btn-picker-opcion" data-picker-idx="${i}">
+                <div class="btn-picker-label">
+                    <span class="btn-picker-titulo">${esc(op.titulo)}</span>
+                    ${op.sub ? `<span class="btn-picker-sub">${esc(op.sub)}</span>` : ''}
+                </div>
+                <svg class="icon icon-line btn-picker-chevron">
+                    <use href="#icon-chevron-right"/>
+                </svg>
+            </button>`).join('');
+
+        contenedor.onclick = e => {
+            const btn = e.target.closest('[data-picker-idx]');
+            if (!btn) return;
+            contenedor.onclick = null;
+            can.onclick = null;
+            MM.cerrar('modal-picker');
+            onElegir(Number(btn.dataset.pickerIdx));
+        };
+
+        can.onclick = () => _cerrarYCancelar();
+
+        MM.abrir('modal-picker', { onEscape: () => _cerrarYCancelar() });
+    }
+
     const _toastQueue = [];
     let _toastActivo = false;
     let _toastUltimo = null;
@@ -517,7 +594,7 @@
     // ════════════════════════════════════════════════════════════════════════════
     // § STORE — datos en memoria, persistencia localStorage
     // ════════════════════════════════════════════════════════════════════════════
-    const KEY = 'cctv_data_v1';
+    const KEY = `${APP_KEY}:cctv_data_v1`;
     let _data = { dispositivos: [], grabadores: [], otros_prod: [] };
 
     // Caches de derived data — se invalidan en cada guardar()/cargar()
@@ -699,7 +776,7 @@
     // § GIST SYNC — sincronización con GitHub Gist
     // ════════════════════════════════════════════════════════════════════════════
     const GistSync = (() => {
-        const CFG_KEY = 'cctv_gist_cfg';
+        const CFG_KEY = `${APP_KEY}:cctv_gist_cfg`;
         const FILENAME = 'cctv_data.json';
         const DEBOUNCE_MS = 3000;
         const RE_GIST_ID = /^[a-f0-9]{20,40}$/i;
@@ -751,9 +828,9 @@
             if (!btn) return;
             if (id) {
                 btn.href = `https://gist.github.com/${id}`;
-                btn.style.display = 'flex';
+                btn.classList.remove('hidden');
             } else {
-                btn.style.display = 'none';
+                btn.classList.add('hidden');
             }
         }
 
@@ -763,12 +840,14 @@
         }
 
         function _actualizarBotonesAjustes() {
-            const visible = !!((_cfg.token || '').trim()) && !!((_cfg.gistId || '').trim());
-            const display = visible ? 'flex' : 'none';
+            const tieneToken = !!((_cfg.token || '').trim());
+            const tieneGistId = !!((_cfg.gistId || '').trim());
+
             const btnUp = document.getElementById('btn-ajustes-gist-subir');
             const btnDn = document.getElementById('btn-ajustes-gist-bajar');
-            if (btnUp) btnUp.style.display = display;
-            if (btnDn) btnDn.style.display = display;
+
+            if (btnUp) btnUp.classList.toggle('hidden', !(tieneToken && tieneGistId));
+            if (btnDn) btnDn.classList.toggle('hidden', !tieneGistId);
         }
 
         async function _validarScopeToken(token) {
@@ -1051,7 +1130,8 @@
         async function bajar() {
             const token = document.getElementById('gist-token')?.value.trim() || _cfg.token;
             const gistId = document.getElementById('gist-id')?.value.trim() || _cfg.gistId;
-            if (!token) { toast('Ingresá el token primero', 'error'); return; }
+
+            // ELIMINAMOS LA LÍNEA DEL TOKEN: if (!token) { toast('Ingresá el token primero', 'error'); return; }
             if (!gistId) { toast('Ingresá el Gist ID primero', 'error'); return; }
             if (!RE_GIST_ID.test(gistId)) { toast('Gist ID inválido', 'error'); return; }
 
@@ -1059,9 +1139,15 @@
             _setStatus('Bajando…');
 
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                    headers: { Authorization: `token ${token}` },
-                });
+                // ARMAMOS LOS HEADERS DINÁMICAMENTE
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `token ${token}`;
+                }
+
+                // EVADIMOS CACHÉ EN LA PETICIÓN PRINCIPAL
+                const url = `https://api.github.com/gists/${gistId}?_ts=${Date.now()}`;
+                const res = await fetch(url, { headers, cache: 'no-store' });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
 
@@ -1072,7 +1158,9 @@
                 if (file.truncated) {
                     const rawOrigin = new URL(file.raw_url).hostname;
                     if (!rawOrigin.endsWith('.githubusercontent.com')) throw new Error('raw_url inválida');
-                    const r2 = await fetch(file.raw_url);
+
+                    // EVADIMOS CACHÉ EN LA PETICIÓN RAW
+                    const r2 = await fetch(`${file.raw_url}?_ts=${Date.now()}`, { cache: 'no-store' });
                     contenido = await r2.text();
                 }
 
@@ -1166,12 +1254,12 @@
             if (_cfg.lastSync) _setStatusSync(); else _setStatus('');
 
             const scopeWarn = document.getElementById('gist-scope-warning');
-            if (scopeWarn) scopeWarn.style.display = 'none';
+            if (scopeWarn) scopeWarn.classList.add('hidden');
             if (_cfg.token) {
                 _validarScopeToken(_cfg.token).then(r => {
                     if (!r.ok || !scopeWarn) return;
                     if (r.peligrosos && r.peligrosos.length > 0) {
-                        scopeWarn.style.display = '';
+                        scopeWarn.classList.remove('hidden');
                         scopeWarn.innerHTML = `⚠️ <strong>Permisos excesivos detectados:</strong> Este token tiene los scopes <code>${r.peligrosos.join(', ')}</code> además de <code>gist</code>. Recomendamos crear un token nuevo con solo el scope <code>gist</code>.`;
                     }
                 });
@@ -1186,13 +1274,18 @@
         }
 
         async function verificarAlAbrir() {
-            if (!_cfg.auto || !_cfg.token || !_cfg.gistId) return;
+            // QUITAMOS LA VALIDACIÓN DEL TOKEN !_cfg.token
+            if (!_cfg.auto || !_cfg.gistId) return;
 
             _spinStart();
             try {
-                const res = await fetch(`https://api.github.com/gists/${_cfg.gistId}`, {
-                    headers: { Authorization: `token ${_cfg.token}` },
-                });
+                const headers = {};
+                if (_cfg.token) {
+                    headers['Authorization'] = `token ${_cfg.token}`;
+                }
+
+                const url = `https://api.github.com/gists/${_cfg.gistId}?_ts=${Date.now()}`;
+                const res = await fetch(url, { headers, cache: 'no-store' });
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -1203,7 +1296,8 @@
                 if (file.truncated) {
                     const rawOrigin = new URL(file.raw_url).hostname;
                     if (!rawOrigin.endsWith('.githubusercontent.com')) return;
-                    const r2 = await fetch(file.raw_url);
+
+                    const r2 = await fetch(`${file.raw_url}?_ts=${Date.now()}`, { cache: 'no-store' });
                     contenido = await r2.text();
                 }
 
@@ -1242,7 +1336,7 @@
                 const desc = document.querySelector('.gist-novedades-desc');
                 if (desc) {
                     desc.innerHTML = esValida
-                        ? 'Se encontraron mejoras o registros en GitHub que no están en este dispositivo:'
+                        ? 'Se encontraron campos o registros en GitHub que no están en este dispositivo:'
                         : 'Se encontraron registros en GitHub.<br><strong class="gist-warn-altered">⚠️ Atención: Los datos fueron alterados manualmente.</strong>';
                 }
 
@@ -1250,11 +1344,11 @@
                 if (detalle) {
                     const chips = [];
                     if (resMerge.cDispsAdd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Dispositivos nuevos</span><span class="gist-novedades-chip-count">+${resMerge.cDispsAdd}</span></div>`);
-                    if (resMerge.cDispsUpd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Dispositivos a enriquecer</span><span class="gist-novedades-chip-count gist-novedades-chip-count--purple">~${resMerge.cDispsUpd}</span></div>`);
+                    if (resMerge.cDispsUpd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Dispositivos a actualizar</span><span class="gist-novedades-chip-count gist-novedades-chip-count--purple">~${resMerge.cDispsUpd}</span></div>`);
                     if (resMerge.cGrabsAdd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Grabadores nuevos</span><span class="gist-novedades-chip-count">+${resMerge.cGrabsAdd}</span></div>`);
-                    if (resMerge.cGrabsUpd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Grabadores a enriquecer</span><span class="gist-novedades-chip-count gist-novedades-chip-count--purple">~${resMerge.cGrabsUpd}</span></div>`);
+                    if (resMerge.cGrabsUpd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Grabadores a actualizar</span><span class="gist-novedades-chip-count gist-novedades-chip-count--purple">~${resMerge.cGrabsUpd}</span></div>`);
                     if (resMerge.cOtrosAdd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Otros disp. nuevos</span><span class="gist-novedades-chip-count">+${resMerge.cOtrosAdd}</span></div>`);
-                    if (resMerge.cOtrosUpd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Otros a enriquecer</span><span class="gist-novedades-chip-count gist-novedades-chip-count--purple">~${resMerge.cOtrosUpd}</span></div>`);
+                    if (resMerge.cOtrosUpd) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Otros a actualizar</span><span class=" gist-novedades-chip-count gist-novedades-chip-count--purple">~${resMerge.cOtrosUpd}</span></div>`);
                     if (resMerge.cTipos) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Tipos Custom</span><span class="gist-novedades-chip-count">+${resMerge.cTipos}</span></div>`);
                     if (resMerge.cEdif) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Edificios</span><span class="gist-novedades-chip-count">+${resMerge.cEdif}</span></div>`);
                     detalle.innerHTML = chips.join('');
@@ -1297,8 +1391,11 @@
     // § RENDER — funciones de renderizado (dashboard, activos, producción)
     // ════════════════════════════════════════════════════════════════════════════
     let _filtrosPrevios = null;
+    let _filtroEdificioPiso = null; // { edificio, piso } — filtro directo desde dashboard, evalúa asignaciones
     let _estadoColapsadoPrevio = null;
     let _estadoPisosPrevio = null;
+    let _pisosOcultosConEdificios = false;
+    let _renderResumenTimeout = null; // true cuando los pisos están en pisosCollapsed solo por colapsar edificios (Estado 1)
 
     function _calcIdsEnProd() {
         const { grabadores: grabs, otros_prod: otros = [] } = _data;
@@ -1322,6 +1419,9 @@
         estadoAbierto: null,
         estadoAbiertoPrevio: null,
         camarasVista: 'edificio',
+        l2VistaEdificio: false,   // en getL2Html de cámaras: false=forma, true=edificios
+        l2EdificioAbierto: null,  // edificio expandido en nivel 3 (vista edificios)
+        l2EdificioAbiertoPrevio: null, // <-- NUEVA VARIABLE AGREGADA
     };
 
     function _setCamarasVista(vista) {
@@ -1344,7 +1444,7 @@
             try {
                 let v = localStorage.getItem(LS.ACTIVOS_ORDEN);
                 if (v === 'tipo') v = 'forma';
-                return ['estado', 'forma', 'marca', 'edificio-piso'].includes(v) ? v : 'forma';
+                return ['estado', 'forma', 'marca', 'modelo', 'patrimonio', 'edificio-piso'].includes(v) ? v : 'forma';
             } catch { return 'forma'; }
         })(),
         collapsed: (() => {
@@ -1380,6 +1480,7 @@
 
     function _togglePisoActivos(floorKey) {
         const col = _activos.pisosCollapsed;
+        _pisosOcultosConEdificios = false;
         const floorContainer = document.querySelector(`.sub-grupo-piso[data-floor-key="${CSS.escape(floorKey)}"]`);
         if (!floorContainer) return;
 
@@ -1416,225 +1517,335 @@
     }
 
     function _toggleTipoDetalle(tipoKey) {
-        if (_dash.tipoAbierto !== tipoKey) _dash.estadoAbierto = null;
+        if (_dash.tipoAbierto !== tipoKey) {
+            _dash.estadoAbierto = null;
+            _dash.l2VistaEdificio = false;
+            _dash.l2EdificioAbierto = null;
+        }
         _dash.tipoAbierto = _dash.tipoAbierto === tipoKey ? null : tipoKey;
 
         const disps = _data.dispositivos;
         const grabs = _data.grabadores;
         const idsEnProd = _calcIdsEnProd();
-        _renderResumenGeneral(disps, idsEnProd);
+        _renderResumenGeneral(disps, grabs, idsEnProd);
     };
 
     function _toggleEstadoDetalle(estadoKey) {
-        if (_dash.tipoAbierto !== 'camara') return;
+        if (!_dash.tipoAbierto) return;
 
         _dash.estadoAbierto = _dash.estadoAbierto === estadoKey ? null : estadoKey;
+        if (!_dash.estadoAbierto) {
+            _dash.l2VistaEdificio = false;
+            _dash.l2EdificioAbierto = null;
+        }
 
         const disps = _data.dispositivos;
         const grabs = _data.grabadores;
         const idsEnProd = _calcIdsEnProd();
-        _renderResumenGeneral(disps, idsEnProd);
+        _renderResumenGeneral(disps, grabs, idsEnProd);
     };
 
-    function _inyectarStaggerChips() {
-        if (document.getElementById('stagger-chips-css')) return;
-        const A = '.dash-slide-wrap.en-detalle .dash-slide-panel:last-child';
-        const B = '.dash-slide-wrap:not(.en-detalle) .dash-slide-panel:first-child';
-        let css = '';
-        for (let i = 1; i <= 20; i++) {
-            css += `${A} .stat-chip:nth-child(${i}){transition-delay:${(i * 0.04).toFixed(2)}s}`;
-            css += `${B} .stat-chip:nth-child(${i}){transition-delay:${(0.04 + (i - 1) * 0.03).toFixed(2)}s}`;
-        }
-        const el = document.createElement('style');
-        el.id = 'stagger-chips-css';
-        el.textContent = css;
-        document.head.appendChild(el);
-    }
+    function _inyectarStaggerChips() { }
 
-    function _renderResumenGeneral(disps, idsEnProd) {
-        const tiposConDisps = new Set(disps.map(d => d.tipo));
-        const tiposBuitin = Object.keys(S.TIPOS_BUILTIN);
-        const tiposCustom = Object.keys(S.TIPOS).filter(k => !S.TIPOS_BUILTIN[k] && tiposConDisps.has(k)).sort();
-        const tiposOrden = [...tiposBuitin, ...tiposCustom];
+    function _renderResumenGeneral(disps, grabs, idsEnProd) {
+        const tiposServidores = ['nvr', 'dvr', 'analitica', 'encoder'];
 
+        // Calculamos profundidad: 0 (Main), 1 (Estados), 2 (Desglose L2), 3 (Pisos L3 de Edificio)
+        const depth = (!_dash.tipoAbierto) ? 0 :
+            (!_dash.estadoAbierto ? 1 :
+                (_dash.l2EdificioAbierto ? 3 : 2));
 
-        const depth = (!_dash.tipoAbierto) ? 0 : (!_dash.estadoAbierto ? 1 : 2);
-
-        const getTiposHtml = () => {
-            const chipTotal = `
-                    <div class="dash-chip-main">
-                        <div class="stat-chip-valor">${disps.length}</div>
-                        <div class="stat-chip-label">Dispositivos en total</div>
-                    </div>`;
-
-            const chipsTipo = tiposOrden.map(tipoKey => {
-                const tc = S.TIPOS[tipoKey];
-                if (!tc) return '';
-                const n = disps.filter(d => d.tipo === tipoKey).length;
-                return `
-                        <div class="stat-chip stat-chip-tipo" data-action="toggle-tipo" data-tipo="${tipoKey}">
-                            <div class="stat-chip-valor">${n}</div>
-                            <div class="stat-chip-label">${tc.emoji} ${(tc.label + (tipoKey === 'camara' ? 's' : '')).toUpperCase()}</div>
-                            <span class="stat-chip-arrow">▶</span>
-                        </div>`;
-            }).join('');
-
-            return `
-                    <div class="dash-resumen-grid">
-                        <div class="dash-resumen-col-info">${chipTotal}</div>
-                        <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsTipo}</div></div>
-                    </div>`;
-        };
-
-        const getEstadosHtml = (tipoOverride) => {
-            const tipo = tipoOverride || _dash.tipoAbierto;
-            if (!tipo || !S.TIPOS[tipo]) return '';
-
-            const tc = S.TIPOS[tipo];
-            const dispsDelTipo = disps.filter(d => d.tipo === tipo);
-            const est = _estadosDeDisps(dispsDelTipo, idsEnProd);
-
-            const chipSeleccionado = `
-                    <div class="dash-chip-main clickable" data-action="toggle-tipo" data-tipo="${tipo}">
-                        <div class="stat-chip-valor">${dispsDelTipo.length}</div>
-                        <div class="stat-chip-label">${tc.emoji} ${(tc.label + (tipo === 'camara' ? 's' : '')).toUpperCase()}</div>
-                        <div class="dash-chip-btn-group">
-                            <div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div>
-                        </div>
-                    </div>`;
-
-            const chipsEstado = ESTADOS_DEF.map(e => {
-                const n = est[e.key];
-                const esCamara = tipo === 'camara';
-                const clickable = n > 0
-                    ? `class="stat-chip stat-chip-tipo" data-action="toggle-estado-o-ir" data-tipo="${tipo}" data-estado="${e.key}" data-es-camara="${esCamara}"`
-                    : `class="stat-chip" data-action="stop"`;
-                return `
-                        <div ${clickable}>
-                            <div class="stat-chip-valor stat-chip-val--${e.key}">${n}</div>
-                            <div class="stat-chip-label">${e.label}</div>
-                            ${(esCamara && n > 0) ? '<span class="stat-chip-arrow">▶</span>' : ''}
-                        </div>`;
-            }).join('');
-
-            return `
-                    <div class="dash-resumen-grid">
-                        <div class="dash-resumen-col-info">${chipSeleccionado}</div>
-                        <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsEstado}</div></div>
-                    </div>`;
-        };
-
-        const getFormasHtml = (estadoOverride) => {
-            const estado = estadoOverride || _dash.estadoAbierto;
-            if (!estado) return '';
-
-            const camarasDelEstado = disps.filter(d => d.tipo === 'camara' && (d.estado || (idsEnProd.has(d.id) ? 'produccion' : 'disponible')) === estado);
-
-            const conteo = {};
-            camarasDelEstado.forEach(d => { const k = d.forma || '__sin__'; conteo[k] = (conteo[k] || 0) + 1; });
-
-            const chipEstado = `
-                    <div class="dash-chip-main clickable" data-action="toggle-estado" data-estado="${estado}">
-                        <div class="stat-chip-valor stat-chip-val--${estado}">${camarasDelEstado.length}</div>
-                        <div class="stat-chip-label stat-chip-val--${estado}">${(ESTADO_LABEL_PLURAL[estado] || estado).toUpperCase()}</div>
-                        <div class="dash-chip-btn-group">
-                            <div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div>
-                            <div class="stat-chip-volver dash-chip-btn" data-action="ir-activos" data-tipo="camara" data-estado="${estado}">VER TODOS ▶</div>
-                        </div>
-                    </div>`;
-
-            const filas = FORMAS_DEF.filter(f => conteo[f.key] > 0);
-            if (conteo['__sin__'] > 0) filas.push({ key: '', label: 'Sin forma' });
-
-            const chipsForma = filas.map(f => `
-                        <div class="stat-chip stat-chip-tipo" data-action="ir-activos" data-tipo="camara" data-estado="${estado}" data-forma="${f.key}">
-                            <div class="stat-chip-valor">${conteo[f.key || '__sin__']}</div>
-                            <div class="stat-chip-label">${f.label.toUpperCase()}</div>
-                        </div>`).join('');
-
-            return `
-                    <div class="dash-resumen-grid">
-                        <div class="dash-resumen-col-info">${chipEstado}</div>
-                        <div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsForma}</div></div>
-                    </div>`;
-        };
-
-        let htmlIzq = '', htmlDer = '';
-        let enDetalle = depth > 0;
-        let isSlidingAtrasNivel2 = false;
-
-        const saltandoNivel = (_dash.estadoAbiertoPrevio !== _dash.estadoAbierto && _dash.tipoAbierto && _dash.tipoAbiertoPrevio === _dash.tipoAbierto);
-        const saltandoAdelante = saltandoNivel && _dash.estadoAbierto !== null;
-        const saltandoAtras = saltandoNivel && _dash.estadoAbierto === null;
-
-        if (depth === 0) {
-            htmlIzq = getTiposHtml();
-            htmlDer = getEstadosHtml(_dash.tipoAbiertoPrevio);
-        }
-        else if (depth === 1) {
-            htmlIzq = getTiposHtml();
-            htmlDer = getEstadosHtml();
-
-            if (saltandoAtras) {
-
-                htmlIzq = getEstadosHtml();
-                htmlDer = getFormasHtml(_dash.estadoAbiertoPrevio);
-                enDetalle = false;
-                isSlidingAtrasNivel2 = true;
-            }
-        }
-        else if (depth === 2) {
-            htmlIzq = getEstadosHtml();
-            htmlDer = getFormasHtml();
-        }
-
+        // ── PASO CLAVE: Inicializamos el contenedor y el wrap arriba de todo para evitar ReferenceErrors ──
         const contenedor = document.getElementById('dash-disp-tree');
         let wrap = contenedor.querySelector('.dash-slide-wrap');
         if (!wrap) {
-            contenedor.innerHTML = `
-                        <div class="dash-slide-wrap">
-                            <div class="dash-slide-panel" id="dash-panel-izq"></div>
-                            <div class="dash-slide-panel" id="dash-panel-der"></div>
-                        </div>`;
+            contenedor.innerHTML = `<div class="dash-slide-wrap"><div class="dash-slide-panel" id="dash-panel-izq"></div><div class="dash-slide-panel" id="dash-panel-der"></div></div>`;
             wrap = contenedor.querySelector('.dash-slide-wrap');
         }
 
         const panelIzq = wrap.querySelector('#dash-panel-izq');
         const panelDer = wrap.querySelector('#dash-panel-der');
-
         const alturaActual = contenedor.offsetHeight;
         const esPrimeraCarga = alturaActual === 0;
 
-        if (_dash.tipoAbiertoPrevio === _dash.tipoAbierto && _dash.estadoAbiertoPrevio === _dash.estadoAbierto && !esPrimeraCarga) {
-            panelIzq.innerHTML = htmlIzq;
-            panelDer.innerHTML = htmlDer;
-            return;
+        // Control blindado del botón toggle en el header:
+        const toggleEl = document.getElementById('dash-l2-vista-toggle');
+        if (toggleEl) {
+            const debeMostrarToggle = (depth === 2 || depth === 3) && _dash.tipoAbierto === 'camara' && _dash.estadoAbierto === 'produccion';
+            toggleEl.style.display = debeMostrarToggle ? 'inline-flex' : 'none';
+            if (debeMostrarToggle) {
+                toggleEl.querySelectorAll('.dash-l2-vista-btn').forEach(btn => {
+                    btn.classList.toggle('activa', btn.dataset.vista === (_dash.l2VistaEdificio ? 'edificio' : 'forma'));
+                });
+            }
         }
 
-        if (saltandoAdelante && !esPrimeraCarga) {
-            wrap.style.transition = 'none';
-            wrap.classList.remove('en-detalle');
-            panelIzq.innerHTML = getEstadosHtml();
-            void wrap.offsetWidth;
-            wrap.style.transition = '';
+        // NIVEL 0: Grilla Principal
+        const getTiposHtml = () => {
+            const chipTotal = `<div class="dash-chip-main">
+                <div class="stat-chip-valor">${disps.length}</div>
+                <div class="stat-chip-label">Dispositivos en total</div>
+            </div>`;
+
+            let chipsHtml = '';
+            Object.keys(S.TIPOS_BUILTIN).filter(k => !tiposServidores.includes(k)).forEach(tipoKey => {
+                const tc = S.TIPOS[tipoKey];
+                const n = disps.filter(d => d.tipo === tipoKey).length;
+                chipsHtml += `
+                    <div class="stat-chip stat-chip-tipo" data-action="toggle-tipo" data-tipo="${tipoKey}">
+                        <div class="stat-chip-valor">${n}</div>
+                        <div class="stat-chip-label">${tc.emoji} ${(tc.label + (tipoKey === 'camara' ? 's' : '')).toUpperCase()}</div>
+                        <span class="stat-chip-arrow">▶</span>
+                    </div>`;
+            });
+
+            const nServ = disps.filter(d => tiposServidores.includes(d.tipo)).length;
+            chipsHtml += `
+                <div class="stat-chip stat-chip-tipo" data-action="toggle-tipo" data-tipo="servidores">
+                    <div class="stat-chip-valor">${nServ}</div>
+                    <div class="stat-chip-label">🖥️ SERVIDORES</div>
+                    <span class="stat-chip-arrow">▶</span>
+                </div>`;
+
+            const tiposCustomKeys = Object.keys(S.TIPOS)
+                .filter(k => !S.TIPOS_BUILTIN[k] && disps.some(d => d.tipo === k))
+                .sort((a, b) => S.TIPOS[a].label.localeCompare(S.TIPOS[b].label));
+
+            tiposCustomKeys.forEach(tipoKey => {
+                const tc = S.TIPOS[tipoKey];
+                const n = disps.filter(d => d.tipo === tipoKey).length;
+                chipsHtml += `
+                    <div class="stat-chip stat-chip-tipo" data-action="toggle-tipo" data-tipo="${tipoKey}">
+                        <div class="stat-chip-valor">${n}</div>
+                        <div class="stat-chip-label">${tc.emoji} ${tc.label.toUpperCase()}</div>
+                        <span class="stat-chip-arrow">▶</span>
+                    </div>`;
+            });
+
+            return `<div class="dash-resumen-grid"><div class="dash-resumen-col-info">${chipTotal}</div><div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsHtml}</div></div></div>`;
+        };
+
+        // NIVEL 1: Selección de Estado
+        const getL1Html = (tipoOverride) => {
+            const tipo = tipoOverride || _dash.tipoAbierto;
+            if (!tipo) return '';
+
+            const esGrupoServidores = tipo === 'servidores';
+            const dispsFiltrados = esGrupoServidores ? disps.filter(d => tiposServidores.includes(d.tipo)) : disps.filter(d => d.tipo === tipo);
+            const est = _estadosDeDisps(dispsFiltrados, idsEnProd);
+            const tc = esGrupoServidores ? { emoji: '🖥️', label: 'Servidores' } : S.TIPOS[tipo];
+
+            const chipSeleccionado = `
+                <div class="dash-chip-main clickable" data-action="toggle-tipo" data-tipo="${tipo}">
+                    <div class="stat-chip-valor">${dispsFiltrados.length}</div>
+                    <div class="stat-chip-label">${tc.emoji} ${tc.label.toUpperCase()}</div>
+                    <div class="dash-chip-btn-group"><div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div></div>
+                </div>`;
+
+            const tieneNivel2 = esGrupoServidores || tipo === 'camara';
+
+            const chipsEstado = ESTADOS_DEF.map(e => {
+                const n = est[e.key];
+                const action = n > 0 ? (tieneNivel2 ? `data-action="toggle-estado" data-estado="${e.key}"` : `data-action="ir-activos" data-tipo="${tipo}" data-estado="${e.key}"`) : `data-action="stop"`;
+                const clase = n > 0 ? "stat-chip stat-chip-tipo" : "stat-chip";
+                return `
+                    <div class="${clase}" ${action}>
+                        <div class="stat-chip-valor stat-chip-val--${e.key}">${n}</div>
+                        <div class="stat-chip-label">${e.label}</div>
+                        ${(tieneNivel2 && n > 0) ? '<span class="stat-chip-arrow">▶</span>' : ''}
+                    </div>`;
+            }).join('');
+
+            return `<div class="dash-resumen-grid"><div class="dash-resumen-col-info">${chipSeleccionado}</div><div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsEstado}</div></div></div>`;
+        };
+
+        // NIVEL 2: Desglose por Formas o Edificios
+        const getL2Html = (estadoOverride) => {
+            const tipo = _dash.tipoAbierto;
+            const estado = estadoOverride || _dash.estadoAbierto;
+            if (!tipo || !estado) return '';
+
+            const esGrupoServidores = tipo === 'servidores';
+            const esCamaraProd = !esGrupoServidores && estado === 'produccion';
+
+            const chipEstado = `
+                <div class="dash-chip-main clickable dash-chip-main--${estado}" data-action="toggle-estado" data-estado="${estado}">
+                    <div class="stat-chip-valor stat-chip-val--${estado}">${disps.filter(d => (esGrupoServidores ? tiposServidores.includes(d.tipo) : d.tipo === tipo) && (d.estado || (idsEnProd.has(d.id) ? 'produccion' : 'disponible')) === estado).length}</div>
+                    <div class="stat-chip-label stat-chip-val--${estado}">${(ESTADO_LABEL_PLURAL[estado] || estado).toUpperCase()}</div>
+                    <div class="dash-chip-btn-group"><div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div></div>
+                </div>`;
+
+            let chipsFinales = '';
+
+            if (esGrupoServidores) {
+                chipsFinales = tiposServidores.map(tKey => {
+                    const n = disps.filter(d => d.tipo === tKey && (d.estado || (idsEnProd.has(d.id) ? 'produccion' : 'disponible')) === estado).length;
+                    if (n === 0) return '';
+                    return `
+                        <div class="stat-chip stat-chip-tipo" data-action="ir-activos" data-tipo="${tKey}" data-estado="${estado}">
+                            <div class="stat-chip-valor">${n}</div>
+                            <div class="stat-chip-label">${S.TIPOS[tKey].emoji} ${S.TIPOS[tKey].label.toUpperCase()}</div>
+                        </div>`;
+                }).join('');
+            } else {
+                const camarasDelEstado = disps.filter(d => d.tipo === 'camara' && (d.estado || (idsEnProd.has(d.id) ? 'produccion' : 'disponible')) === estado);
+
+                if (esCamaraProd && _dash.l2VistaEdificio) {
+                    const conteoEdif = {};
+                    camarasDelEstado.forEach(d => {
+                        const asig = grabs.flatMap(g => g.canales_data).find(c => c.dispositivoId === d.id);
+                        const edif = asig?.edificio?.trim() || 'Sin edificio';
+                        if (!conteoEdif[edif]) conteoEdif[edif] = 0;
+                        conteoEdif[edif]++;
+                    });
+
+                    const filasEdif = Object.entries(conteoEdif)
+                        .filter(([k]) => k !== 'Sin edificio')
+                        .sort((a, b) => a[0].localeCompare(b[0]))
+                        .map(([label, total]) => ({ label, total }));
+                    if (conteoEdif['Sin edificio']) filasEdif.push({ label: 'Sin edificio', total: conteoEdif['Sin edificio'] });
+
+                    if (filasEdif.length === 0) {
+                        chipsFinales = `<div class="dash-empty-text">Sin cámaras con edificio asignado</div>`;
+                    } else {
+                        chipsFinales = filasEdif.map(f => `
+                            <div class="stat-chip stat-chip-tipo" data-action="toggle-l2-edificio" data-edificio="${esc(f.label)}">
+                                <div class="stat-chip-valor">${f.total}</div>
+                                <div class="stat-chip-label">${esc(f.label).toUpperCase()}</div>
+                                <span class="stat-chip-arrow">▶</span>
+                            </div>`).join('');
+                    }
+                } else {
+                    const conteo = {};
+                    camarasDelEstado.forEach(d => { const k = d.forma || '__sin__'; conteo[k] = (conteo[k] || 0) + 1; });
+                    const filas = FORMAS_DEF.filter(f => conteo[f.key] > 0);
+                    if (conteo['__sin__'] > 0) filas.push({ key: '', label: 'Sin forma' });
+
+                    chipsFinales = filas.map(f => `
+                        <div class="stat-chip stat-chip-tipo" data-action="ir-activos" data-tipo="camara" data-estado="${estado}" data-forma="${f.key}">
+                            <div class="stat-chip-valor">${conteo[f.key || '__sin__']}</div>
+                            <div class="stat-chip-label">${f.label.toUpperCase()}</div>
+                        </div>`).join('');
+                }
+            }
+
+            return `<div class="dash-resumen-grid"><div class="dash-resumen-col-info">${chipEstado}</div><div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsFinales}</div></div></div>`;
+        };
+
+        // NUEVO NIVEL 3: Desglose de Pisos para un Edificio Seleccionado
+        const getL3Html = (edificioOverride) => {
+            const estado = _dash.estadoAbierto;
+            const edifNombre = edificioOverride || _dash.l2EdificioAbierto;
+            if (!edifNombre || !estado) return '';
+
+            const camarasDelEstado = disps.filter(d => d.tipo === 'camara' && (d.estado || (idsEnProd.has(d.id) ? 'produccion' : 'disponible')) === estado);
+
+            const camarasDelEdificio = camarasDelEstado.filter(d => {
+                const asig = grabs.flatMap(g => g.canales_data).find(c => c.dispositivoId === d.id);
+                const edif = asig?.edificio?.trim() || 'Sin edificio';
+                return edifNombre === 'Sin edificio' ? (!asig?.edificio?.trim()) : (edif.toLowerCase() === edifNombre.toLowerCase());
+            });
+
+            const conteoPisos = {};
+            camarasDelEdificio.forEach(d => {
+                const asig = grabs.flatMap(g => g.canales_data).find(c => c.dispositivoId === d.id);
+                const piso = S.normalizarPiso(asig?.piso) || '__sin__';
+                conteoPisos[piso] = (conteoPisos[piso] || 0) + 1;
+            });
+
+            const pisosOrdenados = Object.keys(conteoPisos).sort((a, b) => {
+                if (a === '__sin__') return 1;
+                if (b === '__sin__') return -1;
+                return _getPisoPeso(a) - _getPisoPeso(b);
+            });
+
+            const chipHeader = `
+                <div class="dash-chip-main clickable dash-chip-main--${estado}" data-action="toggle-l2-edificio" data-edificio="">
+                    <div class="stat-chip-valor stat-chip-val--${estado}">${camarasDelEdificio.length}</div>
+                    <div class="stat-chip-label stat-chip-val--${estado}">${esc(edifNombre).toUpperCase()}</div>
+                    <div class="dash-chip-btn-group"><div class="stat-chip-volver dash-chip-btn">◀ VOLVER</div></div>
+                </div>`;
+
+            const chipsPisos = pisosOrdenados.map(p => {
+                const pisoLabel = p === '__sin__' ? 'Sin piso' : p;
+                const queryEdif = edifNombre !== 'Sin edificio' ? edifNombre : '';
+                const queryPiso = pisoLabel !== 'Sin piso' ? pisoLabel : '';
+                const textoMostrar = p === '__sin__' ? 'SIN PISO' : `PISO ${esc(pisoLabel).toUpperCase()}`;
+                return `
+                    <div class="stat-chip stat-chip-tipo" data-action="ir-activos-edif" data-tipo="camara" data-estado="${estado}" data-edificio="${esc(queryEdif)}" data-piso="${esc(queryPiso)}">
+                        <div class="stat-chip-valor">${conteoPisos[p]}</div>
+                        <div class="stat-chip-label">${textoMostrar}</div>
+                    </div>`;
+            }).join('');
+
+            return `<div class="dash-resumen-grid"><div class="dash-resumen-col-info">${chipHeader}</div><div class="dash-resumen-col-data"><div class="dashboard-grid">${chipsPisos}</div></div></div>`;
+        };
+
+        let htmlIzq = '', htmlDer = '';
+        let enDetalle = depth > 0;
+        let isSlidingAtrasNivel2 = false;
+        let isSlidingAtrasNivel3 = false;
+
+        const cambioEstado = _dash.estadoAbiertoPrevio !== _dash.estadoAbierto;
+        const cambioEdificio = _dash.l2EdificioAbiertoPrevio !== _dash.l2EdificioAbierto;
+        const saltandoNivel2 = cambioEstado && _dash.tipoAbierto && _dash.tipoAbiertoPrevio === _dash.tipoAbierto;
+        const saltandoNivel3 = cambioEdificio && _dash.estadoAbierto && _dash.estadoAbiertoPrevio === _dash.estadoAbierto;
+
+        if (depth === 0) {
+            htmlIzq = getTiposHtml();
+            htmlDer = getL1Html(_dash.tipoAbiertoPrevio);
+        }
+        else if (depth === 1) {
+            htmlIzq = getTiposHtml();
+            htmlDer = getL1Html();
+            if (saltandoNivel2 && _dash.estadoAbierto === null) {
+                htmlIzq = getL1Html();
+                htmlDer = getL2Html(_dash.estadoAbiertoPrevio);
+                enDetalle = false;
+                isSlidingAtrasNivel2 = true;
+            }
+        }
+        else if (depth === 2) {
+            htmlIzq = getL1Html();
+            htmlDer = getL2Html();
+            if (saltandoNivel2 && _dash.estadoAbierto !== null) {
+                wrap.style.transition = 'none';
+                wrap.classList.remove('en-detalle');
+                panelIzq.innerHTML = getL1Html();
+                void wrap.offsetWidth;
+                wrap.style.transition = '';
+            } else if (saltandoNivel3 && _dash.l2EdificioAbierto === null) {
+                htmlIzq = getL2Html();
+                htmlDer = getL3Html(_dash.l2EdificioAbiertoPrevio);
+                enDetalle = false;
+                isSlidingAtrasNivel3 = true;
+            }
+        }
+        else if (depth === 3) {
+            htmlIzq = getL2Html();
+            htmlDer = getL3Html();
+            if (saltandoNivel3 && _dash.l2EdificioAbierto !== null) {
+                wrap.style.transition = 'none';
+                wrap.classList.remove('en-detalle');
+                panelIzq.innerHTML = getL2Html();
+                void wrap.offsetWidth;
+                wrap.style.transition = '';
+            }
+        }
+
+        if (_renderResumenTimeout) { clearTimeout(_renderResumenTimeout); _renderResumenTimeout = null; contenedor.style.height = ''; contenedor.style.transition = ''; }
+
+        if (_dash.tipoAbiertoPrevio === _dash.tipoAbierto && _dash.estadoAbiertoPrevio === _dash.estadoAbierto && _dash.l2EdificioAbiertoPrevio === _dash.l2EdificioAbierto && !esPrimeraCarga) {
+            panelIzq.innerHTML = htmlIzq; panelDer.innerHTML = htmlDer; return;
         }
 
         _dash.tipoAbiertoPrevio = _dash.tipoAbierto;
         _dash.estadoAbiertoPrevio = _dash.estadoAbierto;
+        _dash.l2EdificioAbiertoPrevio = _dash.l2EdificioAbierto;
 
-        if (!esPrimeraCarga) {
-            contenedor.style.transition = 'none';
-            contenedor.style.height = alturaActual + 'px';
-        }
-
-        panelIzq.style.height = '';
-        panelIzq.style.overflow = '';
-        panelDer.style.height = '';
-        panelDer.style.overflow = '';
-
-        panelIzq.innerHTML = htmlIzq;
-        panelDer.innerHTML = htmlDer;
-
+        if (!esPrimeraCarga) { contenedor.style.transition = 'none'; contenedor.style.height = alturaActual + 'px'; }
+        panelIzq.style.height = ''; panelIzq.style.overflow = ''; panelDer.style.height = ''; panelDer.style.overflow = '';
+        panelIzq.innerHTML = htmlIzq; panelDer.innerHTML = htmlDer;
         void contenedor.offsetHeight;
 
         const panelActivo = enDetalle ? panelDer : panelIzq;
@@ -1642,46 +1853,23 @@
 
         if (esPrimeraCarga) {
             wrap.classList.toggle('en-detalle', enDetalle);
-            if (enDetalle) {
-                panelIzq.style.height = '0px';
-                panelIzq.style.overflow = 'hidden';
-            } else {
-                panelDer.style.height = '0px';
-                panelDer.style.overflow = 'hidden';
-            }
+            if (enDetalle) { panelIzq.style.height = '0px'; panelIzq.style.overflow = 'hidden'; } else { panelDer.style.height = '0px'; panelDer.style.overflow = 'hidden'; }
         } else {
             requestAnimationFrame(() => {
                 contenedor.style.transition = 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
                 wrap.classList.toggle('en-detalle', enDetalle);
                 if (alturaObjetivo > 0) contenedor.style.height = alturaObjetivo + 'px';
 
-                setTimeout(() => {
-                    if (contenedor.style.height === alturaObjetivo + 'px') {
-                        contenedor.style.height = '';
-                        contenedor.style.transition = '';
-
-                        if (isSlidingAtrasNivel2) {
-
-                            wrap.style.transition = 'none';
-                            panelIzq.innerHTML = getTiposHtml();
-                            panelDer.innerHTML = getEstadosHtml();
-                            wrap.classList.add('en-detalle');
-                            void wrap.offsetWidth;
-                            wrap.style.transition = '';
-
-                            panelIzq.style.height = '0px';
-                            panelIzq.style.overflow = 'hidden';
-                            panelDer.style.height = '';
-                            panelDer.style.overflow = '';
-                        } else {
-                            if (enDetalle) {
-                                panelIzq.style.height = '0px';
-                                panelIzq.style.overflow = 'hidden';
-                            } else {
-                                panelDer.style.height = '0px';
-                                panelDer.style.overflow = 'hidden';
-                            }
-                        }
+                _renderResumenTimeout = setTimeout(() => {
+                    contenedor.style.height = ''; contenedor.style.transition = '';
+                    if (isSlidingAtrasNivel2) {
+                        wrap.style.transition = 'none'; panelIzq.innerHTML = getTiposHtml(); panelDer.innerHTML = getL1Html(); wrap.classList.add('en-detalle'); void wrap.offsetWidth; wrap.style.transition = '';
+                        panelIzq.style.height = '0px'; panelIzq.style.overflow = 'hidden'; panelDer.style.height = ''; panelDer.style.overflow = '';
+                    } else if (isSlidingAtrasNivel3) {
+                        wrap.style.transition = 'none'; panelIzq.innerHTML = getL1Html(); panelDer.innerHTML = getL2Html(); wrap.classList.add('en-detalle'); void wrap.offsetWidth; wrap.style.transition = '';
+                        panelIzq.style.height = '0px'; panelIzq.style.overflow = 'hidden'; panelDer.style.height = ''; panelDer.style.overflow = '';
+                    } else {
+                        if (enDetalle) { panelIzq.style.height = '0px'; panelIzq.style.overflow = 'hidden'; } else { panelDer.style.height = '0px'; panelDer.style.overflow = 'hidden'; }
                     }
                 }, 360);
             });
@@ -1745,7 +1933,7 @@
                         <span class="dash-grab-row-pct" data-pct-target="${pct}">0%</span>
                     </div>
                     <div class="dash-grab-barra">
-                        <div class="dash-grab-barra-fill" style="width:0%;background:${colorBarra}" data-pct-target="${pct}"></div>
+                        <div class="dash-grab-barra-fill" data-color="${colorBarra}" data-pct-target="${pct}"></div>
                     </div>
                 </div>`;
         }).join('');
@@ -1753,6 +1941,12 @@
         dashGrabadores.innerHTML = htmlTotales + htmlLista;
 
         requestAnimationFrame(() => {
+            // Primer frame: fijar width:0% y color para que la transición CSS tenga punto de partida
+            dashGrabadores.querySelectorAll('.dash-grab-barra-fill').forEach(fill => {
+                fill.style.width = '0%';
+                if (fill.dataset.color) fill.style.background = fill.dataset.color;
+            });
+
             requestAnimationFrame(() => {
 
                 dashGrabadores.querySelectorAll('.dash-grab-barra-fill').forEach(fill => {
@@ -1841,33 +2035,33 @@
             if (filasRaw.length === 0) {
                 vistaHtml = `<div class="dash-empty-text anim-in">Sin cámaras registradas</div>`;
             } else {
-                const col = (txt, color) => `<span class="dash-cam-label-small" style="color:${color}">${txt}</span>`;
-                const val = (n, color) => `<span class="dash-cam-val" style="color:${color}">${n}</span>`;
+                const col = (txt, cls) => `<span class="dash-cam-label-small ${cls}">${txt}</span>`;
+                const val = (n, cls) => `<span class="dash-cam-val ${cls}">${n}</span>`;
                 const header = `
                         <div class="dash-cam-header dash-cam-header--border anim-in">
                             <span class="dash-cam-row-label"></span>
-                            ${col('TOTAL', 'var(--text-disabled)')}
-                            ${col('PROD.', 'var(--c-blue)')}
-                            ${col('DISP.', 'var(--c-green)')}
-                            ${col('AVER.', 'var(--c-red)')}
-                            ${col('REVIS.', 'var(--c-purple)')}
-                            ${col('DESAF.', 'var(--text-muted)')}
+                            ${col('TOTAL', 'dash-cam-label-small--total')}
+                            ${col('PROD.', 'dash-cam-label-small--prod')}
+                            ${col('DISP.', 'dash-cam-label-small--disp')}
+                            ${col('AVER.', 'dash-cam-label-small--aver')}
+                            ${col('REVIS.', 'dash-cam-label-small--revis')}
+                            ${col('DESAF.', 'dash-cam-label-small--desaf')}
                         </div>`;
                 const esModoModelo = _dash.camarasVista === 'modelo';
                 const rows = filasRaw.map((f, i) => {
                     const esCopiable = esModoModelo && f.label !== 'Sin modelo';
                     const labelSpan = esCopiable
-                        ? `<span class="dash-cam-row-label text-truncate ip-copiable" data-copy="${esc(f.label)}" title="Copiar modelo">${esc(f.label)}</span>`
+                        ? `<span class="dash-cam-row-label text-truncate ip-copiable" data-copy="${esc(f.label)}" data-copy-label="Modelo copiado" title="Copiar modelo">${esc(f.label)}</span>`
                         : `<span class="dash-cam-row-label text-truncate" title="${esc(f.label)}">${esc(f.label)}</span>`;
                     return `
-                        <div class="dash-cam-row anim-in${i < filasRaw.length - 1 ? ' dash-cam-row--border' : ''}" style="animation-delay: ${(i + 1) * 0.03}s; animation-fill-mode: both;">
+                        <div class="dash-cam-row anim-in${i < filasRaw.length - 1 ? ' dash-cam-row--border' : ''} anim-delay-\${Math.min(i + 1, 15)}">
                             ${labelSpan}
-                            ${val(f.total, 'var(--text-main)')}
-                            ${val(f.prod, 'var(--c-blue)')}
-                            ${val(f.total - f.prod - f.averiado - f.revisar - f.desafectado, 'var(--c-green)')}
-                            ${val(f.averiado, 'var(--c-red)')}
-                            ${val(f.revisar, 'var(--c-purple)')}
-                            ${val(f.desafectado, 'var(--text-muted)')}
+                            ${val(f.total, 'dash-cam-val--main')}
+                            ${val(f.prod, 'dash-cam-val--blue')}
+                            ${val(f.total - f.prod - f.averiado - f.revisar - f.desafectado, 'dash-cam-val--green')}
+                            ${val(f.averiado, 'dash-cam-val--red')}
+                            ${val(f.revisar, 'dash-cam-val--purple')}
+                            ${val(f.desafectado, 'dash-cam-val--muted')}
                         </div>`;
                 }).join('');
                 vistaHtml = header + rows;
@@ -1920,18 +2114,18 @@
                         const label = piso === '__sin_piso__' ? 'Sin piso' : piso;
                         return `
                                 <div class="dash-edif-piso-row">
-                                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+                                    <div class="d-flex-between">
                                         <span class="dash-edif-piso-label">${esc(label)}</span>
-                                        <span class="dash-cam-val" style="color:var(--c-orange);font-size:var(--fs-base)">${pd.ids.size}</span>
+                                        <span class="dash-cam-val dash-cam-val--orange">${pd.ids.size}</span>
                                     </div>
                                 </div>`;
                     }).join('');
                     return `
                             <div>
-                                <div class="dash-edif-row anim-in" style="animation-delay:${i * 0.03}s;animation-fill-mode:both"
+                                <div class="dash-edif-row anim-in anim-delay-\${Math.min(i, 15)}"
                                     data-action="toggle-edificio">
                                     <span class="dash-edif-label">${chevron}${esc(f.label)}</span>
-                                    <span class="dash-cam-val" style="color:var(--text-main)">${f.total}</span>
+                                    <span class="dash-cam-val dash-cam-val--main">${f.total}</span>
                                 </div>
                                 <div class="dash-edif-pisos">
                                     ${pisosHtml}
@@ -1949,7 +2143,7 @@
         const disps = _data.dispositivos;
         const grabs = [..._data.grabadores].sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
         const idsEnProd = _calcIdsEnProd();
-        _renderResumenGeneral(disps, idsEnProd);
+        _renderResumenGeneral(disps, grabs, idsEnProd);
         _renderResumenGrabadores(grabs);
         _renderResumenCamaras(disps, grabs, idsEnProd);
     }
@@ -2001,6 +2195,15 @@
             return ESTADO_LABEL_PLURAL[est] || est.toUpperCase();
         }
         if (_activos.orden === 'marca') return (d.marca || 'SIN MARCA').toUpperCase();
+        if (_activos.orden === 'modelo') return (d.modelo || 'SIN MODELO').toUpperCase();
+
+        if (_activos.orden === 'patrimonio') {
+            const pat = (d.patrimonio || '').trim().toLowerCase();
+            if (pat === '') return 'SIN RELEVAR';
+            if (pat === 'no') return 'SIN PATRIMONIO';
+            return 'CON PATRIMONIO';
+        }
+
         if (_activos.orden === 'edificio-piso') {
             const asig = (asignaciones[d.id] || [])[0];
             if (!asig) return 'SIN ASIGNAR';
@@ -2017,6 +2220,16 @@
         const ORDEN_ESTADO = { produccion: 0, disponible: 1, revisar: 2, averiado: 3, desafectado: 4 };
         if (_activos.orden === 'estado') return ORDEN_ESTADO[getEstadoEfectivo(d, asignaciones)] ?? 9;
         if (_activos.orden === 'marca') return (d.marca || 'zzz').trim().toLowerCase();
+        if (_activos.orden === 'modelo') return (d.modelo || 'zzz').trim().toLowerCase();
+
+        if (_activos.orden === 'patrimonio') {
+            const pat = (d.patrimonio || '').trim().toLowerCase();
+            if (pat === '') return 2;     // Último: Sin relevar
+            if (pat === 'no') return 1;   // Medio: Sin patrimonio
+            return 0;                     // Primero: Con patrimonio
+        }
+        // -----------------------------
+
         const label = _getGroupLabel(d, asignaciones);
         return (_activos.orden === 'edificio-piso' && label === 'SIN ASIGNAR') ? 'zzzzz' : label.toLowerCase();
     }
@@ -2026,7 +2239,7 @@
         if (!asigs.length) return '';
 
         const isDup = tieneMacDuplicada(d);
-        const badgeProdClass = isDup ? 'badge-estado-revisar' : 'badge-estado-produccion';
+        const badgeProdClass = isDup ? 'canal-numero--dup' : 'badge-estado-produccion';
         const hoverTitle = isDup ? 'title="⚠️ MAC Duplicada en Producción"' : '';
         const ipCopiable = (ip) => `<div class="text-truncate ip-copiable" data-copy="${esc(ip)}" title="Copiar IP">${esc(ip)}</div>`;
 
@@ -2104,12 +2317,12 @@
         return sortedPisos.map(p => {
             const floorKey = `${gLabel}|${p}`;
             const isFloorCollapsed = _activos.pisosCollapsed.has(floorKey);
-            return `<div class="sub-grupo-piso" data-floor-key="${esc(floorKey)}" style="margin-bottom: 0.5rem;">
-                        <div class="grupo-piso-header" data-toggle-piso="${esc(floorKey)}" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:0.4rem 0.5rem;border-radius:var(--radius-sm);margin-bottom:0.25rem;">
-                            <span class="section-label" style="margin:0;opacity:0.8;font-size:0.7rem;border-left:2px solid var(--c-orange);padding-left:0.5rem;">
-                                PISO: ${esc(p)} <span style="font-weight:normal;margin-left:0.3rem;">(${pisos[p].length})</span>
+            return `<div class="sub-grupo-piso" data-floor-key="${esc(floorKey)}">
+                        <div class="grupo-piso-header" data-toggle-piso="${esc(floorKey)}">
+                            <span class="section-label section-label--piso">
+                                PISO: ${esc(p)} <span class="piso-count">(${pisos[p].length})</span>
                             </span>
-                            <svg class="nvr-chevron" style="${isFloorCollapsed ? 'transform:rotate(-90deg);' : ''}width:14px;height:14px;stroke:var(--text-muted);" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
+                            <svg class="nvr-chevron nvr-chevron--piso${isFloorCollapsed ? ' nvr-chevron--collapsed' : ''}" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
                         </div>
                         <div class="activos-grid-transition ${colClass}${isFloorCollapsed ? ' collapsed' : ''}">
                             ${pisos[p].map(renderItem).join('')}
@@ -2185,6 +2398,27 @@
                 .map(({ d }) => d);
         }
 
+        // Filtro directo por edificio/piso del canal asignado (viene del dashboard)
+        if (_filtroEdificioPiso) {
+            const { edificio: fEdif, piso: fPiso } = _filtroEdificioPiso;
+            sorted = sorted.filter(d => {
+                const asigD = asignaciones[d.id] || [];
+                return asigD.some(a => {
+                    let edif = '', piso = '';
+                    if (a.tipo === 'canal' && a.slot) {
+                        edif = (a.slot.edificio || '').trim().toLowerCase();
+                        piso = S.normalizarPiso(a.slot.piso || '').toLowerCase();
+                    } else if (a.tipo === 'otro_prod' && a.item) {
+                        edif = (a.item.edificio || '').trim().toLowerCase();
+                        piso = S.normalizarPiso(a.item.piso || '').toLowerCase();
+                    }
+                    const edifOk = !fEdif || edif === fEdif;
+                    const pisoOk = !fPiso || piso === fPiso;
+                    return edifOk && pisoOk;
+                });
+            });
+        }
+
         if (sorted.length === 0) {
             lista.innerHTML = `<div class="empty-state"><svg class="icon icon-line icon--lg-muted"><use href="#icon-search"/></svg>Sin resultados para "<strong>${esc(query)}</strong>".</div>`;
             document.getElementById('contador-dispositivos').textContent = '0';
@@ -2193,6 +2427,7 @@
 
         const contador = document.getElementById('contador-dispositivos');
         if (contador) contador.textContent = query ? `${sorted.length} / ${disps.length}` : sorted.length;
+        _actualizarBtnExpandir();
 
         const colClass = 'lista-2col';
         const renderItem = d => _renderItemActivo(d, asignaciones, tieneMacDuplicada, dupPatrimonios);
@@ -2203,12 +2438,7 @@
             (grupos[gLabel] || (grupos[gLabel] = [])).push(d);
         });
 
-        if (!document.getElementById('activos-grid-transition-css')) {
-            const el = document.createElement('style');
-            el.id = 'activos-grid-transition-css';
-            el.textContent = '.activos-grid-transition{transition:max-height 0.3s ease,opacity 0.25s ease;overflow:hidden}.activos-grid-transition.collapsed{max-height:0!important;opacity:0!important}';
-            document.head.appendChild(el);
-        }
+        // activos-grid-transition CSS movido a styles.css (CSP: sin unsafe-inline)
         let html = ``;
 
         Object.entries(grupos).forEach(([gLabel, items]) => {
@@ -2220,7 +2450,7 @@
             html += `<div class="grupo-activos-card" data-grupo="${esc(gLabel)}">
         <div class="grupo-activos-header" data-toggle-grupo="${esc(gLabel)}">
             <span class="grupo-activos-header-label">${esc(gLabel)} <span class="badge badge-otro badge--grupo-count">${items.length}</span></span>
-            <svg class="nvr-chevron" style="${isCollapsed ? 'transform:rotate(-90deg);' : ''}stroke:var(--c-orange);" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
+            <svg class="nvr-chevron${isCollapsed ? ' nvr-chevron--collapsed' : ''}" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
         </div>
         <div class="activos-grid-transition${isCollapsed ? ' collapsed' : ''}">${itemsHtml}</div>
     </div>`;
@@ -2247,6 +2477,7 @@
         const grabs = [..._data.grabadores].sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
 
         const tieneMacDuplicada = _calcDupMacs();
+        const estaEnMultiCanal = _calcDispMultiCanal();
 
         if (grabs.length === 0) {
             lista.innerHTML = `<div class="empty-state">
@@ -2262,12 +2493,16 @@
 
                 if (disp) {
                     const tituloCanal = c.descripcion || disp.mac || disp.serial || '—';
-                    const isDup = tieneMacDuplicada(disp);
-                    const badgeStyle = isDup ? 'background: var(--c-purple);' : '';
-                    const tituloHover = isDup ? `[MAC DUPLICADA] ${esc(tituloCanal)}` : esc(tituloCanal);
+                    const isDupMac = tieneMacDuplicada(disp);
+                    const isDupCanal = estaEnMultiCanal(c.dispositivoId);
+                    const isDup = isDupMac || isDupCanal;
+                    const badgeClass = isDup ? ' canal-numero--dup' : '';
+                    const tituloHover = isDupCanal
+                        ? `[EN MÚLTIPLES GRABADORES] ${esc(tituloCanal)}`
+                        : isDupMac ? `[MAC DUPLICADA] ${esc(tituloCanal)}` : esc(tituloCanal);
 
                     return `<div class="canal-slot-lista ocupado" data-canal="${c.canal}">
-                                <div class="canal-numero" style="${badgeStyle}">CH ${c.canal}</div>
+                                <div class="canal-numero${badgeClass}">CH ${c.canal}</div>
                                 <div class="canal-dispositivo-nombre" title="${tituloHover}">${esc(tituloCanal)}</div>
                                 <div class="canal-dispositivo-ip ${c.ip ? 'ip-copiable' : ''}" ${c.ip ? `data-copy="${esc(c.ip)}" title="Copiar IP"` : ''}>${c.ip ? esc(c.ip) : ''}</div>
                             </div>`;
@@ -2381,6 +2616,8 @@
         snapshotOtroProd: null,
         canalDesdeDispId: null,
         volverDesdeCanal: false,
+        volverDesdeGrabador: false,
+        volverDesdeDispositivo: false,
         canalDispOcupados: new Set(),
         canalDispHighlight: -1,
         edificiosOrigen: 'ajustes',
@@ -2406,7 +2643,7 @@
             if (btn) btn.classList.toggle('activo', estadoActual === e);
         });
     }
-    const KEY_EXPANDED = 'cctv_grab_expanded';
+    const KEY_EXPANDED = `${APP_KEY}:cctv_grab_expanded`;
     const _grabExpanded = (() => {
         try {
             const saved = JSON.parse(localStorage.getItem(KEY_EXPANDED) || 'null');
@@ -2440,7 +2677,7 @@
         { id: 'ubicacion', label: 'Ubicación' },
         { id: 'ip', label: 'Dirección IP' },
     ];
-    const KEY_BUSQ = 'cctv_busq_activos';
+    const KEY_BUSQ = `${APP_KEY}:cctv_busq_activos`;
 
     function getEstadoEfectivo(d, asignaciones) {
         return d.estado || (asignaciones[d.id]?.length ? 'produccion' : 'disponible');
@@ -2452,7 +2689,9 @@
             .replace(/\bmini\s+domo\b/gi, 'minidomo')
             .replace(/\bmini\s+bullet\b/gi, 'minibullet');
 
-        const tokens = (qNorm.match(/"[^"]+"|\S+/g) || []).map(t => t.replace(/"/g, ''));
+        const tokens = (qNorm.match(/"[^"]+"|\S+/g) || [])
+            .map(t => t.replace(/"/g, ''))
+            .map(t => /^-?\d+$/.test(t) ? (parseInt(t, 10).toString()) : t); // normaliza pisos numéricos: "03" → "3"
         const tokenRegexes = tokens.map(t => new RegExp('(?<![a-z0-9])' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![a-z0-9])', 'i'));
         return { tokens, tokenRegexes };
     }
@@ -2477,17 +2716,17 @@
 
         if (_busqActivos.has('ubicacion')) {
             const edifDisp = (d.edificio || '').trim();
-            const pisoDisp = (d.piso || '').trim();
+            const pisoDisp = S.normalizarPiso(d.piso || '');
             if (edifDisp || pisoDisp) campos.push([edifDisp, pisoDisp].filter(Boolean).join(' ').toLowerCase());
             asigD.forEach(a => {
                 if (a.tipo === 'canal' && a.slot) {
                     const edifCanal = (a.slot.edificio || '').trim();
-                    const pisoCanal = (a.slot.piso || '').trim();
+                    const pisoCanal = S.normalizarPiso(a.slot.piso || '');
                     if (edifCanal || pisoCanal) campos.push([edifCanal, pisoCanal].filter(Boolean).join(' ').toLowerCase());
                 }
                 if (a.tipo === 'otro_prod' && a.item) {
                     const edifOtro = (a.item.edificio || '').trim();
-                    const pisoOtro = (a.item.piso || '').trim();
+                    const pisoOtro = S.normalizarPiso(a.item.piso || '');
                     if (edifOtro || pisoOtro) campos.push([edifOtro, pisoOtro].filter(Boolean).join(' ').toLowerCase());
                 }
             });
@@ -2553,6 +2792,20 @@
         const dupMacs = new Set(Object.keys(macCounts).filter(k => macCounts[k] > 1));
         return (_cacheDupMacs = (d) => d?.mac?.split(',').some(m => dupMacs.has(m.trim().toUpperCase())) ?? false);
     }
+    function _calcDispMultiCanal() {
+        const dispCounts = {};
+        _data.grabadores.forEach(g => {
+            g.canales_data.forEach(c => {
+                if (c.dispositivoId != null) {
+                    const k = String(c.dispositivoId);
+                    dispCounts[k] = (dispCounts[k] || 0) + 1;
+                }
+            });
+        });
+        const multiCanal = new Set(Object.keys(dispCounts).filter(id => dispCounts[id] > 1));
+        return (dispId) => dispId != null && multiCanal.has(String(dispId));
+    }
+
     const _busqActivos = (() => {
         try {
             const saved = JSON.parse(localStorage.getItem(KEY_BUSQ) || 'null');
@@ -2572,7 +2825,9 @@
         if (!_filtrosPrevios) _filtrosPrevios = new Set(_busqActivos);
         _busqActivos.clear();
         ids.forEach(id => _busqActivos.add(id));
-        _guardarBusqActivos();
+        // No persistir: el estado forzado por chip es transitorio.
+        // _guardarBusqActivos() se llama al restaurar (_restaurarFiltrosPrevios),
+        // evitando que una recarga pierda los filtros previos del usuario.
         _sincFiltrosUI();
     }
 
@@ -2600,13 +2855,170 @@
         _activos.pisosCollapsed.clear();
     }
 
+    function _toggleExpandirTodo() {
+        if (!_activos.collapsed) _activos.collapsed = new Set();
+        if (!_activos.pisosCollapsed) _activos.pisosCollapsed = new Set();
+
+        const esEdificioPiso = _activos.orden === 'edificio-piso';
+
+        if (esEdificioPiso) {
+            // Triple toggle: 0=todo expandido → 1=edificios colapsados → 2=pisos colapsados → 0
+            const hayEdificiosColapsados = _activos.collapsed.size > 0;
+            const hayPisosColapsados = _activos.pisosCollapsed.size > 0;
+
+            if (!hayEdificiosColapsados && !hayPisosColapsados) {
+                // Estado 0 → Estado 1: colapsar edificios y pisos sin animación.
+                // Los pisos se registran en pisosCollapsed para que el toggle individual funcione,
+                // pero se marca el flag para que _actualizarBtnExpandir lo trate como Estado 1.
+                document.querySelectorAll('.sub-grupo-piso[data-floor-key]').forEach(fp => {
+                    const floorKey = fp.dataset.floorKey;
+                    const grid = fp.querySelector('.activos-grid-transition');
+                    const chevron = fp.querySelector('.nvr-chevron');
+                    if (!grid) return;
+                    _activos.pisosCollapsed.add(floorKey);
+                    grid.style.transition = 'none';
+                    grid.classList.add('collapsed');
+                    grid.style.maxHeight = '';
+                    if (chevron) chevron.classList.add('nvr-chevron--collapsed');
+                    requestAnimationFrame(() => { grid.style.transition = ''; });
+                });
+                _pisosOcultosConEdificios = true;
+                document.querySelectorAll('.grupo-activos-card[data-grupo]').forEach(card => {
+                    const groupId = card.dataset.grupo;
+                    const grid = card.querySelector('.activos-grid-transition');
+                    const chevron = card.querySelector(':scope > .grupo-piso-header .nvr-chevron, :scope > .nvr-chevron');
+                    if (!grid) return;
+                    _activos.collapsed.add(groupId);
+                    grid.style.maxHeight = grid.scrollHeight + 'px';
+                    grid.getBoundingClientRect();
+                    grid.classList.add('collapsed');
+                    if (chevron) chevron.classList.add('nvr-chevron--collapsed');
+                    grid.style.maxHeight = '';
+                });
+            } else if (hayEdificiosColapsados) {
+                // Estado 1 → Estado 2: expandir edificios, los pisos ya están en pisosCollapsed.
+                // Si el flag está activo, los pisos ya están registrados; si no, colapsar pisos ahora.
+                _pisosOcultosConEdificios = false;
+                _activos.collapsed.clear();
+                document.querySelectorAll('.grupo-activos-card[data-grupo]').forEach(card => {
+                    const grid = card.querySelector('.activos-grid-transition');
+                    const chevron = card.querySelector(':scope > .grupo-piso-header .nvr-chevron, :scope > .nvr-chevron');
+                    if (!grid) return;
+                    grid.classList.remove('collapsed');
+                    if (chevron) chevron.classList.remove('nvr-chevron--collapsed');
+                    grid.style.maxHeight = grid.scrollHeight + 'px';
+                    grid.addEventListener('transitionend', () => { grid.style.maxHeight = ''; }, { once: true });
+                });
+                if (!hayPisosColapsados) {
+                    document.querySelectorAll('.sub-grupo-piso[data-floor-key]').forEach(fp => {
+                        const floorKey = fp.dataset.floorKey;
+                        const grid = fp.querySelector('.activos-grid-transition');
+                        const chevron = fp.querySelector('.nvr-chevron');
+                        if (!grid) return;
+                        _activos.pisosCollapsed.add(floorKey);
+                        grid.style.maxHeight = grid.scrollHeight + 'px';
+                        grid.getBoundingClientRect();
+                        grid.classList.add('collapsed');
+                        if (chevron) chevron.classList.add('nvr-chevron--collapsed');
+                        grid.style.maxHeight = '';
+                    });
+                }
+            } else {
+                // Estado 2 → Estado 0: expandir todo
+                _pisosOcultosConEdificios = false;
+                _activos.collapsed.clear();
+                _activos.pisosCollapsed.clear();
+                document.querySelectorAll('.grupo-activos-card[data-grupo]').forEach(card => {
+                    const grid = card.querySelector('.activos-grid-transition');
+                    const chevron = card.querySelector(':scope > .grupo-piso-header .nvr-chevron, :scope > .nvr-chevron');
+                    if (!grid) return;
+                    grid.classList.remove('collapsed');
+                    if (chevron) chevron.classList.remove('nvr-chevron--collapsed');
+                    grid.style.maxHeight = grid.scrollHeight + 'px';
+                    grid.addEventListener('transitionend', () => { grid.style.maxHeight = ''; }, { once: true });
+                });
+                document.querySelectorAll('.sub-grupo-piso[data-floor-key]').forEach(fp => {
+                    const grid = fp.querySelector('.activos-grid-transition');
+                    const chevron = fp.querySelector('.nvr-chevron');
+                    if (!grid) return;
+                    grid.classList.remove('collapsed');
+                    if (chevron) chevron.classList.remove('nvr-chevron--collapsed');
+                    grid.style.maxHeight = grid.scrollHeight + 'px';
+                    grid.addEventListener('transitionend', () => { grid.style.maxHeight = ''; }, { once: true });
+                });
+            }
+        } else {
+            // Toggle binario para las otras vistas
+            const hayColapsados = _activos.collapsed.size > 0;
+            if (hayColapsados) {
+                _activos.collapsed.clear();
+                document.querySelectorAll('.grupo-activos-card[data-grupo]').forEach(card => {
+                    const grid = card.querySelector('.activos-grid-transition');
+                    const chevron = card.querySelector(':scope > .grupo-piso-header .nvr-chevron, :scope > .nvr-chevron');
+                    if (!grid) return;
+                    grid.classList.remove('collapsed');
+                    if (chevron) chevron.classList.remove('nvr-chevron--collapsed');
+                    grid.style.maxHeight = grid.scrollHeight + 'px';
+                    grid.addEventListener('transitionend', () => { grid.style.maxHeight = ''; }, { once: true });
+                });
+            } else {
+                document.querySelectorAll('.grupo-activos-card[data-grupo]').forEach(card => {
+                    const groupId = card.dataset.grupo;
+                    const grid = card.querySelector('.activos-grid-transition');
+                    const chevron = card.querySelector(':scope > .grupo-piso-header .nvr-chevron, :scope > .nvr-chevron');
+                    if (!grid) return;
+                    _activos.collapsed.add(groupId);
+                    grid.style.maxHeight = grid.scrollHeight + 'px';
+                    grid.getBoundingClientRect();
+                    grid.classList.add('collapsed');
+                    if (chevron) chevron.classList.add('nvr-chevron--collapsed');
+                    grid.style.maxHeight = '';
+                });
+            }
+        }
+
+        if (_guardarColapsados) _guardarColapsados();
+        _actualizarBtnExpandir();
+    }
+
+    function _actualizarBtnExpandir() {
+        const btn = document.getElementById('btn-expandir-todo');
+        if (!btn) return;
+        const use = btn.querySelector('use');
+        const esEdificioPiso = _activos.orden === 'edificio-piso';
+        const hayEdificiosColapsados = _activos.collapsed && _activos.collapsed.size > 0;
+        const hayPisosColapsados = _activos.pisosCollapsed && _activos.pisosCollapsed.size > 0;
+
+        if (esEdificioPiso) {
+            if (!hayEdificiosColapsados && !hayPisosColapsados) {
+                // Estado 0: todo expandido → próxima acción colapsa edificios
+                if (use) use.setAttribute('href', '#icon-collapse-all');
+                btn.title = 'Colapsar edificios';
+            } else if (hayEdificiosColapsados || _pisosOcultosConEdificios) {
+                // Estado 1: edificios colapsados (pisos pueden estar en pisosCollapsed por el flag)
+                if (use) use.setAttribute('href', '#icon-collapse-floors');
+                btn.title = 'Colapsar pisos';
+            } else {
+                // Estado 2: solo pisos colapsados → próxima acción expande todo
+                if (use) use.setAttribute('href', '#icon-expand-all');
+                btn.title = 'Expandir todo';
+            }
+        } else {
+            const hayColapsados = hayEdificiosColapsados || hayPisosColapsados;
+            if (use) use.setAttribute('href', hayColapsados ? '#icon-expand-all' : '#icon-collapse-all');
+            btn.title = hayColapsados ? 'Expandir todo' : 'Colapsar todo';
+        }
+    }
+
     function _sincFiltrosUI() {
         const btnAll = document.getElementById('btn-toggle-all-filtros');
         if (btnAll) btnAll.textContent = _busqActivos.size > 0 ? 'Desactivar todo' : 'Activar todo';
         const btnFiltros = document.getElementById('btn-filtros-busqueda');
         if (btnFiltros) btnFiltros.classList.toggle('tiene-desactivados', _busqActivos.size < BUSQ_CAMPOS.length);
-        document.querySelectorAll('[id^="filtro-cb-"]').forEach(cb => {
-            cb.checked = _busqActivos.has(cb.id.replace('filtro-cb-', ''));
+
+        // Nueva lógica para pintar de azul los items del dropdown
+        document.querySelectorAll('.canal-disp-item[data-filtro]').forEach(item => {
+            item.classList.toggle('activo-vista', _busqActivos.has(item.dataset.filtro));
         });
     }
 
@@ -2623,7 +3035,7 @@
             if (use) use.setAttribute('href', oscuro ? '#icon-sun' : '#icon-moon');
         },
 
-        copiarAlPortapapeles(texto, event) {
+        copiarAlPortapapeles(texto, event, label) {
             if (event) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -2640,7 +3052,7 @@
                 textArea.select();
                 try {
                     document.execCommand('copy');
-                    toast(`IP copiada: ${texto}`, 'success');
+                    toast(`${label || 'IP copiada'}: ${texto}`, 'success');
                 } catch (err) {
                     toast('No se pudo copiar al portapapeles', 'error');
                 }
@@ -2649,7 +3061,7 @@
             }
 
             navigator.clipboard.writeText(texto).then(() => {
-                toast(`IP copiada: ${texto}`, 'success');
+                toast(`${label || 'IP copiada'}: ${texto}`, 'success');
             }).catch(() => {
                 toast('No se pudo copiar al portapapeles', 'error');
             });
@@ -2699,8 +3111,8 @@
             if (e) e.stopPropagation();
             const dd = document.getElementById('dropdown-vista-activos');
             if (!dd) return;
-            const abriendo = dd.style.display === 'none';
-            dd.style.display = abriendo ? 'block' : 'none';
+            const abriendo = dd.classList.contains('hidden');
+            dd.classList.toggle('hidden', !abriendo);
             if (abriendo) {
                 dd.querySelectorAll('.canal-disp-item[data-orden]').forEach(el => {
                     el.classList.toggle('activo-vista', el.dataset.orden === _activos.orden);
@@ -2715,32 +3127,28 @@
             renderActivos();
         },
 
-        abrirFiltrosBusqueda() {
-            const lista = document.getElementById('filtros-busqueda-lista');
-            const camposOrdenados = [...BUSQ_CAMPOS].sort((a, b) => a.label.localeCompare(b.label));
-            lista.innerHTML = camposOrdenados.map(f => `
-                        <label class="filtro-row">
-                            <span class="filtro-label">${f.label}</span>
-                            <span class="filtro-toggle">
-                                <input type="checkbox" id="filtro-cb-${f.id}"
-                                    data-filtro-id="${f.id}"
-                                    ${_busqActivos.has(f.id) ? 'checked' : ''}>
-                                <span class="filtro-toggle-track"></span>
-                            </span>
-                        </label>`).join('');
+        toggleDropdownFiltros(e) {
+            if (e) e.stopPropagation();
+            const dd = document.getElementById('dropdown-filtros');
+            if (!dd) return;
 
-            lista.querySelectorAll('input[data-filtro-id]').forEach(cb => {
-                cb.addEventListener('change', function () {
-                    UI._onFiltroChange(this.dataset.filtroId, this.checked);
-                });
-            });
+            const abriendo = dd.classList.contains('hidden');
 
+            if (abriendo) {
+                // Si lo estamos abriendo, generamos los items con el estilo nuevo
+                const lista = document.getElementById('filtros-busqueda-lista');
+                const camposOrdenados = [...BUSQ_CAMPOS].sort((a, b) => a.label.localeCompare(b.label));
+                lista.innerHTML = camposOrdenados.map(f => {
+                    const esActivo = _busqActivos.has(f.id);
+                    return `
+                        <div class="canal-disp-item ${esActivo ? 'activo-vista' : ''}" data-action="toggle-filtro-campo" data-filtro="${f.id}">
+                            ${f.label}
+                        </div>`;
+                }).join('');
+            }
+
+            dd.classList.toggle('hidden', !abriendo);
             _sincFiltrosUI();
-            MM.abrir('modal-filtros-busqueda');
-        },
-
-        cerrarFiltrosBusqueda() {
-            MM.cerrar('modal-filtros-busqueda');
         },
 
         _onFiltroChange(id, activo) {
@@ -2781,209 +3189,6 @@
 
         cerrarAjustes() {
             MM.cerrar('modal-ajustes');
-        },
-
-        abrirReporte() {
-            MM.cerrar('modal-ajustes');
-            setTimeout(() => {
-                MM.abrir('modal-reporte', { onEscape: () => UI.cerrarReporte() });
-            }, 150);
-        },
-
-        cerrarReporte() {
-            MM.cerrar('modal-reporte');
-            setTimeout(() => UI.abrirAjustes(), 150);
-        },
-
-        generarReporte() {
-            const disps = _data.dispositivos.map(d => S.sanitizarDisp(d)).filter(Boolean);
-            const grabs = _data.grabadores.map(g => S.sanitizarGrab(g)).filter(Boolean);
-            const edifs = S.edificios;
-            const TIPOS = S.TIPOS;
-            const ESTADOS_LABELS = { '': 'Operativo', averiado: 'Averiado', revisar: 'En revisión', desafectado: 'Desafectado' };
-
-            const asignaciones = _buildAsignaciones();
-
-            const idsEnProd = _calcIdsEnProd();
-
-            function getUbicacion(d) {
-                const asig = (asignaciones[d.id] || [])[0];
-                if (!asig) return { edificio: '', piso: '' };
-                if (asig.tipo === 'canal') return { edificio: asig.slot.edificio || '', piso: asig.slot.piso || '' };
-                if (asig.tipo === 'otro_prod') return { edificio: asig.item.edificio || '', piso: asig.item.piso || '' };
-                if (asig.tipo === 'grabador') return { edificio: asig.grab.edificio || '', piso: asig.grab.piso || '' };
-                return { edificio: '', piso: '' };
-            }
-
-            const sel = id => document.getElementById(id)?.checked;
-            const esc = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-
-            const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
-            const secciones = [];
-
-            if (sel('rpt-activos-totales')) {
-                const rows = Object.entries(TIPOS).map(([k, v]) => {
-                    const n = disps.filter(d => d.tipo === k).length;
-                    return n > 0 ? `<tr><td>${esc(v.emoji)} ${esc(v.label)}</td><td class="num">${n}</td></tr>` : '';
-                }).join('');
-                secciones.push(`<section><h2>Activos totales por tipo</h2><table><thead><tr><th>Tipo</th><th class="num">Cantidad</th></tr></thead><tbody>${rows || '<tr><td colspan="2" class="vacio">Sin dispositivos</td></tr>'}</tbody><tfoot><tr><td><strong>Total</strong></td><td class="num"><strong>${disps.length}</strong></td></tr></tfoot></table></section>`);
-            }
-
-            if (sel('rpt-edificios')) {
-                const rows = edifs.map(e => {
-                    const n = disps.filter(d => (getUbicacion(d).edificio || '').trim().toLowerCase() === e.toLowerCase()).length;
-                    return `<tr><td>${esc(e)}</td><td class="num">${n}</td></tr>`;
-                }).join('');
-                const sinEdif = disps.filter(d => !getUbicacion(d).edificio?.trim()).length;
-                const sinRow = sinEdif > 0 ? `<tr><td class="muted">Sin edificio asignado</td><td class="num muted">${sinEdif}</td></tr>` : '';
-                secciones.push(`<section><h2>Edificios con totales</h2><table><thead><tr><th>Edificio</th><th class="num">Dispositivos</th></tr></thead><tbody>${rows || ''}${sinRow || (!rows ? '<tr><td colspan="2" class="vacio">Sin edificios definidos</td></tr>' : '')}</tbody></table></section>`);
-            }
-
-            if (sel('rpt-formas')) {
-                const camaras = disps.filter(d => d.tipo === 'camara');
-                const conteo = {};
-                camaras.forEach(c => {
-                    const k = c.forma || '__sin__';
-                    if (!conteo[k]) conteo[k] = { produccion: 0, disponible: 0, averiado: 0, revisar: 0, desafectado: 0 };
-                    if (c.estado === 'averiado') conteo[k].averiado++;
-                    else if (c.estado === 'revisar') conteo[k].revisar++;
-                    else if (c.estado === 'desafectado') conteo[k].desafectado++;
-                    else if (idsEnProd.has(c.id)) conteo[k].produccion++;
-                    else conteo[k].disponible++;
-                });
-                const formasOrden = [...FORMAS.filter(f => conteo[f]), ...(conteo['__sin__'] ? ['__sin__'] : [])];
-                const rows = formasOrden.map(f => {
-                    const s = conteo[f];
-                    const total = s.produccion + s.disponible + s.averiado + s.revisar + s.desafectado;
-                    const label = f === '__sin__' ? '<span class="muted">Sin forma</span>' : esc(cap(f.replace(/-/g, ' ')));
-                    return `<tr><td>${label}</td><td class="num">${s.produccion || '—'}</td><td class="num">${s.disponible || '—'}</td><td class="num">${s.averiado || '—'}</td><td class="num">${s.revisar || '—'}</td><td class="num">${s.desafectado || '—'}</td><td class="num"><strong>${total}</strong></td></tr>`;
-                }).join('');
-                secciones.push(`<section><h2>Cámaras por forma</h2><table><thead><tr><th>Forma</th><th class="num">Prod.</th><th class="num">Disp.</th><th class="num">Aver.</th><th class="num">Revis.</th><th class="num">Desaf.</th><th class="num">Total</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="vacio">Sin cámaras registradas</td></tr>'}</tbody><tfoot><tr><td><strong>Total</strong></td><td colspan="5"></td><td class="num"><strong>${camaras.length}</strong></td></tr></tfoot></table></section>`);
-            }
-
-            if (sel('rpt-cam-edificio')) {
-                const camaras = disps.filter(d => d.tipo === 'camara');
-                const mapa = {};
-                camaras.forEach(c => {
-                    const ub = getUbicacion(c);
-                    const e = ub.edificio.trim() || '__sin_edif__';
-                    const p = S.normalizarPiso(ub.piso) || '__sin_piso__';
-                    if (!mapa[e]) mapa[e] = {};
-                    mapa[e][p] = (mapa[e][p] || 0) + 1;
-                });
-                let html = '';
-                const edificioKeys = [...Object.keys(mapa)].sort((a, b) => a === '__sin_edif__' ? 1 : b === '__sin_edif__' ? -1 : a.localeCompare(b));
-                // Reusar _getPisoPeso global; __sin_piso__ mapea a 9999 igual que 'SIN ASIGNAR'
-                const getPisoPeso = p => _getPisoPeso(!p || p === '__sin_piso__' ? 'SIN ASIGNAR' : p);
-                edificioKeys.forEach(e => {
-                    const label = e === '__sin_edif__' ? 'Sin edificio' : esc(e);
-                    const total = Object.values(mapa[e]).reduce((s, n) => s + n, 0);
-                    const pisoRows = Object.entries(mapa[e])
-                        .sort(([a], [b]) => getPisoPeso(a) - getPisoPeso(b))
-                        .map(([p, n]) => {
-                            const pl = p === '__sin_piso__' ? '<span class="muted">Sin piso</span>' : esc(p);
-                            return `<tr class="piso-row"><td>&nbsp;&nbsp;&nbsp;${pl}</td><td class="num">${n}</td></tr>`;
-                        }).join('');
-                    html += `<tr class="edif-row"><td><strong>${label}</strong></td><td class="num"><strong>${total}</strong></td></tr>${pisoRows}`;
-                });
-                secciones.push(`<section><h2>Cámaras por edificio y piso</h2><table><thead><tr><th>Ubicación</th><th class="num">Cámaras</th></tr></thead><tbody>${html || '<tr><td colspan="2" class="vacio">Sin cámaras con ubicación</td></tr>'}</tbody></table></section>`);
-            }
-
-            if (sel('rpt-modelos')) {
-                const conteo = {};
-                disps.forEach(d => { if (d.modelo) { conteo[d.modelo] = (conteo[d.modelo] || 0) + 1; } });
-                const rows = Object.entries(conteo).sort(([, a], [, b]) => b - a).map(([m, n]) => `<tr><td>${esc(m)}</td><td class="num">${n}</td></tr>`).join('');
-                secciones.push(`<section><h2>Cantidad por modelo</h2><table><thead><tr><th>Modelo</th><th class="num">Cantidad</th></tr></thead><tbody>${rows || '<tr><td colspan="2" class="vacio">Sin modelos registrados</td></tr>'}</tbody></table></section>`);
-            }
-
-            if (sel('rpt-estados')) {
-                const conteo = { produccion: 0, disponible: 0, averiado: 0, revisar: 0, desafectado: 0 };
-                disps.forEach(d => {
-                    if (d.estado === 'averiado') conteo.averiado++;
-                    else if (d.estado === 'revisar') conteo.revisar++;
-                    else if (d.estado === 'desafectado') conteo.desafectado++;
-                    else if (idsEnProd.has(d.id)) conteo.produccion++;
-                    else conteo.disponible++;
-                });
-                const rows = Object.entries(ESTADO_LABEL).map(([k, label]) => `<tr><td>${esc(label)}</td><td class="num">${conteo[k] || 0}</td></tr>`).join('');
-                secciones.push(`<section><h2>Estado de dispositivos</h2><table><thead><tr><th>Estado</th><th class="num">Cantidad</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td><strong>Total</strong></td><td class="num"><strong>${disps.length}</strong></td></tr></tfoot></table></section>`);
-            }
-
-            if (sel('rpt-marcas')) {
-                const conteo = {};
-                disps.forEach(d => { const m = (d.marca || '').trim() || '__sin__'; conteo[m] = (conteo[m] || 0) + 1; });
-                const rows = Object.entries(conteo).sort(([, a], [, b]) => b - a).map(([m, n]) => {
-                    const label = m === '__sin__' ? '<span class="muted">Sin marca</span>' : esc(m);
-                    return `<tr><td>${label}</td><td class="num">${n}</td></tr>`;
-                }).join('');
-                secciones.push(`<section><h2>Distribución por marca</h2><table><thead><tr><th>Marca</th><th class="num">Cantidad</th></tr></thead><tbody>${rows || '<tr><td colspan="2" class="vacio">Sin marcas registradas</td></tr>'}</tbody></table></section>`);
-            }
-
-            if (sel('rpt-grabadores')) {
-                const rows = grabs.map(g => {
-                    const ocupados = (g.canales_data || []).filter(c => c.dispositivoId).length;
-                    const libres = (g.canales_n || 0) - ocupados;
-                    const ub = [g.edificio, g.piso].filter(Boolean).join(' · ') || '—';
-                    return `<tr><td>${esc(g.descripcion || 'Sin descripción')}</td><td class="center">${esc(g.tipo?.toUpperCase())}</td><td class="num">${g.canales_n || '?'}</td><td class="num">${ocupados}</td><td class="num">${libres}</td><td>${esc(ub)}</td></tr>`;
-                }).join('');
-                secciones.push(`<section><h2>Lista de grabadores</h2><table><thead><tr><th rowspan="2">Descripción</th><th rowspan="2" class="center">Tipo</th><th colspan="3" class="center th-group">Canales</th><th rowspan="2">Ubicación</th></tr><tr><th class="num th-sub">Total</th><th class="num th-sub">En uso</th><th class="num th-sub">Libres</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="vacio">Sin grabadores registrados</td></tr>'}</tbody></table></section>`);
-            }
-
-            if (!secciones.length) { toast('Seleccioná al menos una sección', 'info'); return; }
-
-            const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Reporte CCTV — ${fecha}</title>
-<style>
-  :root { --blue: #4c72ac; --border: #dde3ea; --muted: #6b7280; --bg: #f5f6fa; --card: #fff; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1a1d23; padding: 2rem 1rem 4rem; }
-  .reporte-wrap { max-width: 860px; margin: 0 auto; }
-  header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--blue); display: flex; justify-content: space-between; align-items: flex-end; }
-  header h1 { font-size: 1.4rem; color: var(--blue); }
-  header .meta { font-size: 0.78rem; color: var(--muted); text-align: right; line-height: 1.6; }
-  section { background: var(--card); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
-  h2 { font-size: 0.95rem; font-weight: 700; color: var(--blue); margin-bottom: 0.85rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  th { text-align: left; font-weight: 600; color: var(--muted); padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em; }
-  td { padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); }
-  tbody tr:last-child td { border-bottom: none; }
-  tfoot td { border-top: 1px solid var(--border); padding-top: 0.5rem; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .center { text-align: center; }
-  .muted { color: var(--muted); font-style: italic; }
-  .vacio { color: var(--muted); text-align: center; padding: 1rem; font-style: italic; }
-  .edif-row td { background: #f0f4fb; }
-  .piso-row td { font-size: 0.8rem; color: #374151; }
-  .th-group { border-bottom: 1px solid var(--border); background: #f0f4fb; font-size: 0.72rem; }
-  .th-sub { border-top: none; font-size: 0.72rem; }
-  .btn-print { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--blue); color: #fff; border: none; border-radius: 999px; padding: .65rem 1.25rem; font-size: .85rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
-  .btn-print:hover { filter: brightness(1.1); }
-  @media print { .btn-print { display: none; } body { background: #fff; } section { box-shadow: none; border: 1px solid var(--border); } }
-</style>
-</head>
-<body>
-<div class="reporte-wrap">
-  <header>
-    <div><h1>📹 Reporte CCTV</h1></div>
-    <div class="meta">Generado el ${fecha}<br>${disps.length} dispositivos · ${grabs.length} grabadores · ${edifs.length} edificios</div>
-  </header>
-  ${secciones.join('\n')}
-</div>
-<button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
-</body>
-</html>`;
-
-            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            setTimeout(() => URL.revokeObjectURL(url), 60000);
-            MM.cerrar('modal-reporte');
-            toast('Reporte generado', 'success');
         },
 
         abrirTiposDispositivo() {
@@ -3030,18 +3235,21 @@
         _renderTiposCustom() {
             const cont = document.getElementById('lista-tipos-custom');
             if (!cont) return;
+            const builtin = Object.entries(S.TIPOS).filter(([, v]) => v.builtin);
             const custom = Object.entries(S.TIPOS).filter(([, v]) => !v.builtin);
-            if (!custom.length) {
-                cont.innerHTML = `<div class="dash-empty-text dash-empty-text--sm-pad">Sin tipos personalizados</div>`;
-                return;
-            }
-            cont.innerHTML = custom.map(([k, v]) => `
+            const builtinHtml = builtin.map(([, v]) => `
                         <div class="tipo-custom-row">
-                            <span class="tipo-custom-label">${esc(v.label)}</span>
+                            <span class="tipo-custom-label">${esc(v.emoji)} ${esc(v.label)}</span>
+                        </div>`).join('');
+            const separador = custom.length ? `<div class="filtro-dropdown-header" style="margin-top:var(--sp-3)"><span class="filtro-dropdown-title">Personalizados</span></div>` : '';
+            const customHtml = custom.map(([k, v]) => `
+                        <div class="tipo-custom-row">
+                            <span class="tipo-custom-label">${esc(v.emoji)} ${esc(v.label)}</span>
                             <button data-action="eliminar-tipo" data-key="${esc(k)}" class="icon-btn btn-delete btn-delete--sm" title="Eliminar tipo">
                                 <svg class="icon icon-line icon--sm"><use href="#icon-trash"/></svg>
                             </button>
                         </div>`).join('');
+            cont.innerHTML = builtinHtml + separador + customHtml;
         },
 
         agregarTipoCustom() {
@@ -3171,7 +3379,7 @@
                         document.getElementById('canal-comentarios').value = snap.comentarios;
                         _poblarSelectEdificio('canal-edificio', snap.edificio);
                         const btnVerActivo = document.getElementById('btn-ver-activo-canal');
-                        if (btnVerActivo) btnVerActivo.style.display = snap.dispositivoId ? '' : 'none';
+                        if (btnVerActivo) btnVerActivo.classList.toggle('hidden', !snap.dispositivoId);
                         _edicion.edificiosSnapForm = null;
                     }, 220);
                 }, 150);
@@ -3209,10 +3417,10 @@
                         document.getElementById(`${prefijo}-rack`).value = snap.rack;
                         document.getElementById(`${prefijo}-comentarios`).value = snap.comentarios;
                         _poblarSelectEdificio(`${prefijo}-edificio`, snap.edificio);
-                        
+
                         if (prefijo === 'editar-otro-prod') {
                             const btnVerActivo = document.getElementById('btn-ver-activo-otro-prod');
-                            if (btnVerActivo) btnVerActivo.style.display = snap.dispositivoId ? '' : 'none';
+                            if (btnVerActivo) btnVerActivo.classList.toggle('hidden', !snap.dispositivoId);
                         }
                         _edicion.edificiosSnapForm = null;
                     }, 220);
@@ -3315,7 +3523,7 @@
             if (!mantenerBusqueda && (tieneBusqueda || tieneSnapshot)) {
                 if (inputBusq) inputBusq.value = '';
                 const btnX = document.getElementById('btn-limpiar-busqueda');
-                if (btnX) btnX.style.display = 'none';
+                if (btnX) btnX.classList.add('hidden');
 
                 _restaurarColapsos();
 
@@ -3341,8 +3549,8 @@
                 panelSaliente.classList.add('tab-saliendo');
                 setTimeout(() => {
                     panelSaliente.classList.remove('tab-saliendo');
-                    panelSaliente.style.display = 'none';
-                    panelEntrante.style.display = '';
+                    panelSaliente.classList.add('hidden');
+                    panelEntrante.classList.remove('hidden');
                     panelEntrante.getBoundingClientRect();
                     panelEntrante.classList.add('tab-entrando');
                     panelEntrante.addEventListener('animationend', () => {
@@ -3350,16 +3558,28 @@
                     }, { once: true });
                 }, 180);
             } else {
-                if (panelEntrante) panelEntrante.style.display = '';
+                if (panelEntrante) panelEntrante.classList.remove('hidden');
             }
         },
 
-        irAActivosConFiltro(tipo, estado, forma) {
+        irAActivosConFiltro(tipo, estado, forma, edificio, piso) {
             const tipoLabel = S.TIPOS[tipo]?.label?.toLowerCase() || tipo;
             const estadoQ = estado || '';
             const formaQ = forma || '';
-            const query = [tipoLabel, estadoQ, formaQ].filter(Boolean).join(' ');
 
+            // Para edificio/piso usamos filtro directo (no texto libre) porque
+            // el dashboard agrupa por el edificio/piso del canal asignado, no del dispositivo.
+            if (edificio || piso) {
+                _filtroEdificioPiso = {
+                    edificio: (edificio || '').trim().toLowerCase(),
+                    piso: (piso || '').trim().toLowerCase()
+                };
+            } else {
+                _filtroEdificioPiso = null;
+            }
+
+            // El query de texto solo incluye tipo, estado y forma
+            const query = [tipoLabel, estadoQ, formaQ].filter(Boolean).join(' ');
             _forzarFiltros('tipo', 'estado', 'forma');
 
             if (_dash.tipoAbierto) {
@@ -3377,7 +3597,7 @@
 
             const input = document.getElementById('input-busqueda');
             const btnX = document.getElementById('btn-limpiar-busqueda');
-            if (input) { input.value = query; if (btnX) btnX.style.display = query ? '' : 'none'; }
+            if (input) { input.value = query; if (btnX) btnX.classList.toggle('hidden', !query); }
 
             _expandirTodosLosGrupos();
 
@@ -3385,8 +3605,8 @@
                 panelSaliente.classList.add('tab-saliendo');
                 setTimeout(() => {
                     panelSaliente.classList.remove('tab-saliendo');
-                    panelSaliente.style.display = 'none';
-                    panelEntrante.style.display = '';
+                    panelSaliente.classList.add('hidden');
+                    panelEntrante.classList.remove('hidden');
                     panelEntrante.getBoundingClientRect();
                     panelEntrante.classList.add('tab-entrando');
                     panelEntrante.addEventListener('animationend', () => {
@@ -3395,7 +3615,7 @@
                     renderActivos();
                 }, 180);
             } else {
-                panelEntrante.style.display = '';
+                panelEntrante.classList.remove('hidden');
                 renderActivos();
             }
             setTimeout(() => input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 250);
@@ -3406,7 +3626,10 @@
             const btnX = document.getElementById('btn-limpiar-busqueda');
             const query = input.value;
 
-            if (btnX) btnX.style.display = query ? '' : 'none';
+            // Si el usuario escribe manualmente, cancela el filtro directo de edificio/piso
+            _filtroEdificioPiso = null;
+
+            if (btnX) btnX.classList.toggle('hidden', !query);
 
             if (query && _tabActual !== 'activos') {
                 UI.cambiarTab('activos', true);
@@ -3429,10 +3652,11 @@
         limpiarBusqueda() {
 
             if (_busqTimer) clearTimeout(_busqTimer);
+            _filtroEdificioPiso = null;
 
             const input = document.getElementById('input-busqueda');
             input.value = '';
-            document.getElementById('btn-limpiar-busqueda').style.display = 'none';
+            document.getElementById('btn-limpiar-busqueda').classList.add('hidden');
             input.focus();
 
             _restaurarColapsos();
@@ -3470,8 +3694,8 @@
 
         onDispTipoChange(prefijo) {
             const tipo = document.getElementById(`${prefijo}-tipo`).value;
-            document.getElementById(`${prefijo}-forma-group`).style.display = tipo === 'camara' ? '' : 'none';
-            document.getElementById(`${prefijo}-canales-group`).style.display = ['nvr', 'dvr'].includes(tipo) ? '' : 'none';
+            document.getElementById(`${prefijo}-forma-group`).classList.toggle('hidden', tipo !== 'camara');
+            document.getElementById(`${prefijo}-canales-group`).classList.toggle('hidden', !['nvr', 'dvr'].includes(tipo));
             if (tipo !== 'camara') document.getElementById(`${prefijo}-forma`).value = '';
         },
 
@@ -3561,10 +3785,10 @@
             document.getElementById(`${prefijo}-patrimonio`).value = d.patrimonio || '';
             document.getElementById(`${prefijo}-firmware`).value = d.firmware || '';
             const esCamara = d.tipo === 'camara';
-            document.getElementById(`${prefijo}-forma-group`).style.display = esCamara ? '' : 'none';
+            document.getElementById(`${prefijo}-forma-group`).classList.toggle('hidden', !esCamara);
             document.getElementById(`${prefijo}-forma`).value = d.forma || '';
             const esGrab = ['nvr', 'dvr'].includes(d.tipo);
-            document.getElementById(`${prefijo}-canales-group`).style.display = esGrab ? '' : 'none';
+            document.getElementById(`${prefijo}-canales-group`).classList.toggle('hidden', !esGrab);
             document.getElementById(`${prefijo}-canales`).value = d.canales || 16;
 
             const grabAsociado = esGrab ? _data.grabadores.find(g => g.dispositivoId === id) : null;
@@ -3613,15 +3837,15 @@
 
             const btnAsig = document.getElementById('btn-editar-asignacion');
             if (esCamara) {
-                btnAsig.style.display = enProduccionComoCanal ? '' : 'none';
+                btnAsig.classList.toggle('hidden', !enProduccionComoCanal);
                 btnAsig.title = 'Ver asignación';
                 btnAsig.onclick = () => UI.editarAsignacionCamara();
             } else if (esGrab && enProduccionComoGrab) {
-                btnAsig.style.display = '';
+                btnAsig.classList.remove('hidden');
                 btnAsig.title = 'Ver grabador';
                 btnAsig.onclick = () => UI.verGrabadorDesdeDispositivo();
             } else {
-                btnAsig.style.display = 'none';
+                btnAsig.classList.add('hidden');
             }
             _edicion.snapshotDisp = {
                 tipo: d.tipo,
@@ -3649,7 +3873,7 @@
             ModalLock.reset('modal-editar-disp');
             MM.abrir('modal-editar-disp', { onEscape: () => UI.cerrarModalEditarDispositivo() });
             const btnCerrarDisp = document.querySelector('#modal-editar-disp .btn-cancel');
-            if (btnCerrarDisp) btnCerrarDisp.innerHTML = _edicion.volverDesdeCanal
+            if (btnCerrarDisp) btnCerrarDisp.innerHTML = (_edicion.volverDesdeCanal || _edicion.volverDesdeGrabador)
                 ? '<svg class="icon icon-line"><use href="#icon-undo"/></svg>Volver'
                 : '<svg class="icon icon-line"><use href="#icon-cancelar"/></svg>Cancelar';
         },
@@ -3657,15 +3881,20 @@
         cerrarModalEditarDispositivo() {
             MM.cerrar('modal-editar-disp');
             _edicion.estado = '';
-            const volver = _edicion.volverDesdeCanal;
+            const volverCanal = _edicion.volverDesdeCanal;
+            const volverGrab = _edicion.volverDesdeGrabador;
             const grabId = _edicion.canalGrabId;
             const canalN = _edicion.canalN;
+            const grabIdOrigen = _edicion.grabId;
             _edicion.dispId = null;
             _edicion.volverDesdeCanal = false;
-            if (volver && grabId === 'OTRO_PROD') {
+            _edicion.volverDesdeGrabador = false;
+            if (volverCanal && grabId === 'OTRO_PROD') {
                 setTimeout(() => canalN ? UI.abrirEditarOtroProd(canalN) : UI.abrirNuevoOtroProd(), 180);
-            } else if (volver && grabId != null && canalN != null) {
+            } else if (volverCanal && grabId != null && canalN != null) {
                 setTimeout(() => UI.abrirAsignarCanal(grabId, canalN), 180);
+            } else if (volverGrab && grabIdOrigen != null) {
+                setTimeout(() => UI.abrirEditarGrabador(grabIdOrigen), 180);
             }
         },
 
@@ -3771,19 +4000,27 @@
             const estadoCambioAInactivo = estadosConDesasignacion.includes(_edicion.estado) &&
                 !estadosConDesasignacion.includes(_edicion.snapshotDisp?.estado || '');
             if (esCamara && estadoCambioAInactivo) {
-                let grabConCanal = null, slotConCanal = null;
+                // Recolectar TODOS los slots en TODOS los grabadores que referencian este dispositivo
+                const slotsAsignados = [];
                 for (const g of _data.grabadores) {
-                    const slot = g.canales_data.find(c => c.dispositivoId === _edicion.dispId);
-                    if (slot) { grabConCanal = g; slotConCanal = slot; break; }
+                    g.canales_data.forEach(slot => {
+                        if (slot.dispositivoId === _edicion.dispId) {
+                            slotsAsignados.push({ grab: g, slot });
+                        }
+                    });
                 }
-                if (grabConCanal && slotConCanal) {
+                if (slotsAsignados.length > 0) {
                     const LABELS = { averiado: 'Averiado', revisar: 'A revisar', desafectado: 'Desafectado' };
-                    const msg = `Marcar como "${LABELS[_edicion.estado]}" quitará este dispositivo del Canal ${slotConCanal.canal} del ${grabConCanal.descripcion}\n ¿Confirmar?`;
+                    const detalleCanales = slotsAsignados
+                        .map(({ grab, slot }) => `Canal ${slot.canal} de ${grab.descripcion}`)
+                        .join(', ');
+                    const msg = `Marcar como "${LABELS[_edicion.estado]}" quitará este dispositivo de: ${detalleCanales}. ¿Confirmar?`;
                     const ok = await confirmarModal(msg, 'Guardar');
                     if (!ok) return;
 
-                    historial.empujar('Actualizar estado dispositivo y liberar canal');
-                    slotConCanal.dispositivoId = '';
+                    historial.empujar('Actualizar estado dispositivo y liberar canales');
+                    // Limpiar TODOS los slots encontrados
+                    slotsAsignados.forEach(({ slot }) => { slot.dispositivoId = ''; });
                 } else {
                     historial.empujar('Editar dispositivo');
                 }
@@ -3801,21 +4038,55 @@
 
         editarAsignacionCamara() {
             if (!_edicion.dispId) return;
-            let grabId = null, nCanal = null;
+
+            // Recolectar todos los canales donde está asignado este dispositivo
+            const asignaciones = [];
             for (const g of _data.grabadores) {
-                const slot = g.canales_data.find(c => c.dispositivoId === _edicion.dispId);
-                if (slot) { grabId = g.id; nCanal = slot.canal; break; }
+                g.canales_data.forEach(slot => {
+                    if (slot.dispositivoId === _edicion.dispId) {
+                        asignaciones.push({ grabId: g.id, grabNombre: g.descripcion, canal: slot.canal });
+                    }
+                });
             }
-            if (!grabId) return;
+            if (!asignaciones.length) return;
+
             const dispId = _edicion.dispId;
+
+            if (asignaciones.length === 1) {
+                // Caso original: navegar directo
+                MM.cerrar('modal-editar-disp');
+                setTimeout(() => UI.abrirAsignarCanal(asignaciones[0].grabId, asignaciones[0].canal, dispId), 180);
+                return;
+            }
+
+            // Múltiples asignaciones: cerrar padre → abrir picker con retorno al padre si cancela
+            const opciones = asignaciones.map(a => ({ titulo: `Canal ${a.canal} — ${a.grabNombre}`, sub: null }));
+
             MM.cerrar('modal-editar-disp');
-            setTimeout(() => UI.abrirAsignarCanal(grabId, nCanal, dispId), 180);
+            setTimeout(() => {
+                pickerModal(
+                    'Ver asignación en canal',
+                    opciones,
+                    (idx) => {
+                        // Eligió una opción: ir al canal
+                        const elegida = asignaciones[idx];
+                        setTimeout(() => UI.abrirAsignarCanal(elegida.grabId, elegida.canal, dispId), 150);
+                    },
+                    () => {
+                        // Canceló: volver al modal de dispositivo
+                        UI.abrirEditarDispositivo(dispId);
+                    }
+                );
+            }, 150);
         },
 
         verGrabadorDesdeDispositivo() {
             if (!_edicion.dispId) return;
             const grab = _data.grabadores.find(g => g.dispositivoId === _edicion.dispId);
             if (!grab) return;
+            const dispIdOrigen = _edicion.dispId;
+            _edicion.volverDesdeDispositivo = true;
+            _edicion.dispIdOrigenGrab = dispIdOrigen;
             MM.cerrar('modal-editar-disp');
             setTimeout(() => UI.abrirEditarGrabador(grab.id), 180);
         },
@@ -3923,25 +4194,37 @@
             };
 
             ModalLock.reset('modal-editar-grab');
-            MM.abrir('modal-editar-grab');
+            MM.abrir('modal-editar-grab', { onEscape: () => UI.cerrarModalEditarGrabador() });
             const btnVerActivo = document.getElementById('btn-ver-activo-grab');
-            if (btnVerActivo) btnVerActivo.style.display = g.dispositivoId ? '' : 'none';
+            if (btnVerActivo) btnVerActivo.classList.toggle('hidden', !g.dispositivoId);
+            const btnCerrarGrab = document.querySelector('#modal-editar-grab .btn-cancel');
+            if (btnCerrarGrab) btnCerrarGrab.innerHTML = _edicion.volverDesdeDispositivo
+                ? '<svg class="icon icon-line"><use href="#icon-undo"/></svg>Volver'
+                : '<svg class="icon icon-line"><use href="#icon-cancelar"/></svg>Cancelar';
         },
 
         cerrarModalEditarGrabador() {
             MM.cerrar('modal-editar-grab');
             _edicion.grabId = null;
+            const volver = _edicion.volverDesdeDispositivo;
+            const dispIdOrigen = _edicion.dispIdOrigenGrab;
+            _edicion.volverDesdeDispositivo = false;
+            _edicion.dispIdOrigenGrab = null;
+            if (volver && dispIdOrigen) {
+                setTimeout(() => UI.abrirEditarDispositivo(dispIdOrigen), 180);
+            }
         },
 
         onGrabDispositivoChange() {
             const dispId = document.getElementById('editar-grab-dispositivo-id').value;
             const btn = document.getElementById('btn-ver-activo-grab');
-            if (btn) btn.style.display = dispId ? '' : 'none';
+            if (btn) btn.classList.toggle('hidden', !dispId);
         },
 
         verActivoDesdeGrabador() {
             const dispId = document.getElementById('editar-grab-dispositivo-id').value;
             if (!dispId) return;
+            _edicion.volverDesdeGrabador = true;
             MM.cerrar('modal-editar-grab');
             setTimeout(() => UI.abrirEditarDispositivo(dispId), 180);
         },
@@ -4000,7 +4283,7 @@
             };
 
             const huboCambiosGrab = JSON.stringify(nuevoSnapGrab) !== JSON.stringify(_edicion.snapshotGrab);
-            if (!huboCambiosGrab) { toast('Sin cambios', 'info'); MM.cerrar('modal-editar-grab'); _edicion.grabId = null; _edicion.snapshotGrab = null; return; }
+            if (!huboCambiosGrab) { toast('Sin cambios', 'info'); MM.cerrar('modal-editar-grab'); _edicion.grabId = null; _edicion.snapshotGrab = null; _edicion.volverDesdeDispositivo = false; _edicion.dispIdOrigenGrab = null; return; }
 
             historial.empujar('Editar grabador');
 
@@ -4009,7 +4292,7 @@
                 _data.grabadores[idx] = S.sanitizarGrab(datos);
             }
             toast('Grabador actualizado', 'success');
-            guardar(); render(); MM.cerrar('modal-editar-grab'); _edicion.grabId = null; _edicion.snapshotGrab = null;
+            guardar(); render(); MM.cerrar('modal-editar-grab'); _edicion.grabId = null; _edicion.volverDesdeDispositivo = false; _edicion.dispIdOrigenGrab = null; _edicion.snapshotGrab = null; _edicion.volverDesdeDispositivo = false; _edicion.dispIdOrigenGrab = null;
         },
 
         async eliminarGrabador() {
@@ -4026,7 +4309,7 @@
             historial.empujar('Eliminar grabador');
 
             _data.grabadores = _data.grabadores.filter(x => x.id !== _edicion.grabId);
-            guardar(); render(); MM.cerrar('modal-editar-grab'); _edicion.grabId = null;
+            guardar(); render(); MM.cerrar('modal-editar-grab'); _edicion.grabId = null; _edicion.volverDesdeDispositivo = false; _edicion.dispIdOrigenGrab = null;
             toast('Grabador eliminado', 'success');
         },
 
@@ -4063,7 +4346,7 @@
             } else {
                 input.value = '';
             }
-            document.getElementById('canal-disp-dropdown').style.display = 'none';
+            document.getElementById('canal-disp-dropdown').classList.add('hidden');
             _edicion.canalDispHighlight = -1;
 
             ModalLock.reset('modal-canal');
@@ -4088,7 +4371,7 @@
             document.getElementById('canal-rack').value = slot?.rack || '';
             document.getElementById('canal-comentarios').value = slot?.comentarios || '';
             const btnVerActivo = document.getElementById('btn-ver-activo-canal');
-            btnVerActivo.style.display = slot?.dispositivoId ? '' : 'none';
+            btnVerActivo.classList.toggle('hidden', !slot?.dispositivoId);
         },
 
         _canalDispFiltrar() {
@@ -4113,7 +4396,7 @@
 
             if (!filtrados.length && query) {
                 dd.innerHTML = `<div class="canal-disp-item canal-disp-item-vaciobtn">Sin resultados</div>`;
-                dd.style.display = '';
+                dd.classList.remove('hidden');
                 _edicion.canalDispHighlight = -1;
                 return;
             }
@@ -4147,7 +4430,7 @@
             });
 
             dd.innerHTML = items.join('');
-            dd.style.display = '';
+            dd.classList.remove('hidden');
             _edicion.canalDispHighlight = -1;
 
             dd.querySelectorAll('.canal-disp-item:not(.ocupado)').forEach(el => {
@@ -4161,15 +4444,15 @@
         _canalDispSeleccionar(id, mac) {
             document.getElementById('sel-canal-dispositivo').value = id || '';
             document.getElementById('canal-disp-input').value = id ? (mac || id) : '';
-            document.getElementById('canal-disp-dropdown').style.display = 'none';
+            document.getElementById('canal-disp-dropdown').classList.add('hidden');
             _edicion.canalDispHighlight = -1;
             const btn = document.getElementById('btn-ver-activo-canal');
-            if (btn) btn.style.display = id ? '' : 'none';
+            if (btn) btn.classList.toggle('hidden', !id);
         },
 
         _canalDispKeydown(e) {
             const dd = document.getElementById('canal-disp-dropdown');
-            if (dd.style.display === 'none') return;
+            if (dd.classList.contains('hidden')) return;
             const items = [...dd.querySelectorAll('.canal-disp-item:not(.ocupado)')];
             if (!items.length) return;
 
@@ -4187,7 +4470,7 @@
                 }
                 return;
             } else if (e.key === 'Escape') {
-                dd.style.display = 'none';
+                dd.classList.add('hidden');
                 _edicion.canalDispHighlight = -1;
                 return;
             } else { return; }
@@ -4231,7 +4514,7 @@
             document.getElementById('canal-piso').value = '';
             document.getElementById('canal-rack').value = '';
             document.getElementById('canal-comentarios').value = '';
-            document.getElementById('btn-ver-activo-canal').style.display = 'none';
+            document.getElementById('btn-ver-activo-canal').classList.add('hidden');
         },
 
         guardarAsignacionCanal() {
@@ -4323,7 +4606,7 @@
             document.getElementById(`sel-${prefijo}-dispositivo`).value = '';
             document.getElementById(`${prefijo}-disp-input`).value = '';
             document.getElementById(`${prefijo}-disp-input`).classList.remove('error');
-            document.getElementById(`${prefijo}-disp-dropdown`).style.display = 'none';
+            document.getElementById(`${prefijo}-disp-dropdown`).classList.add('hidden');
         },
 
         abrirNuevoOtroProd() {
@@ -4370,8 +4653,8 @@
             } else {
                 input.value = '';
             }
-            document.getElementById(`${prefijo}-disp-dropdown`).style.display = 'none';
-            document.getElementById('btn-ver-activo-otro-prod').style.display = o.dispositivoId ? '' : 'none';
+            document.getElementById(`${prefijo}-disp-dropdown`).classList.add('hidden');
+            document.getElementById('btn-ver-activo-otro-prod').classList.toggle('hidden', !o.dispositivoId);
 
             const grabs = _data.grabadores;
             const idsOcupados = [
@@ -4478,7 +4761,7 @@
 
             if (!filtrados.length && query) {
                 dd.innerHTML = `<div class="canal-disp-item canal-disp-item-vaciobtn">Sin resultados</div>`;
-                dd.style.display = ''; return;
+                dd.classList.remove('hidden'); return;
             }
 
             const ESTADO_LABELS_DISP = { averiado: 'averiado', revisar: 'a revisar', desafectado: 'desafectado' };
@@ -4496,22 +4779,22 @@
             });
 
             dd.innerHTML = items.join('');
-            dd.style.display = '';
+            dd.classList.remove('hidden');
 
             dd.querySelectorAll('.canal-disp-item:not(.ocupado)').forEach(el => {
                 el.addEventListener('mousedown', e => {
                     e.preventDefault();
                     hidden.value = el.dataset.id;
                     input.value = el.dataset.mac || el.dataset.id;
-                    dd.style.display = 'none';
-                    if(prefijo === 'editar-otro-prod') document.getElementById('btn-ver-activo-otro-prod').style.display = '';
+                    dd.classList.add('hidden');
+                    if (prefijo === 'editar-otro-prod') document.getElementById('btn-ver-activo-otro-prod').classList.remove('hidden');
                 });
             });
         },
 
         _otroProdDispKeydown(e, prefijo) {
             const dd = document.getElementById(`${prefijo}-disp-dropdown`);
-            if (dd.style.display === 'none') return;
+            if (dd.classList.contains('hidden')) return;
             const items = [...dd.querySelectorAll('.canal-disp-item:not(.ocupado)')];
             if (!items.length) return;
 
@@ -4525,12 +4808,12 @@
                     const el = items[_edicion.canalDispHighlight];
                     document.getElementById(`sel-${prefijo}-dispositivo`).value = el.dataset.id;
                     document.getElementById(`${prefijo}-disp-input`).value = el.dataset.mac || el.dataset.id;
-                    dd.style.display = 'none';
-                    if(prefijo === 'editar-otro-prod') document.getElementById('btn-ver-activo-otro-prod').style.display = '';
+                    dd.classList.add('hidden');
+                    if (prefijo === 'editar-otro-prod') document.getElementById('btn-ver-activo-otro-prod').classList.remove('hidden');
                 }
                 return;
             } else if (e.key === 'Escape') {
-                dd.style.display = 'none'; _edicion.canalDispHighlight = -1; return;
+                dd.classList.add('hidden'); _edicion.canalDispHighlight = -1; return;
             } else { return; }
 
             items.forEach((el, i) => el.classList.toggle('highlighted', i === _edicion.canalDispHighlight));
@@ -4705,6 +4988,199 @@
                 toast('Error al exportar', 'error');
             }
         },
+
+        abrirReporteAgrupamiento() {
+            const disps = _data.dispositivos;
+            const query = (document.getElementById('input-busqueda')?.value || '').trim().toLowerCase();
+            const asignaciones = _buildAsignaciones();
+
+            // Replicamos el filtrado idéntico que ve el usuario en pantalla
+            let sorted = [...disps];
+            if (query) {
+                const { tokens, tokenRegexes } = _tokenizar(query);
+                sorted = sorted.map(d => ({ d, score: scoreDispositivo(d, { tokens, tokenRegexes, query, asignaciones }) }))
+                    .filter(({ score }) => score < Infinity)
+                    .sort((a, b) => a.score - b.score)
+                    .map(({ d }) => d);
+            }
+
+            if (_filtroEdificioPiso) {
+                const { edificio: fEdif, piso: fPiso } = _filtroEdificioPiso;
+                sorted = sorted.filter(d => {
+                    const asigD = asignaciones[d.id] || [];
+                    return asigD.some(a => {
+                        let edif = '', piso = '';
+                        if (a.tipo === 'canal' && a.slot) {
+                            edif = (a.slot.edificio || '').trim().toLowerCase();
+                            piso = S.normalizarPiso(a.slot.piso || '').toLowerCase();
+                        } else if (a.tipo === 'otro_prod' && a.item) {
+                            edif = (a.item.edificio || '').trim().toLowerCase();
+                            piso = S.normalizarPiso(a.item.piso || '').toLowerCase();
+                        }
+                        return (!fEdif || edif === fEdif) && (!fPiso || piso === fPiso);
+                    });
+                });
+            }
+
+            // Agrupamos dinámicamente según el orden seleccionado actualmente
+            const grupos = {};
+            sorted.forEach(d => {
+                const gLabel = _getGroupLabel(d, asignaciones);
+                (grupos[gLabel] || (grupos[gLabel] = [])).push(d);
+            });
+
+            const listaContenedor = document.getElementById('reporte-agrupamiento-lista');
+            if (!listaContenedor) return;
+
+            const grupoKeys = Object.keys(grupos);
+            if (grupoKeys.length === 0) {
+                toast('No hay grupos visualizados para exportar', 'info');
+                return;
+            }
+
+            // Poblamos las opciones del modal con casillas de verificación por cada grupo real visible
+            listaContenedor.innerHTML = grupoKeys.map((gLabel) => `
+                <label class="reporte-opcion">
+                    <input type="checkbox" class="chk-grupo-rpt" data-grupo-label="${esc(gLabel)}" checked>
+                    <span class="reporte-opcion-texto">
+                        <span class="reporte-opcion-titulo">${esc(gLabel)}</span>
+                        <span class="reporte-opcion-desc">${grupos[gLabel].length} dispositivo(s) en este bloque</span>
+                    </span>
+                </label>
+            `).join('');
+
+            _edicion.gruposReporteTmp = grupos; // Almacenamiento temporal en el estado
+            MM.abrir('modal-reporte-agrupamiento');
+        },
+
+        descargarReporteAgrupamiento() {
+            const grupos = _edicion.gruposReporteTmp;
+            if (!grupos) return;
+
+            const seleccionados = [];
+            document.querySelectorAll('.chk-grupo-rpt').forEach(chk => {
+                if (chk.checked) seleccionados.push(chk.dataset.grupoLabel);
+            });
+
+            if (seleccionados.length === 0) {
+                toast('Seleccioná al menos un grupo para exportar', 'info');
+                return;
+            }
+
+            const asignaciones = _buildAsignaciones();
+            const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+            let htmlSecciones = '';
+
+            seleccionados.forEach(gLabel => {
+                const items = grupos[gLabel] || [];
+                const rowsHtml = items.map(d => {
+                    const mac = d.mac || '—';
+                    const serial = d.serial || '—';
+                    const tipoForma = d.tipo === 'camara' && d.forma ? d.forma.replace(/-/g, ' ') : (S.TIPOS[d.tipo]?.label || d.tipo);
+
+                    // Condición solicitada de Patrimonio
+                    const patRaw = (d.patrimonio || '').trim().toLowerCase();
+                    let patrimonio = 'No relevado';
+
+                    if (patRaw === 'no') {
+                        patrimonio = 'Sin patrimonio';
+                    } else if (patRaw !== '') {
+                        patrimonio = d.patrimonio;
+                    }
+
+                    // Condición solicitada de Estado / Producción
+                    const estadoEfectivo = getEstadoEfectivo(d, asignaciones);
+                    let estado = '';
+                    if (estadoEfectivo === 'produccion') {
+                        const asigs = asignaciones[d.id] || [];
+                        estado = asigs.map(a => {
+                            if (a.tipo === 'canal') return a.slot.descripcion || 'En producción';
+                            if (a.tipo === 'otro_prod') return a.item.descripcion || 'En producción';
+                            return a.grab.descripcion || 'En producción';
+                        }).join(' / ') || 'En producción';
+                    } else {
+                        estado = ESTADO_LABEL[estadoEfectivo] || estadoEfectivo;
+                    }
+
+                    return `<tr>
+                        <td><strong>${esc(mac)}</strong></td>
+                        <td>${esc(serial)}</td>
+                        <td>${esc(tipoForma).toUpperCase()}</td>
+                        <td>${esc(patrimonio).toUpperCase()}</td>
+                        <td>${esc(estado)}</td>
+                    </tr>`;
+                }).join('');
+
+                htmlSecciones += `
+                <section>
+                    <h2>Bloque: ${esc(gLabel)}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MAC</th>
+                                <th>Serial</th>
+                                <th>Tipo / Forma</th>
+                                <th>Patrimonio</th>
+                                <th>Estado / Descripcion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </section>`;
+            });
+
+            const htmlCompleto = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sumario de Vista — ${fecha}</title>
+<style>
+  :root { --blue: #4c72ac; --border: #e2e6ef; --muted: #5a6070; --bg: #f5f6fa; --card: #fff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1a1d23; padding: 2rem 1rem 4rem; }
+  .reporte-wrap { max-width: 960px; margin: 0 auto; }
+  header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--blue); display: flex; justify-content: space-between; align-items: flex-end; }
+  header h1 { font-size: 1.3rem; color: var(--blue); font-weight: 700; }
+  header .meta { font-size: 0.8rem; color: var(--muted); text-align: right; line-height: 1.5; }
+  section { background: var(--card); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); border: 1px solid var(--border); }
+  h2 { font-size: 0.95rem; font-weight: 700; color: var(--blue); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th { text-align: left; font-weight: 600; color: var(--muted); padding: 0.5rem; border-bottom: 1px solid var(--border); background: #f0f2f8; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .03em; }
+  td { padding: 0.5rem; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: none; }
+  .btn-print { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--blue); color: #fff; border: none; border-radius: 999px; padding: .6rem 1.2rem; font-size: .8rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  @media print { .btn-print { display: none; } body { background: #fff; padding: 0; } section { box-shadow: none; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="reporte-wrap">
+  <header>
+    <div><h1>📋 Sumario CCTV</h1></div>
+    <div class="meta">Exportado el ${fecha}<br>Criterio de agrupamiento: Unidades por ${_activos.orden.toUpperCase()}</div>
+  </header>
+  ${htmlSecciones}
+</div>
+<button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlCompleto], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sumario-activos-${_activos.orden}-${new Date().toISOString().slice(0, 10)}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+            MM.cerrar('modal-reporte-agrupamiento');
+            _edicion.gruposReporteTmp = null;
+            toast('Sumario descargado correctamente', 'success');
+        },
     };
 
 
@@ -4804,7 +5280,7 @@
                 if (selectId.startsWith('nuevo-grab')) origen = 'nuevo-grab';
                 else if (selectId.startsWith('editar-grab')) origen = 'editar-grab';
                 else if (selectId.startsWith('nuevo-otro-prod')) origen = 'nuevo-otro-prod';
-                    else if (selectId.startsWith('editar-otro-prod')) origen = 'editar-otro-prod';
+                else if (selectId.startsWith('editar-otro-prod')) origen = 'editar-otro-prod';
                 UI.abrirEdificios(origen);
             } else {
                 seleccionado = sel.value;
@@ -4856,9 +5332,9 @@
         const tipoEl = document.getElementById(`${prefijo}-tipo`);
         tipoEl.value = ''; tipoEl.classList.remove('error');
         document.getElementById(`${prefijo}-forma`).value = '';
-        document.getElementById(`${prefijo}-forma-group`).style.display = 'none';
+        document.getElementById(`${prefijo}-forma-group`).classList.add('hidden');
         document.getElementById(`${prefijo}-canales`).value = '16';
-        document.getElementById(`${prefijo}-canales-group`).style.display = 'none';
+        document.getElementById(`${prefijo}-canales-group`).classList.add('hidden');
     }
 
     function _limpiarFormGrab(prefijo) {
@@ -4874,37 +5350,53 @@
 
         const cbCanal = document.getElementById('canal-disp-combobox');
         if (cbCanal && !cbCanal.contains(e.target)) {
-            document.getElementById('canal-disp-dropdown').style.display = 'none';
+            document.getElementById('canal-disp-dropdown').classList.add('hidden');
             _edicion.canalDispHighlight = -1;
         }
 
         const cbNuevoOtro = document.querySelector('#modal-nuevo-otro-prod .combobox-wrap');
         if (cbNuevoOtro && !cbNuevoOtro.contains(e.target)) {
             const ddNuevoOtro = document.getElementById('nuevo-otro-prod-disp-dropdown');
-            if (ddNuevoOtro) ddNuevoOtro.style.display = 'none';
+            if (ddNuevoOtro) ddNuevoOtro.classList.add('hidden');
             _edicion.canalDispHighlight = -1;
         }
 
         const cbEditarOtro = document.querySelector('#modal-editar-otro-prod .combobox-wrap');
         if (cbEditarOtro && !cbEditarOtro.contains(e.target)) {
             const ddEditarOtro = document.getElementById('editar-otro-prod-disp-dropdown');
-            if (ddEditarOtro) ddEditarOtro.style.display = 'none';
+            if (ddEditarOtro) ddEditarOtro.classList.add('hidden');
             _edicion.canalDispHighlight = -1;
         }
 
         const wrapActivos = document.getElementById('btn-vista-activos-wrap');
         const ddActivos = document.getElementById('dropdown-vista-activos');
         if (wrapActivos && ddActivos && !wrapActivos.contains(e.target)) {
-            ddActivos.style.display = 'none';
+            ddActivos.classList.add('hidden');
+        }
+
+        const wrapFiltros = document.getElementById('btn-filtros-wrap');
+        const ddFiltros = document.getElementById('dropdown-filtros');
+        if (wrapFiltros && ddFiltros && !wrapFiltros.contains(e.target)) {
+            ddFiltros.classList.add('hidden');
         }
     });
 
     document.getElementById('card-resumen-general').addEventListener('mousedown', e => {
         if (!_dash.tipoAbierto) return;
-        if (!e.target.closest('#dash-disp-tree')) {
+        if (e.target.closest('[data-action]:not([data-action="stop"])')) return;
+
+        // Retroceso secuencial inteligente de niveles
+        if (_dash.l2EdificioAbierto) {
+            _dash.l2EdificioAbierto = null;
+        } else if (_dash.estadoAbierto) {
+            _dash.estadoAbierto = null;
+        } else {
             _dash.tipoAbierto = null;
-            renderDashboard();
         }
+        const disps = _data.dispositivos;
+        const grabs = _data.grabadores;
+        const idsEnProd = _calcIdsEnProd();
+        _renderResumenGeneral(disps, grabs, idsEnProd);
     });
 
     const dz = document.getElementById('importar-dropzone');
@@ -5006,7 +5498,7 @@
         if (!input) return;
         input.value = texto;
         const btnX = document.getElementById('btn-limpiar-busqueda');
-        if (btnX) btnX.style.display = '';
+        if (btnX) btnX.classList.remove('hidden');
 
         if (_tabActual !== 'activos') UI.cambiarTab('activos', true);
 
@@ -5134,7 +5626,7 @@
             const scrollSuficiente = window.scrollY > window.innerHeight * 0.85;
             if (btn) {
                 if (enPanel && scrollSuficiente) {
-                    btn.style.display = '';
+                    btn.classList.remove('hidden');
                     requestAnimationFrame(() => {
                         btn.style.opacity = '1';
                         btn.style.transform = 'translateY(0)';
@@ -5143,7 +5635,7 @@
                     btn.style.opacity = '0';
                     btn.style.transform = 'translateY(8px)';
                     setTimeout(() => {
-                        if (btn.style.opacity === '0') btn.style.display = 'none';
+                        if (btn.style.opacity === '0') btn.classList.add('hidden');
                     }, 260);
                 }
             }
@@ -5192,7 +5684,7 @@
                 setTimeout(() => {
                     const inp = document.getElementById('input-busqueda');
                     inp.value = t;
-                    document.getElementById('btn-limpiar-busqueda').style.display = '';
+                    document.getElementById('btn-limpiar-busqueda').classList.remove('hidden');
                     inp.focus();
                     UI.filtrarActivos();
                 }, 220);
@@ -5201,7 +5693,13 @@
             }
         });
         on('btn-limpiar-busqueda', 'click', () => UI.limpiarBusqueda());
-        on('btn-filtros-busqueda', 'click', () => UI.abrirFiltrosBusqueda());
+        on('btn-filtros-busqueda', 'click', (e) => UI.toggleDropdownFiltros(e));
+
+        // Sumario por Agrupamiento Actual
+        on('btn-reporte-agrupamiento', 'click', () => UI.abrirReporteAgrupamiento());
+        on('btn-generar-reporte-agrupamiento', 'click', () => UI.descargarReporteAgrupamiento());
+        document.querySelector('#modal-reporte-agrupamiento .btn-cancel')
+            ?.addEventListener('click', () => MM.cerrar('modal-reporte-agrupamiento'));
 
         // Mini-tabs cámaras dashboard
         document.querySelectorAll('.mini-tab-btn[data-target]').forEach(btn => {
@@ -5211,6 +5709,8 @@
         // Dropdown activos
         document.querySelector('#btn-vista-activos-wrap > .icon-btn')
             ?.addEventListener('click', (e) => UI.toggleDropdownActivos(e));
+        document.getElementById('btn-expandir-todo')
+            ?.addEventListener('click', () => _toggleExpandirTodo());
         document.querySelectorAll('#dropdown-vista-activos .canal-disp-item').forEach(item => {
             const orden = item.dataset.orden;
             if (orden) item.addEventListener('click', () => { UI.setActivosOrden(orden); UI.toggleDropdownActivos(); });
@@ -5229,7 +5729,6 @@
             const icon = btn.querySelector('use')?.getAttribute('href');
             if (icon === '#icon-grid') btn.addEventListener('click', () => UI.abrirTiposDispositivo());
             if (icon === '#icon-building') btn.addEventListener('click', () => UI.abrirEdificios());
-            if (icon === '#icon-report') btn.addEventListener('click', () => UI.abrirReporte());
             if (icon === '#icon-gist') btn.addEventListener('click', () => UI.abrirGist());
             if (icon === '#icon-upload') btn.addEventListener('click', () => UI.abrirImportarDesdeAjustes());
             if (icon === '#icon-download') btn.addEventListener('click', () => UI.exportarJSON());
@@ -5241,11 +5740,6 @@
         document.querySelector('#modal-ajustes .btn-cancel')
             ?.addEventListener('click', () => UI.cerrarAjustes());
         on('btn-alternar-tema', 'click', () => UI.alternarTema());
-
-        // Modal reporte
-        document.querySelector('#modal-reporte .btn-cancel')
-            ?.addEventListener('click', () => UI.cerrarReporte());
-        on('btn-generar-reporte', 'click', () => UI.generarReporte());
 
         // Modal tipos dispositivo
         on('nuevo-tipo-label', 'keydown', (e) => { if (e.key === 'Enter') UI.agregarTipoCustom(); });
@@ -5366,10 +5860,9 @@
         // Delegación: data-copy (IPs y modelos generados dinámicamente)
         document.addEventListener('click', (e) => {
             const el = e.target.closest('[data-copy]');
-            if (el) { e.stopPropagation(); UI.copiarAlPortapapeles(el.dataset.copy, e); }
+            if (el) { e.stopPropagation(); UI.copiarAlPortapapeles(el.dataset.copy, e, el.dataset.copyLabel); }
         });
 
-        // Delegación: data-action (botones en listas dinámicas)
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
@@ -5377,16 +5870,54 @@
             const action = btn.dataset.action;
             if (action === 'eliminar-tipo') UI.eliminarTipoCustom(btn.dataset.key);
             if (action === 'eliminar-edificio') UI.eliminarEdificio(Number(btn.dataset.idx));
-            if (action === 'toggle-tipo') _toggleTipoDetalle(btn.dataset.tipo);
-            if (action === 'toggle-estado') _toggleEstadoDetalle(btn.dataset.estado);
-            if (action === 'ir-activos') UI.irAActivosConFiltro(btn.dataset.tipo, btn.dataset.estado, btn.dataset.forma);
-            if (action === 'toggle-estado-o-ir') {
-                if (btn.dataset.esCamara === 'true') _toggleEstadoDetalle(btn.dataset.estado);
-                else UI.irAActivosConFiltro(btn.dataset.tipo, btn.dataset.estado);
+
+            // -- LÓGICA LIMPIA DE NAVEGACIÓN --
+            if (action === 'toggle-tipo') {
+                _dash.estadoAbierto = null;
+                _toggleTipoDetalle(btn.dataset.tipo);
             }
+            if (action === 'toggle-estado') {
+                _toggleEstadoDetalle(btn.dataset.estado);
+            }
+            if (action === 'ir-activos') {
+                UI.irAActivosConFiltro(btn.dataset.tipo, btn.dataset.estado, btn.dataset.forma);
+            }
+
+            if (action === 'ir-activos-edif') {
+                const { tipo, estado, edificio, piso } = btn.dataset;
+                UI.irAActivosConFiltro(tipo, estado, null, edificio, piso);
+            }
+
+            if (action === 'l2-vista') {
+                _dash.l2VistaEdificio = btn.dataset.vista === 'edificio';
+                _dash.l2EdificioAbierto = null;
+                const disps = _data.dispositivos;
+                const grabs = _data.grabadores;
+                const idsEnProd = _calcIdsEnProd();
+                _renderResumenGeneral(disps, grabs, idsEnProd);
+            }
+
+            if (action === 'toggle-l2-edificio') {
+                const edif = btn.dataset.edificio;
+                if (!edif) {
+                    _dash.l2EdificioAbierto = null;
+                } else {
+                    _dash.l2EdificioAbierto = _dash.l2EdificioAbierto === edif ? null : edif;
+                }
+                const disps = _data.dispositivos;
+                const grabs = _data.grabadores;
+                const idsEnProd = _calcIdsEnProd();
+                _renderResumenGeneral(disps, grabs, idsEnProd);
+            }
+
             if (action === 'toggle-edificio') {
                 const rowEl = e.target.closest('.dash-edif-row');
                 if (rowEl) _toggleEdificio(rowEl);
+            }
+
+            if (action === 'toggle-filtro-campo') {
+                const key = btn.dataset.filtro;
+                UI._onFiltroChange(key, !_busqActivos.has(key));
             }
         });
     }
@@ -5426,7 +5957,7 @@
                     () => document.querySelector('#modal-canal .btn-delete'),
                 ],
                 lockBtn: 'btn-lock-canal',
-            },            
+            },
             'modal-editar-otro-prod': {
                 inputs: ['editar-otro-prod-descripcion', 'editar-otro-prod-disp-input', 'editar-otro-prod-ip', 'editar-otro-prod-puerto',
                     'editar-otro-prod-edificio', 'editar-otro-prod-piso', 'editar-otro-prod-rack', 'editar-otro-prod-comentarios'],
@@ -5506,7 +6037,7 @@
         const btn = document.getElementById('tab-' + t);
         const panel = document.getElementById('panel-' + t);
         if (btn) btn.classList.toggle('activa', t === _tabActual);
-        if (panel) panel.style.display = t === _tabActual ? '' : 'none';
+        if (panel) panel.classList.toggle('hidden', t !== _tabActual);
     });
 
     requestAnimationFrame(() => {
@@ -5531,7 +6062,7 @@
 
             deferredPrompt = e;
 
-            if (btnInstallApp) btnInstallApp.style.display = 'flex';
+            if (btnInstallApp) btnInstallApp.classList.remove('hidden');
         });
 
         if (btnInstallApp) {
@@ -5545,23 +6076,35 @@
 
                 deferredPrompt = null;
 
-                btnInstallApp.style.display = 'none';
+                btnInstallApp.classList.add('hidden');
             });
         }
 
         window.addEventListener('appinstalled', () => {
-            if (btnInstallApp) btnInstallApp.style.display = 'none';
+            if (btnInstallApp) btnInstallApp.classList.add('hidden');
             deferredPrompt = null;
             toast('Aplicación instalada con éxito', 'success');
         });
     })();
 
-})();
+    // ── REGISTRO DEL SERVICE WORKER (PWA) ──
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('SW registrado:', registration.scope);
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Al estar dentro del IIFE, ahora sí tiene acceso a toast()
+                                toast('Nueva versión disponible. Recargá o reiniciá la app para actualizar.', 'info');
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.error('❌ Error SW:', err));
+        });
+    }
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('SW registrado', reg.scope))
-            .catch(err => console.warn('Error al registrar SW', err));
-    });
-}
+})();
