@@ -6,13 +6,13 @@
     --text-main: #1a1d23;
     --text-muted: #5a6070;
     --border: #e2e6ef;
-    
+
     /* Colores base */
     --accent: #3b64d2;
     --c-blue: rgba(76, 114, 172, 1);
     --c-green: rgba(76, 172, 140, 1);
     --c-purple: rgba(129, 76, 172, 1);
-    
+
     /* Fondos semánticos para los iconos */
     --c-blue-bg: rgba(76, 114, 172, 0.12);
     --c-green-bg: rgba(76, 172, 140, 0.12);
@@ -37,7 +37,13 @@ html.dark-mode body {
 }
 
 /* ════ 2. RESET & BASE ════ */
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-body);
@@ -62,22 +68,56 @@ body {
     top: 0;
     z-index: 90;
 }
-.header-logo { color: var(--accent); display: flex; align-items: center; }
-.header-logo .svg-icon { width: 28px; height: 28px; }
-.header-main-title { font-size: 1.25rem; font-weight: 700; flex: 1; letter-spacing: -0.01em; }
+
+.header-actions {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.header-logo {
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+}
+
+.header-logo .svg-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.header-main-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    flex: 1;
+    letter-spacing: -0.01em;
+}
 
 .icon-btn {
-    width: 44px; height: 44px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: transparent;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: background 0.2s, color 0.2s;
 }
-.icon-btn:hover { background: var(--border); color: var(--text-main); }
-.svg-icon { width: 22px; height: 22px; }
+
+.icon-btn:hover {
+    background: var(--border);
+    color: var(--text-main);
+}
+
+.svg-icon {
+    width: 22px;
+    height: 22px;
+}
 
 /* ════ 4. LAYOUT DEL LAUNCHER ════ */
 .container {
@@ -91,8 +131,18 @@ body {
     text-align: center;
     margin-bottom: 3rem;
 }
-.welcome-section h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
-.welcome-section p { color: var(--text-muted); font-size: 1.1rem; }
+
+.welcome-section h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.welcome-section p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
 
 /* ════ 5. TARJETAS DE APLICACIONES ════ */
 .app-grid {
@@ -117,10 +167,12 @@ body {
     outline: none;
 }
 
-.app-card:hover, .app-card:focus-visible {
+.app-card:hover,
+.app-card:focus-visible {
     transform: translateY(-8px);
     box-shadow: var(--shadow-hover);
-    border-color: var(--border); /* Evita que el borde compita visualmente con el icono */
+    border-color: var(--border);
+    /* Evita que el borde compita visualmente con el icono */
 }
 
 /* Iconos grandes */
@@ -139,12 +191,26 @@ body {
     transform: scale(1.05);
 }
 
-.app-icon { width: 44px; height: 44px; }
+.app-icon {
+    width: 44px;
+    height: 44px;
+}
 
 /* Colores dinámicos por módulo */
-.color-blue { background: var(--c-blue-bg); color: var(--c-blue); }
-.color-green { background: var(--c-green-bg); color: var(--c-green); }
-.color-purple { background: var(--c-purple-bg); color: var(--c-purple); }
+.color-blue {
+    background: var(--c-blue-bg);
+    color: var(--c-blue);
+}
+
+.color-green {
+    background: var(--c-green-bg);
+    color: var(--c-green);
+}
+
+.color-purple {
+    background: var(--c-purple-bg);
+    color: var(--c-purple);
+}
 
 .app-info h3 {
     font-size: 1.3rem;
@@ -168,9 +234,26 @@ body {
 
 /* Ajustes para móviles */
 @media (max-width: 600px) {
-    .container { padding: 2rem 1rem; }
-    .welcome-section h2 { font-size: 1.5rem; }
-    .app-card { padding: 2rem 1.25rem; }
-    .app-icon-wrapper { width: 70px; height: 70px; border-radius: 20px; }
-    .app-icon { width: 34px; height: 34px; }
+    .container {
+        padding: 2rem 1rem;
+    }
+
+    .welcome-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .app-card {
+        padding: 2rem 1.25rem;
+    }
+
+    .app-icon-wrapper {
+        width: 70px;
+        height: 70px;
+        border-radius: 20px;
+    }
+
+    .app-icon {
+        width: 34px;
+        height: 34px;
+    }
 }
