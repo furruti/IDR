@@ -2,7 +2,7 @@
 (function initLauncher() {
     'use strict';
 
-    const STORAGE_KEY_DARK_MODE = 'po_dark';
+    const STORAGE_KEY_DARK_MODE = 'IDR_dark';
     const btnDarkMode = document.getElementById('btn-dark-mode');
     const iconThemeUse = document.getElementById('icon-theme-use');
     
@@ -73,6 +73,49 @@
         }
     }
 
+    // --- LÓGICA DE NAVEGACIÓN ANIMADA ---
+    function setupNavigation() {
+        const appCards = document.querySelectorAll('.app-card');
+        
+        appCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                // Permitimos abrir en nueva pestaña con Ctrl/Cmd + click sin bloquear el comportamiento nativo
+                if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+
+                e.preventDefault(); // Evitamos el salto inmediato
+                const targetUrl = card.href;
+
+                // Aplicamos la clase de salida a todas las tarjetas
+                appCards.forEach((c, index) => {
+                    // Reasignamos el delay para que la salida también sea escalonada
+                    c.style.animationDelay = `${index * 0.05}s`;
+                    c.classList.add('exiting');
+                });
+
+                // Esperamos a que termine la animación (400ms de animación + delays) para redirigir
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 500);
+            });
+        });
+    }
+
+    // --- MANEJO DE CACHÉ DE NAVEGACIÓN (Bugfix Firefox) ---
+    window.addEventListener('pageshow', (event) => {
+        // event.persisted es true si la página se restauró desde la caché (botón "Atrás")
+        if (event.persisted) {
+            const appCards = document.querySelectorAll('.app-card');
+            appCards.forEach(card => {
+                // 1. Quitamos la clase de animación de salida
+                card.classList.remove('exiting');
+                
+                // 2. Este "truco" fuerza al navegador a redibujar el elemento inmediatamente, 
+                // solucionando el problema de los íconos SVG invisibles en Firefox.
+                void card.offsetWidth; 
+            });
+        }
+    });
+
     // --- INICIALIZACIÓN ---
     function boot() {
         renderTheme(isDarkModeActive());
@@ -87,6 +130,7 @@
         }
 
         setupPWA();
+        setupNavigation(); // Llamamos a la nueva función aquí
     }
 
     if (document.readyState === 'loading') {

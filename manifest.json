@@ -1,13 +1,13 @@
 {
-  "name": "sai",
-  "short_name": "sai",
+  "name": "Infraestructura de red",
+  "short_name": "IDR",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#1f2937",
   "orientation": "portrait",
   "scope": "./",
-  "id": "/SAI-laucher-app",
+  "id": "/IDR-laucher-app",
   "icons": [
     {
       "src": "./icon.svg",

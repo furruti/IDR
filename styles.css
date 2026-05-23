@@ -48,12 +48,16 @@ html.dark-mode body {
 
 body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-body);
+    background-color: var(--bg-body);
     color: var(--text-main);
-    transition: background 0.3s, color 0.3s;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+#btn-install-app {
+    display: none;
 }
 
 /* ════ 3. HEADER ════ */
@@ -167,14 +171,10 @@ body {
     box-shadow: var(--shadow);
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s, border-color 0.25s;
     outline: none;
-}
-
-.app-card:hover,
-.app-card:focus-visible {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-hover);
-    border-color: var(--border);
-    /* Evita que el borde compita visualmente con el icono */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: fadeInUp 0.6s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
 /* Iconos grandes */
@@ -198,45 +198,93 @@ body {
     height: 44px;
 }
 
-/* Colores dinámicos por módulo */
-.color-blue {
-    background: var(--c-blue-bg);
-    color: var(--c-blue);
+/* --- Colores dinámicos por módulo --- */
+/* Definimos las variables temáticas en la tarjeta padre */
+.card-blue {
+    --theme-color: var(--c-blue);
+    --theme-bg: var(--c-blue-bg);
 }
 
-.color-green {
-    background: var(--c-green-bg);
-    color: var(--c-green);
+.card-green {
+    --theme-color: var(--c-green);
+    --theme-bg: var(--c-green-bg);
 }
 
-.color-purple {
-    background: var(--c-purple-bg);
-    color: var(--c-purple);
+.card-purple {
+    --theme-color: var(--c-purple);
+    --theme-bg: var(--c-purple-bg);
 }
 
-.color-red {
-    background: var(--c-red-bg);
-    color: var(--c-red);
+.card-red {
+    --theme-color: var(--c-red);
+    --theme-bg: var(--c-red-bg);
 }
 
-.app-info h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+/* El wrapper del ícono ahora hereda esas variables directamente */
+.app-card .app-icon-wrapper {
+    background: var(--theme-bg);
+    color: var(--theme-color);
 }
 
-#btn-install-app {
-    display: none;
+/* --- Modificamos el hover de la tarjeta (Modo Claro) --- */
+.app-card:hover,
+.app-card:focus-visible {
+    transform: translateY(-8px);
+    border-color: var(--theme-color);
+    box-shadow: 0 10px 20px var(--theme-bg), 0 0 4px var(--theme-color);
 }
 
-.app-info p {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    line-height: 1.5;
+/* --- Resplandor potenciado (Modo Oscuro) --- */
+html.dark-mode .app-card:hover,
+html.dark-mode .app-card:focus-visible {
+    border-color: var(--theme-color);
+    box-shadow: 0 12px 25px var(--theme-bg), 0 0 8px var(--theme-color), 0 0 20px var(--theme-bg);
 }
 
-.svg-sprites {
-    display: none;
+/* Retardos escalonados para cada tarjeta según su orden */
+.app-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.app-card:nth-child(2) {
+    animation-delay: 0.10s;
+}
+
+.app-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.app-card:nth-child(4) {
+    animation-delay: 0.20s;
+}
+
+.app-card.exiting {
+    animation: fadeOutDown 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
+    pointer-events: none;
+}
+
+/* --- Animación de salida --- */
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        translate: 0 20px;
+    }
+    to {
+        opacity: 1;
+        translate: 0 0;
+    }
 }
 
 /* Ajustes para móviles */
