@@ -273,6 +273,17 @@ html.dark-mode .app-card:focus-visible {
     pointer-events: none;
 }
 
+/* --- ESTADO DESHABILITADO --- */
+.app-card.disabled {
+    opacity: 0.5;
+    filter: grayscale(100%);
+    cursor: not-allowed;
+    /* Bloquea clics, hover y la animación de salida */
+    pointer-events: none;
+    /* Mantiene el borde estático anulando el color del tema */
+    border-color: var(--border) !important;
+}
+
 /* --- Animación de salida --- */
 @keyframes fadeOutDown {
     from {
