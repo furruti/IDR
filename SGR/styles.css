@@ -1735,3 +1735,58 @@ kbd {
 .gist-quick-hidden {
     display: none;
 }
+/* ── Modal Edificios ── */
+.edificios-add-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.edificios-add-row input {
+    flex: 1;
+}
+
+.btn-icon-only {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem;
+    border-radius: var(--radius);
+    flex-shrink: 0;
+}
+
+.edificios-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.edificios-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--input-bg);
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.55rem 0.75rem 0.55rem 0.9rem;
+}
+
+.edificios-item-nombre {
+    flex: 1;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.edificios-item-eliminar {
+    color: var(--c-red);
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.edificios-item-eliminar:hover {
+    opacity: 1;
+}

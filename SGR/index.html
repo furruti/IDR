@@ -24,7 +24,6 @@
     <script src="./flash.js"></script>
     <link rel="stylesheet" href="./styles.css">
     <script src="./app.js" defer></script>
-    <title>Racks</title>
 </head>
 
 <body>
@@ -262,6 +261,8 @@
                 <option value="marca">Marca / Mod</option>
                 <option value="identificador">Identificador</option>
                 <option value="unidades">Unidades</option>
+                <option value="edificio">Edificio</option>
+                <option value="dependencia">Dependencia</option>
                 <option value="estado">Estado</option>
             </select>
         </div>
@@ -387,8 +388,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Edificio</label>
-                        <input type="text" id="servicio-edificio" placeholder="ej: Palacio" maxlength="80"
-                            autocomplete="off">
+                        <select id="servicio-edificio"></select>
                     </div>
                     <div class="form-group">
                         <label>Piso</label>
@@ -486,7 +486,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Edificio</label>
-                        <input type="text" id="editar-servicio-edificio" placeholder="ej: Palacio" maxlength="80" autocomplete="off">
+                        <select id="editar-servicio-edificio"></select>
                     </div>
                     <div class="form-group">
                         <label>Piso</label>
@@ -618,6 +618,14 @@
                         </svg>
                     </button>
                 </div>
+                <p class="ajustes-section-label ajustes-section-label-mt">Configuración</p>
+                <button class="ajustes-row" id="ajustes-edificios-btn">
+                    <svg class="svg-icon">
+                        <use href="#icon-building" />
+                    </svg>
+                    <span>Edificios</span>
+                    <span class="ajustes-arrow">›</span>
+                </button>
                 <p class="ajustes-section-label ajustes-section-label-mt">Datos</p>
                 <button class="ajustes-row" id="ajustes-exportar-btn">
                     <svg class="svg-icon">
@@ -646,6 +654,34 @@
                     <svg class="svg-icon">
                         <use href="#icon-back" />
                     </svg> Volver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIFICIOS -->
+    <div class="modal" id="modal-edificios">
+        <div class="modal-content modal-content-md">
+            <div class="modal-header">
+                <h3><svg class="svg-icon"><use href="#icon-building" /></svg> Edificios</h3>
+            </div>
+            <div class="modal-body modal-body-pb">
+                <p class="ajustes-section-label">Agregar</p>
+                <div class="edificios-add-row">
+                    <input type="text" id="edificios-nuevo-input" placeholder="Nombre del edificio…" maxlength="80" autocomplete="off">
+                    <button class="btn-primary btn-icon-only" id="edificios-agregar-btn" title="Agregar">
+                        <svg class="svg-icon"><use href="#icon-add" /></svg>
+                    </button>
+                </div>
+                <p class="ajustes-section-label ajustes-section-label-mt">Lista</p>
+                <ul class="edificios-lista" id="edificios-lista">
+                    <!-- poblado por JS -->
+                </ul>
+                <p class="edificios-empty td-muted td-sm hidden" id="edificios-empty">No hay edificios registrados.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-full" id="edificios-cerrar-btn">
+                    <svg class="svg-icon"><use href="#icon-back" /></svg> Volver
                 </button>
             </div>
         </div>

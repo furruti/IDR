@@ -73,13 +73,16 @@ function _sanitizarRack(r) {
 function sanitizarEstado(raw) {
     if (!raw || typeof raw !== 'object') return null;
     if (!Array.isArray(raw.racks)) return null;
-    return { racks: raw.racks.map(_sanitizarRack).filter(Boolean) };
+    const edificios = Array.isArray(raw.edificios)
+        ? raw.edificios.map(e => _s(e, 80)).filter(Boolean)
+        : [];
+    return { racks: raw.racks.map(_sanitizarRack).filter(Boolean), edificios };
 }
 
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
-let state = { racks: [] };
+let state = { racks: [], edificios: [] };
 const CFG_DATA = APP_KEY + 'data'; // Ahora es dinámico
 
 function guardar() {
@@ -259,15 +262,16 @@ function switchTab(tab) {
     const headerTabTitle = document.getElementById('header-tab-title');
     if (headerTabTitle) headerTabTitle.innerHTML = `<svg class="svg-icon"><use href="${TAB_ICONS[tab]}"/></svg> ${TAB_LABELS[tab]}`;
 
-    const saliente = document.getElementById(`panel-${_tabActual}`);
+    // Limpiar cualquier animación pendiente en todos los paneles antes de cambiar
+    ['dashboard', 'servicio', 'inventario'].forEach(t => {
+        const p = document.getElementById(`panel-${t}`);
+        if (p) p.classList.remove('activa', 'tab-saliendo', 'tab-entrando');
+    });
+
     const entrante = document.getElementById(`panel-${tab}`);
     _tabActual = tab;
-    saliente.classList.remove('activa'); saliente.classList.add('tab-saliendo');
-    setTimeout(() => {
-        saliente.classList.remove('tab-saliendo');
-        entrante.classList.add('activa', 'tab-entrando');
-        entrante.addEventListener('animationend', () => entrante.classList.remove('tab-entrando'), { once: true });
-    }, 180);
+    entrante.classList.add('activa', 'tab-entrando');
+    entrante.addEventListener('animationend', () => entrante.classList.remove('tab-entrando'), { once: true });
     renderTodo();
 }
 
@@ -306,9 +310,10 @@ const UI = {
             }).join('');
         sel.value = '';
         sel.classList.remove('error');
-        ['servicio-edificio', 'servicio-piso', 'servicio-dependencia', 'servicio-numero'].forEach(id => {
+        ['servicio-piso', 'servicio-dependencia', 'servicio-numero'].forEach(id => {
             const el = document.getElementById(id); if (el) { el.value = ''; el.classList.remove('error'); }
         });
+        GestorEdificios.poblarSelect('servicio-edificio', '');
         MM.abrir('modal-rack-servicio', () => { if (!isMobile()) setTimeout(() => sel.focus(), 200); });
     },
     abrirNuevoRack() {
@@ -330,7 +335,8 @@ const UI = {
         MM.nav('modal-ajustes', () => {
             document.getElementById('importar-file-input').value = '';
             document.getElementById('importar-dropzone-label').textContent = 'Seleccioná o arrastrá un archivo .json';
-            document.getElementById('importar-dropzone').style.borderColor = '';
+            const dz = document.getElementById('importar-dropzone');
+            dz.classList.remove('dropzone-ok', 'dropzone-warn', 'dropzone-error');
             document.getElementById('importar-confirmar-btn').disabled = true;
             document.getElementById('importar-combinar-btn').disabled = true;
             _importarParsed = null;
@@ -339,6 +345,95 @@ const UI = {
     },
     cerrarImportar() { MM.nav('modal-importar', () => MM.abrir('modal-ajustes')); },
 };
+
+// ═══════════════════════════════════════════════════════
+//  GESTOR EDIFICIOS
+// ═══════════════════════════════════════════════════════
+const GestorEdificios = (() => {
+    function _renderLista() {
+        const lista = document.getElementById('edificios-lista');
+        const empty = document.getElementById('edificios-empty');
+        if (!lista) return;
+        lista.innerHTML = '';
+        const eds = state.edificios;
+        if (!eds.length) {
+            if (empty) empty.classList.add('hidden');
+            return;
+        }
+        if (empty) empty.classList.remove('hidden');
+        eds.forEach((ed, i) => {
+            const li = document.createElement('li');
+            li.className = 'edificios-item';
+            const span = document.createElement('span');
+            span.className = 'edificios-item-nombre';
+            span.textContent = ed;
+            const btn = document.createElement('button');
+            btn.className = 'edificios-item-eliminar icon-btn';
+            btn.title = 'Eliminar';
+            btn.innerHTML = '<svg class="svg-icon"><use href="#icon-trash"/></svg>';
+            btn.addEventListener('click', () => eliminar(i));
+            li.appendChild(span);
+            li.appendChild(btn);
+            lista.appendChild(li);
+        });
+    }
+
+    function poblarSelect(selectId, valorActual) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">— Sin edificio —</option>';
+        state.edificios.forEach(ed => {
+            const opt = document.createElement('option');
+            opt.value = ed;
+            opt.textContent = ed;
+            sel.appendChild(opt);
+        });
+        sel.value = (valorActual && state.edificios.includes(valorActual)) ? valorActual : '';
+    }
+
+    function abrir() {
+        _renderLista();
+        MM.nav('modal-ajustes', () => MM.abrir('modal-edificios'));
+    }
+
+    function cerrar() {
+        MM.nav('modal-edificios', () => MM.abrir('modal-ajustes'));
+    }
+
+    function agregar() {
+        const input = document.getElementById('edificios-nuevo-input');
+        if (!input) return;
+        const nombre = input.value.trim();
+        if (!nombre) { input.classList.add('error'); setTimeout(() => input.classList.remove('error'), 1200); return; }
+        if (state.edificios.some(e => e.toLowerCase() === nombre.toLowerCase())) {
+            toast('Ese edificio ya existe', 'error'); return;
+        }
+        historial.empujar('Agregar edificio');
+        state.edificios.push(nombre);
+        state.edificios.sort((a, b) => a.localeCompare(b, 'es'));
+        guardar();
+        input.value = '';
+        _renderLista();
+        toast(`Edificio "${nombre}" agregado`, 'success');
+    }
+
+    function eliminar(idx) {
+        const ed = state.edificios[idx];
+        const enUso = state.racks.some(r => r.edificio === ed);
+        const msg = enUso
+            ? `"${ed}" está asignado a ${state.racks.filter(r => r.edificio === ed).length} rack(s). ¿Eliminar de todas formas?`
+            : `¿Eliminar el edificio "${ed}"?`;
+        confirmar('Eliminar edificio', msg, () => {
+            historial.empujar('Eliminar edificio');
+            state.edificios.splice(idx, 1);
+            guardar();
+            _renderLista();
+            toast(`Edificio "${ed}" eliminado`);
+        });
+    }
+
+    return { abrir, cerrar, agregar, poblarSelect };
+})();
 
 // ═══════════════════════════════════════════════════════
 //  RACK CRUD
@@ -416,7 +511,7 @@ function abrirModalEditarServicio(id) {
         if (el) { el.value = v ?? ''; el.classList.remove('error'); }
     };
     set('editar-servicio-numero', rack.numero);
-    set('editar-servicio-edificio', rack.edificio);
+    GestorEdificios.poblarSelect('editar-servicio-edificio', rack.edificio);
     set('editar-servicio-piso', rack.piso);
     set('editar-servicio-dependencia', rack.dependencia);
     const info = document.getElementById('editar-servicio-info');
@@ -581,15 +676,20 @@ function _coincideBusqueda(r, busq, campo) {
     const estadoVis = r.estado === 'inventario' ? 'disponible' : r.estado;
     const uniVis = r.unidades ? r.unidades + 'u' : '';
 
-    if (campo === 'todo') h = [r.numero, r.patrimonio, r.marca, r.modelo, r.identificador, r.notas, uniVis, estadoVis].join(' ');
+    if (campo === 'todo') h = [r.numero, r.patrimonio, r.marca, r.modelo, r.identificador, r.notas, r.edificio, r.piso, r.dependencia, uniVis, estadoVis].join(' ');
     else if (campo === 'numero') h = r.numero;
     else if (campo === 'patrimonio') h = r.patrimonio;
     else if (campo === 'marca') h = [r.marca, r.modelo].join(' ');
     else if (campo === 'identificador') h = r.identificador;
     else if (campo === 'unidades') h = uniVis;
     else if (campo === 'estado') h = estadoVis;
+    else if (campo === 'edificio') h = [r.edificio, r.piso].join(' ');
+    else if (campo === 'dependencia') h = r.dependencia;
 
     const textoNorm = normalizarTexto(h);
+    // Para edificio y dependencia se compara la frase completa (sin split por tokens)
+    // para evitar que "anexo b" matchee "anexo a", "anexo c", etc.
+    if (campo === 'edificio' || campo === 'dependencia') return textoNorm.includes(busq);
     return busq.split(' ').every(t => textoNorm.includes(t));
 }
 
@@ -694,12 +794,6 @@ function renderDashboard() {
         </div>
         `;
 
-    // Animar barras
-    requestAnimationFrame(() => {
-        document.querySelectorAll('.rack-dist-bar-fill').forEach(el => {
-            el.style.width = (el.dataset.pct || 0) + '%';
-        });
-    });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -709,10 +803,8 @@ function renderServicio() {
     const busq = normalizarTexto(document.getElementById('busq-global')?.value || '');
     let racks = state.racks.filter(r => r.estado === 'servicio');
     if (busq) {
-        racks = racks.filter(r => {
-            const h = normalizarTexto([r.numero, r.patrimonio, r.marca, r.modelo, r.identificador, r.notas].join(' '));
-            return busq.split(' ').every(t => h.includes(t));
-        });
+        const campo = document.getElementById('busq-filtro')?.value || 'todo';
+        racks = racks.filter(r => _coincideBusqueda(r, busq, campo));
     }
     racks = _ordenarArray(racks, _sortServ.col, _sortServ.dir);
     _actualizarIndicadoresSort('panel-servicio', _sortServ);
@@ -783,7 +875,8 @@ function onImportarFileChange(e) {
     if (file.size > 5 * 1024 * 1024) {
         _importarParsed = null;
         label.innerHTML = '<span class="import-fail">✗ Archivo demasiado grande (máx 5 MB)</span>';
-        zone.style.borderColor = 'var(--c-red)'; btn.disabled = true; btnC.disabled = true; return;
+        zone.classList.remove('dropzone-ok', 'dropzone-warn'); zone.classList.add('dropzone-error');
+        btn.disabled = true; btnC.disabled = true; return;
     }
     const reader = new FileReader();
     reader.onload = async ev => {
@@ -794,12 +887,14 @@ function onImportarFileChange(e) {
             if (!parsed) throw new Error('Esquema inválido');
             _importarParsed = { ...parsed, _firmaValida: esValida };
             label.innerHTML = `<span class="${esValida ? 'import-ok' : 'import-warn'}">${esValida ? '✓' : '⚠️'} ${esc(file.name)}</span><br><span class="import-sub">${parsed.racks.length} racks</span>`;
-            zone.style.borderColor = esValida ? 'var(--c-green)' : 'var(--c-orange)';
+            zone.classList.remove('dropzone-error', 'dropzone-warn', 'dropzone-ok');
+            zone.classList.add(esValida ? 'dropzone-ok' : 'dropzone-warn');
             btn.disabled = false; btnC.disabled = false;
         } catch (_) {
             _importarParsed = null;
             label.innerHTML = '<span class="import-fail">✗ Archivo inválido o dañado</span>';
-            zone.style.borderColor = 'var(--c-red)'; btn.disabled = true; btnC.disabled = true;
+            zone.classList.remove('dropzone-ok', 'dropzone-warn'); zone.classList.add('dropzone-error');
+            btn.disabled = true; btnC.disabled = true;
         }
     };
     reader.readAsText(file);
@@ -813,6 +908,7 @@ function importarDatos(modo) {
         confirmar('¿Reemplazar todos los datos?', alerta + 'Todos los racks actuales serán reemplazados.', () => {
             historial.empujar('Importar y reemplazar');
             state.racks = parsed.racks || [];
+            state.edificios = parsed.edificios || [];
             guardar(); MM.cerrar('modal-importar'); _importarParsed = null;
             renderTodo(); toast(`Datos reemplazados (${state.racks.length} racks)`);
         });
@@ -822,6 +918,10 @@ function importarDatos(modo) {
             const nums = new Set(state.racks.map(r => r.numero.toLowerCase()));
             let n = 0;
             (parsed.racks || []).forEach(r => { if (!nums.has(r.numero.toLowerCase())) { state.racks.push(r); nums.add(r.numero.toLowerCase()); n++; } });
+            // Combinar edificios (sin duplicados)
+            const edsExist = new Set(state.edificios.map(e => e.toLowerCase()));
+            (parsed.edificios || []).forEach(e => { if (!edsExist.has(e.toLowerCase())) { state.edificios.push(e); edsExist.add(e.toLowerCase()); } });
+            state.edificios.sort((a, b) => a.localeCompare(b, 'es'));
             guardar(); MM.cerrar('modal-importar'); _importarParsed = null;
             renderTodo(); toast(n > 0 ? `+${n} racks combinados` : 'Sin cambios', n > 0 ? 'success' : 'info');
         });
@@ -834,6 +934,7 @@ function restablecerDatos() {
         confirmar('¿Restablecer todos los datos?', 'Se eliminarán todos los racks. Podés deshacer antes de cerrar la página.', () => {
             historial.empujar('Restablecer todos los datos');
             state.racks = [];
+            state.edificios = [];
             guardar(); renderTodo(); toast('Datos restablecidos');
         });
     }, 200);
@@ -1135,6 +1236,8 @@ function _initBindings() {
         if (tr) abrirModalEditarRack(tr.dataset.rackId);
     });
 
+    document.getElementById('ajustes-edificios-btn')?.addEventListener('click', () => GestorEdificios.abrir());
+
     // Ajustes
     document.getElementById('ajustes-cerrar-btn')?.addEventListener('click', () => UI.cerrarAjustes());
     document.getElementById('ajustes-exportar-btn')?.addEventListener('click', exportarDatos);
@@ -1169,6 +1272,11 @@ function _initBindings() {
             if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('importar-file-input').files = dt.files; onImportarFileChange({ target: { files: [file] } }); }
         });
     }
+
+    // Modal edificios
+    document.getElementById('edificios-cerrar-btn')?.addEventListener('click', () => GestorEdificios.cerrar());
+    document.getElementById('edificios-agregar-btn')?.addEventListener('click', () => GestorEdificios.agregar());
+    document.getElementById('edificios-nuevo-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') GestorEdificios.agregar(); });
 
     // Modal confirmar
     document.getElementById('confirmar-ok')?.addEventListener('click', () => {
