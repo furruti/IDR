@@ -83,7 +83,7 @@ function sanitizarEstado(raw) {
 //  STATE
 // ═══════════════════════════════════════════════════════
 let state = { racks: [], edificios: [] };
-const CFG_DATA = APP_KEY + 'data'; // Ahora es dinámico
+const CFG_DATA = APP_KEY + 'data';
 
 function guardar() {
     try { localStorage.setItem(CFG_DATA, JSON.stringify(state)); } catch (_) { }
@@ -97,17 +97,49 @@ function cargar() {
     } catch (_) { }
 }
 
+// Actualiza campos de un rack por id y persiste.
+// Garantiza que ninguna mutación quede sin guardar.
+function actualizarRack(id, cambios) {
+    const idx = state.racks.findIndex(r => r.id === id);
+    if (idx === -1) return false;
+    state.racks[idx] = { ...state.racks[idx], ...cambios };
+    guardar();
+    return true;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CACHÉ DE REFERENCIAS DOM
+// ═══════════════════════════════════════════════════════
+// Se popula en _initDOMRefs() una vez que el DOM está listo.
+const DOM = {};
+function _initDOMRefs() {
+    DOM.busqGlobal        = document.getElementById('busq-global');
+    DOM.tablaServicio     = document.getElementById('tabla-servicio');
+    DOM.tablaInventario   = document.getElementById('tabla-inventario');
+    DOM.servicioEmpty     = document.getElementById('servicio-empty');
+    DOM.inventarioEmpty   = document.getElementById('inventario-empty');
+    DOM.servicioCount     = document.getElementById('servicio-count');
+    DOM.inventarioCount   = document.getElementById('inventario-count');
+    DOM.statsGrid         = document.getElementById('stats-grid');
+    DOM.toast             = document.getElementById('toast');
+    DOM.btnUndo           = document.getElementById('btn-undo');
+    DOM.btnRedo           = document.getElementById('btn-redo');
+    DOM.fabRackServicio   = document.getElementById('fab-rack-servicio');
+    DOM.busqClearBtn      = document.getElementById('busq-clear-btn');
+    DOM.filtroMenu        = document.getElementById('busq-filtro-menu');
+    DOM.filtroBtn         = document.getElementById('busq-filtro-btn');
+}
+
 // ═══════════════════════════════════════════════════════
 //  HISTORIAL UNDO/REDO
 // ═══════════════════════════════════════════════════════
 const historial = (() => {
     const MAX = 30;
     let _pasado = [], _futuro = [];
-    function _clonar(s) { return parseSeguro(JSON.stringify(s)); }
+    function _clonar(s) { return structuredClone(s); }
     function _actualizarBotones() {
-        const u = document.getElementById('btn-undo'), r = document.getElementById('btn-redo');
-        if (u) u.disabled = !_pasado.length;
-        if (r) r.disabled = !_futuro.length;
+        if (DOM.btnUndo) DOM.btnUndo.disabled = !_pasado.length;
+        if (DOM.btnRedo) DOM.btnRedo.disabled = !_futuro.length;
     }
     function empujar(label) {
         _pasado.push({ state: _clonar(state), label });
@@ -148,6 +180,52 @@ const MM = (() => {
         if (!abiertos.length) return;
         _back = true; cerrarTop(); setTimeout(() => { _back = false; }, 50);
     });
+
+    // ── Focus trap ──────────────────────────────────────────
+    // Selectores de elementos que pueden recibir foco
+    const FOCUSABLE = [
+        'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+        'select:not([disabled])', 'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+
+    // Mapa de modal-id → handler de Tab activo, para poder removerlo al cerrar
+    const _trapHandlers = new Map();
+    // Elemento que tenía el foco antes de abrir el modal, para restaurarlo al cerrar
+    const _prevFocus = new Map();
+
+    function _instalarTrap(m) {
+        _prevFocus.set(m.id, document.activeElement);
+
+        // Mover el foco al primer elemento interactivo del modal
+        const focusables = () => Array.from(m.querySelectorAll(FOCUSABLE)).filter(el => !el.closest('[hidden]'));
+        setTimeout(() => { focusables()[0]?.focus(); }, 50);
+
+        function _onTab(e) {
+            if (e.key !== 'Tab') return;
+            const elems = focusables();
+            if (!elems.length) { e.preventDefault(); return; }
+            const first = elems[0], last = elems[elems.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+            } else {
+                if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
+        }
+        m.addEventListener('keydown', _onTab);
+        _trapHandlers.set(m.id, _onTab);
+    }
+
+    function _removerTrap(m) {
+        const handler = _trapHandlers.get(m.id);
+        if (handler) { m.removeEventListener('keydown', handler); _trapHandlers.delete(m.id); }
+        // Restaurar foco al elemento que lo tenía antes de abrir
+        const prev = _prevFocus.get(m.id);
+        if (prev && typeof prev.focus === 'function') { try { prev.focus(); } catch (_) {} }
+        _prevFocus.delete(m.id);
+    }
+    // ────────────────────────────────────────────────────────
+
     function _onMD(e) { _mdDown = e.target === e.currentTarget; }
     function _onClick(e) { if (!_mdDown) return; if (e.target === e.currentTarget) cerrar(e.target.id); }
     function abrir(id, cb) {
@@ -155,6 +233,7 @@ const MM = (() => {
         m.classList.add('show'); document.body.classList.add('modal-open');
         if (!_back && !_nav) history.pushState({ rckModal: id }, '');
         setTimeout(() => { m.addEventListener('mousedown', _onMD); m.addEventListener('click', _onClick); }, 100);
+        _instalarTrap(m);
         cb?.();
     }
     function cerrar(id, cb) {
@@ -162,6 +241,7 @@ const MM = (() => {
         m.classList.remove('show');
         if (!document.querySelector('.modal.show')) document.body.classList.remove('modal-open');
         m.removeEventListener('mousedown', _onMD); m.removeEventListener('click', _onClick);
+        _removerTrap(m);
         if (!_back && !_nav) { _ignorar = true; history.back(); }
         cb?.();
     }
@@ -169,6 +249,7 @@ const MM = (() => {
         document.querySelectorAll('.modal.show').forEach(m => {
             m.classList.remove('show');
             m.removeEventListener('mousedown', _onMD); m.removeEventListener('click', _onClick);
+            _removerTrap(m);
         });
         document.body.classList.remove('modal-open');
     }
@@ -195,7 +276,7 @@ function toast(msg, tipo = 'success') {
 function _flushToast() {
     if (_toastBusy || !_toastQ.length) return;
     _currentToast = _toastQ.shift(); _toastBusy = true;
-    const el = document.getElementById('toast');
+    const el = DOM.toast || document.getElementById('toast');
     el.textContent = _currentToast.msg;
     el.className = `toast show ${_currentToast.tipo}`;
     setTimeout(() => {
@@ -280,16 +361,16 @@ function switchTab(tab) {
 // ═══════════════════════════════════════════════════════
 let _busqTimer = null;
 function onBusqGlobal() {
-    const val = document.getElementById('busq-global').value;
-    const clearBtn = document.getElementById('busq-clear-btn');
+    const val = (DOM.busqGlobal || document.getElementById('busq-global')).value;
+    const clearBtn = DOM.busqClearBtn || document.getElementById('busq-clear-btn');
     if (clearBtn) clearBtn.classList.toggle('visible', !!val);
     if (_busqTimer) clearTimeout(_busqTimer);
     _busqTimer = setTimeout(renderTodo, 300);
 }
 function limpiarBusqueda() {
     if (_busqTimer) clearTimeout(_busqTimer);
-    document.getElementById('busq-global').value = '';
-    const clearBtn = document.getElementById('busq-clear-btn');
+    (DOM.busqGlobal || document.getElementById('busq-global')).value = '';
+    const clearBtn = DOM.busqClearBtn || document.getElementById('busq-clear-btn');
     if (clearBtn) clearBtn.classList.remove('visible');
     renderTodo();
 }
@@ -314,7 +395,7 @@ const UI = {
             const el = document.getElementById(id); if (el) { el.value = ''; el.classList.remove('error'); }
         });
         GestorEdificios.poblarSelect('servicio-edificio', '');
-        MM.abrir('modal-rack-servicio', () => { if (!isMobile()) setTimeout(() => sel.focus(), 200); });
+        MM.abrir('modal-rack-servicio');
     },
     abrirNuevoRack() {
         cerrarFab();
@@ -322,9 +403,7 @@ const UI = {
             const el = document.getElementById(`rack-${f}-nuevo`);
             if (el) { el.value = ''; el.classList.remove('error'); }
         });
-        MM.abrir('modal-rack-nuevo', () => {
-            if (!isMobile()) setTimeout(() => document.getElementById('rack-patrimonio-nuevo')?.focus(), 200);
-        });
+        MM.abrir('modal-rack-nuevo');
     },
     cerrarNuevoRack() { MM.cerrar('modal-rack-nuevo'); },
     abrirGist() { MM.nav('modal-ajustes', () => { GistSync.poblarModal(); MM.abrir('modal-gist'); }); },
@@ -522,6 +601,17 @@ function abrirModalEditarServicio(id) {
     MM.abrir('modal-rack-editar-servicio');
 }
 
+// Compara un objeto de campos nuevos contra las propiedades actuales de un rack.
+// Devuelve true si al menos un campo difiere (comparación de strings normalizados).
+function _hayCambios(rack, nuevos) {
+    return Object.keys(nuevos).some(k => {
+        const actual = rack[k] ?? '';
+        const nuevo  = nuevos[k] ?? '';
+        // Comparar como string para cubrir números (unidades) y strings vacíos
+        return String(actual).trim() !== String(nuevo).trim();
+    });
+}
+
 function guardarEditarServicio() {
     if (!_editandoServicioId) return;
     const numEl = document.getElementById('editar-servicio-numero');
@@ -533,12 +623,16 @@ function guardarEditarServicio() {
         return;
     }
     const rack = state.racks.find(r => r.id === _editandoServicioId); if (!rack) return;
+    const cambios = {
+        numero,
+        edificio:    document.getElementById('editar-servicio-edificio')?.value.trim() || '',
+        piso:        document.getElementById('editar-servicio-piso')?.value.trim() || '',
+        dependencia: document.getElementById('editar-servicio-dependencia')?.value.trim() || '',
+    };
+    if (!_hayCambios(rack, cambios)) { MM.cerrar('modal-rack-editar-servicio'); toast('Sin cambios', 'info'); return; }
     historial.empujar(`Editar rack en servicio (${rack.numero})`);
-    rack.numero = numero;
-    rack.edificio = document.getElementById('editar-servicio-edificio')?.value.trim() || '';
-    rack.piso = document.getElementById('editar-servicio-piso')?.value.trim() || '';
-    rack.dependencia = document.getElementById('editar-servicio-dependencia')?.value.trim() || '';
-    guardar(); renderTodo(); MM.cerrar('modal-rack-editar-servicio');
+    actualizarRack(_editandoServicioId, cambios);
+    renderTodo(); MM.cerrar('modal-rack-editar-servicio');
     toast('Rack actualizado');
 }
 
@@ -550,8 +644,8 @@ function quitarDeServicio() {
         'Volverá al inventario como disponible.',
         () => {
             historial.empujar(`Quitar de servicio rack (${rack.numero})`);
-            rack.estado = 'inventario';
-            guardar(); renderTodo(); MM.cerrar('modal-rack-editar-servicio');
+            actualizarRack(_editandoServicioId, { estado: 'inventario' });
+            renderTodo(); MM.cerrar('modal-rack-editar-servicio');
             toast('Rack devuelto al inventario', 'info');
         }
     );
@@ -573,10 +667,10 @@ function guardarEditarRack() {
         return;
     }
     const rack = state.racks.find(r => r.id === _editandoRackId);
+    if (!_hayCambios(rack, datos)) { MM.cerrar('modal-rack-editar'); toast('Sin cambios', 'info'); return; }
     historial.empujar(`Editar rack (patrimonio ${datos.patrimonio})`);
-    const idx = state.racks.findIndex(r => r.id === _editandoRackId);
-    if (idx !== -1) state.racks[idx] = { ...state.racks[idx], ...datos };
-    guardar(); renderTodo(); MM.cerrar('modal-rack-editar');
+    actualizarRack(_editandoRackId, datos);
+    renderTodo(); MM.cerrar('modal-rack-editar');
     toast(`Rack actualizado`);
 }
 
@@ -587,8 +681,8 @@ function toggleBajaRack() {
     if (esBaja) {
         // Reactivar
         historial.empujar(`Reactivar rack (patrimonio ${rack.patrimonio})`);
-        rack.estado = 'inventario';
-        guardar(); renderTodo(); MM.cerrar('modal-rack-editar');
+        actualizarRack(_editandoRackId, { estado: 'inventario' });
+        renderTodo(); MM.cerrar('modal-rack-editar');
         toast(`Rack reactivado`);
     } else {
         // Dar de baja
@@ -597,8 +691,8 @@ function toggleBajaRack() {
             'El rack quedará marcado como baja. Podés reactivarlo después.',
             () => {
                 historial.empujar(`Dar de baja rack (patrimonio ${rack.patrimonio})`);
-                rack.estado = 'baja';
-                guardar(); renderTodo(); MM.cerrar('modal-rack-editar');
+                actualizarRack(_editandoRackId, { estado: 'baja' });
+                renderTodo(); MM.cerrar('modal-rack-editar');
                 toast(`Rack dado de baja`, 'info');
             }
         );
@@ -637,18 +731,14 @@ function confirmarPonerEnServicio() {
     const piso = document.getElementById('servicio-piso')?.value.trim() || '';
     const dependencia = document.getElementById('servicio-dependencia')?.value.trim() || '';
     historial.empujar(`Poner en servicio rack (patrimonio ${rack.patrimonio})`);
-    rack.estado = 'servicio';
-    rack.numero = numero;
-    rack.edificio = edificio;
-    rack.piso = piso;
-    rack.dependencia = dependencia;
-    guardar(); renderTodo(); MM.cerrar('modal-rack-servicio');
+    actualizarRack(id, { estado: 'servicio', numero, edificio, piso, dependencia });
+    renderTodo(); MM.cerrar('modal-rack-servicio');
     toast(`Rack ${numero} puesto en servicio`);
     actualizarFabServicio();
 }
 
 function actualizarFabServicio() {
-    const btn = document.getElementById('fab-rack-servicio');
+    const btn = DOM.fabRackServicio || document.getElementById('fab-rack-servicio');
     if (!btn) return;
     const hayDisponibles = state.racks.some(r => r.estado === 'inventario');
     btn.disabled = !hayDisponibles;
@@ -813,7 +903,7 @@ function renderDashboard() {
         </div>`;
     }).join('') : '<p class="td-muted td-sm">Sin datos</p>';
 
-    document.getElementById('stats-grid').innerHTML = `
+    (DOM.statsGrid || document.getElementById('stats-grid')).innerHTML = `
         <div class="stat-chip">
             <span class="stat-chip-label">Racks</span>
             <span class="stat-chip-value">${total}</span>
@@ -837,7 +927,7 @@ function renderDashboard() {
 //  RENDER SERVICIO
 // ═══════════════════════════════════════════════════════
 function renderServicio() {
-    const busq = normalizarTexto(document.getElementById('busq-global')?.value || '');
+    const busq = normalizarTexto((DOM.busqGlobal || document.getElementById('busq-global'))?.value || '');
     let racks = state.racks.filter(r => r.estado === 'servicio');
     if (busq) {
         const campos = _getCamposBusq();
@@ -846,9 +936,9 @@ function renderServicio() {
     racks = _ordenarArray(racks, _sortServ.col, _sortServ.dir);
     _actualizarIndicadoresSort('panel-servicio', _sortServ);
 
-    const tbody = document.getElementById('tabla-servicio');
-    const empty = document.getElementById('servicio-empty');
-    const count = document.getElementById('servicio-count');
+    const tbody = DOM.tablaServicio || document.getElementById('tabla-servicio');
+    const empty = DOM.servicioEmpty || document.getElementById('servicio-empty');
+    const count = DOM.servicioCount || document.getElementById('servicio-count');
     if (count) count.textContent = racks.length;
 
     if (!racks.length) {
@@ -865,9 +955,9 @@ function renderServicio() {
 function renderInventario() {
     _actualizarIndicadoresSort('panel-inventario', _sortInv);
     const racks = _getRacksFiltrados();
-    const tbody = document.getElementById('tabla-inventario');
-    const empty = document.getElementById('inventario-empty');
-    const count = document.getElementById('inventario-count');
+    const tbody = DOM.tablaInventario || document.getElementById('tabla-inventario');
+    const empty = DOM.inventarioEmpty || document.getElementById('inventario-empty');
+    const count = DOM.inventarioCount || document.getElementById('inventario-count');
     if (count) count.textContent = racks.length;
 
     if (!racks.length) {
@@ -883,8 +973,9 @@ function renderInventario() {
 // ═══════════════════════════════════════════════════════
 function renderTodo() {
     renderDashboard();
-    renderServicio();
-    renderInventario();
+    if (_tabActual === 'servicio') renderServicio();
+    else if (_tabActual === 'inventario') renderInventario();
+    else { renderServicio(); renderInventario(); }
     actualizarFabServicio();
 }
 
@@ -911,7 +1002,11 @@ function onImportarFileChange(e) {
     const btnC = document.getElementById('importar-combinar-btn');
     if (file.size > 5 * 1024 * 1024) {
         _importarParsed = null;
-        label.innerHTML = '<span class="import-fail">✗ Archivo demasiado grande (máx 5 MB)</span>';
+        label.textContent = '';
+        const spanErr = document.createElement('span');
+        spanErr.className = 'import-fail';
+        spanErr.textContent = '✗ Archivo demasiado grande (máx 5 MB)';
+        label.appendChild(spanErr);
         zone.classList.remove('dropzone-ok', 'dropzone-warn'); zone.classList.add('dropzone-error');
         btn.disabled = true; btnC.disabled = true; return;
     }
@@ -923,13 +1018,26 @@ function onImportarFileChange(e) {
             const parsed = sanitizarEstado(raw);
             if (!parsed) throw new Error('Esquema inválido');
             _importarParsed = { ...parsed, _firmaValida: esValida };
-            label.innerHTML = `<span class="${esValida ? 'import-ok' : 'import-warn'}">${esValida ? '✓' : '⚠️'} ${esc(file.name)}</span><br><span class="import-sub">${parsed.racks.length} racks</span>`;
+            label.textContent = '';
+            const spanNombre = document.createElement('span');
+            spanNombre.className = esValida ? 'import-ok' : 'import-warn';
+            spanNombre.textContent = `${esValida ? '✓' : '⚠️'} ${file.name}`;
+            const spanCount = document.createElement('span');
+            spanCount.className = 'import-sub';
+            spanCount.textContent = `${parsed.racks.length} racks`;
+            label.appendChild(spanNombre);
+            label.appendChild(document.createElement('br'));
+            label.appendChild(spanCount);
             zone.classList.remove('dropzone-error', 'dropzone-warn', 'dropzone-ok');
             zone.classList.add(esValida ? 'dropzone-ok' : 'dropzone-warn');
             btn.disabled = false; btnC.disabled = false;
         } catch (_) {
             _importarParsed = null;
-            label.innerHTML = '<span class="import-fail">✗ Archivo inválido o dañado</span>';
+            label.textContent = '';
+            const spanInv = document.createElement('span');
+            spanInv.className = 'import-fail';
+            spanInv.textContent = '✗ Archivo inválido o dañado';
+            label.appendChild(spanInv);
             zone.classList.remove('dropzone-ok', 'dropzone-warn'); zone.classList.add('dropzone-error');
             btn.disabled = true; btnC.disabled = true;
         }
@@ -1195,31 +1303,40 @@ document.addEventListener('input', e => {
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
-cargar();
+function _init() {
+    cargar();
 
-try { if (localStorage.getItem(APP_KEY + 'dark') === '1') { document.getElementById('dark-icon-use')?.setAttribute('href', '#icon-sun'); } } catch (_) { }
+    try {
+        if (localStorage.getItem(APP_KEY + 'dark') === '1') {
+            document.getElementById('dark-icon-use')?.setAttribute('href', '#icon-sun');
+        }
+    } catch (_) { }
 
-try {
-    const t = localStorage.getItem(APP_KEY + 'tab');
-    if (t && ['servicio', 'inventario'].includes(t)) {
-        document.getElementById('panel-dashboard').classList.remove('activa');
-        document.getElementById(`panel-${t}`).classList.add('activa');
-        document.getElementById('tab-dashboard').classList.remove('activa');
-        document.getElementById(`tab-${t}`).classList.add('activa');
-        _tabActual = t;
-        const htt = document.getElementById('header-tab-title');
-        if (htt) htt.innerHTML = `<svg class="svg-icon"><use href="${TAB_ICONS[t]}"/></svg> ${TAB_LABELS[t]}`;
-    }
-} catch (_) { }
+    try {
+        const t = localStorage.getItem(APP_KEY + 'tab');
+        if (t && ['servicio', 'inventario'].includes(t)) {
+            document.getElementById('panel-dashboard').classList.remove('activa');
+            document.getElementById(`panel-${t}`).classList.add('activa');
+            document.getElementById('tab-dashboard').classList.remove('activa');
+            document.getElementById(`tab-${t}`).classList.add('activa');
+            _tabActual = t;
+            const htt = document.getElementById('header-tab-title');
+            if (htt) htt.innerHTML = `<svg class="svg-icon"><use href="${TAB_ICONS[t]}"/></svg> ${TAB_LABELS[t]}`;
+        }
+    } catch (_) { }
 
-renderTodo();
-_restaurarCamposBusq();
-GistSync.init();
+    renderTodo();
+    _restaurarCamposBusq();
+    GistSync.init();
+}
 
 // ═══════════════════════════════════════════════════════
 //  BINDINGS
 // ═══════════════════════════════════════════════════════
 function _initBindings() {
+    _initDOMRefs();
+    _init();
+
     // Tabs
     document.getElementById('tab-dashboard')?.addEventListener('click', () => switchTab('dashboard'));
     document.getElementById('tab-servicio')?.addEventListener('click', () => switchTab('servicio'));
@@ -1383,12 +1500,14 @@ function _initBindings() {
             }
         });
 
-        filtroMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const _allChecks = Array.from(filtroMenu.querySelectorAll('input[type="checkbox"]'));
+        const _total = _allChecks.length;
+
+        _allChecks.forEach(cb => {
             cb.addEventListener('change', () => {
-                const total = filtroMenu.querySelectorAll('input[type="checkbox"]').length;
-                const checked = filtroMenu.querySelectorAll('input[type="checkbox"]:checked').length;
-                if (filtroToggleAll) filtroToggleAll.textContent = checked === total ? 'Desactivar todo' : 'Activar todo';
-                filtroBtn.classList.toggle('con-filtro', checked < total);
+                const checked = _allChecks.filter(c => c.checked).length;
+                if (filtroToggleAll) filtroToggleAll.textContent = checked === _total ? 'Desactivar todo' : 'Activar todo';
+                filtroBtn.classList.toggle('con-filtro', checked < _total);
                 _guardarCamposBusq();
                 onBusqGlobal();
             });
@@ -1397,9 +1516,8 @@ function _initBindings() {
         if (filtroToggleAll) {
             filtroToggleAll.addEventListener('click', e => {
                 e.stopPropagation();
-                const checks = filtroMenu.querySelectorAll('input[type="checkbox"]');
-                const allChecked = Array.from(checks).every(c => c.checked);
-                checks.forEach(c => { c.checked = !allChecked; });
+                const allChecked = _allChecks.every(c => c.checked);
+                _allChecks.forEach(c => { c.checked = !allChecked; });
                 filtroToggleAll.textContent = allChecked ? 'Activar todo' : 'Desactivar todo';
                 filtroBtn.classList.toggle('con-filtro', allChecked);
                 _guardarCamposBusq();
