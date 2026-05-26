@@ -2685,7 +2685,7 @@ document.addEventListener('keydown', e => {
     }
 
     // ── Alt + ← / → : cambiar pestaña ───────────────────
-    if (!modalOpen && e.altKey) {
+    if (!modalOpen && e.ctrlKey) {
         if (e.key === 'ArrowLeft') { e.preventDefault(); switchTab('dashboard'); return; }
         if (e.key === 'ArrowRight') { e.preventDefault(); switchTab('movimientos'); return; }
     }

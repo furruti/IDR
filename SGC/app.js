@@ -5902,7 +5902,7 @@
             return;
         }
 
-        if (!modalAbierto && e.altKey) {
+        if (!modalAbierto && e.ctrlKey) {
             const tabs = TABS;
             const idxActual = tabs.indexOf(_tabActual);
 
