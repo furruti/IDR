@@ -437,10 +437,10 @@ const GestorEdificios = (() => {
         lista.innerHTML = '';
         const eds = state.edificios;
         if (!eds.length) {
-            if (empty) empty.classList.add('hidden');
+            if (empty) empty.removeAttribute('hidden');
             return;
         }
-        if (empty) empty.classList.remove('hidden');
+        if (empty) empty.setAttribute('hidden', '');
         eds.forEach((ed, i) => {
             const li = document.createElement('li');
             li.className = 'edificios-item';
@@ -1221,7 +1221,7 @@ const GistSync = (() => {
             
             const procesarBajada = () => {
                 _setBusy(true);
-                let nuevos = 0, actualizados = 0;
+                let nuevos = 0, actualizados = 0, nuevosEdificios = 0;
                 (remoto.racks || []).forEach(r => {
                     const idx = state.racks.findIndex(x => x.id === r.id);
                     if (idx === -1) {
@@ -1238,14 +1238,23 @@ const GistSync = (() => {
                         }
                     }
                 });
-                if (nuevos === 0 && actualizados === 0) {
+                const edsExist = new Set(state.edificios.map(e => e.toLowerCase()));
+                (remoto.edificios || []).forEach(e => {
+                    if (!edsExist.has(e.toLowerCase())) {
+                        state.edificios.push(e);
+                        edsExist.add(e.toLowerCase());
+                        nuevosEdificios++;
+                    }
+                });
+                if (nuevosEdificios > 0) state.edificios.sort((a, b) => a.localeCompare(b, 'es'));
+                if (nuevos === 0 && actualizados === 0 && nuevosEdificios === 0) {
                     _cfg.token = token; _cfg.gistId = gistId; _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync();
                     toast('Sin cambios', 'info'); _setBusy(false); return;
                 }
                 historial.empujar(esValida ? 'Bajar desde Gist' : 'Bajar desde Gist (Forzado)');
                 guardar(); renderTodo();
                 _cfg.token = token; _cfg.gistId = gistId; _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync();
-                const resumen = [nuevos > 0 ? `+${nuevos} nuevos` : '', actualizados > 0 ? `${actualizados} actualizados` : ''].filter(Boolean).join(', ');
+                const resumen = [nuevos > 0 ? `+${nuevos} racks` : '', actualizados > 0 ? `${actualizados} actualizados` : '', nuevosEdificios > 0 ? `+${nuevosEdificios} edificios` : ''].filter(Boolean).join(', ');
                 toast(`Sincronizado: ${resumen}`, esValida ? 'success' : 'info'); _setBusy(false);
             };
             if (!esValida) { _setBusy(false); confirmar('Datos alterados', 'Los datos fueron modificados externamente. ¿Combinar de todos modos?', procesarBajada); }
@@ -1277,7 +1286,7 @@ const GistSync = (() => {
                 const rawRemoto = parseSeguro(contenido);
                 const remoto = sanitizarEstado(rawRemoto);
                 if (!remoto) throw new Error('Formato inválido');
-                let nuevos = 0, actualizados = 0;
+                let nuevos = 0, actualizados = 0, nuevosEdificios = 0;
                 (remoto.racks || []).forEach(r => {
                     const idx = state.racks.findIndex(x => x.id === r.id);
                     if (idx === -1) {
@@ -1288,10 +1297,19 @@ const GistSync = (() => {
                         if (tsRemoto > tsLocal) { state.racks[idx] = r; actualizados++; }
                     }
                 });
-                if (nuevos > 0 || actualizados > 0) {
+                const edsExist = new Set(state.edificios.map(e => e.toLowerCase()));
+                (remoto.edificios || []).forEach(e => {
+                    if (!edsExist.has(e.toLowerCase())) {
+                        state.edificios.push(e);
+                        edsExist.add(e.toLowerCase());
+                        nuevosEdificios++;
+                    }
+                });
+                if (nuevosEdificios > 0) state.edificios.sort((a, b) => a.localeCompare(b, 'es'));
+                if (nuevos > 0 || actualizados > 0 || nuevosEdificios > 0) {
                     // No empuja al historial para no contaminar undo en el arranque
                     guardar(); renderTodo();
-                    const resumen = [nuevos > 0 ? `+${nuevos} nuevos` : '', actualizados > 0 ? `${actualizados} actualizados` : ''].filter(Boolean).join(', ');
+                    const resumen = [nuevos > 0 ? `+${nuevos} racks` : '', actualizados > 0 ? `${actualizados} actualizados` : '', nuevosEdificios > 0 ? `+${nuevosEdificios} edificios` : ''].filter(Boolean).join(', ');
                     toast(`AutoSync: ${resumen}`, 'success');
                 }
                 _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync();
