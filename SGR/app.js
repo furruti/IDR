@@ -67,6 +67,7 @@ function _sanitizarRack(r) {
         edificio: _s(r.edificio, 80),
         piso: _s(r.piso, 30),
         dependencia: _s(r.dependencia, 100),
+        _updatedAt: typeof r._updatedAt === 'string' ? r._updatedAt : new Date().toISOString(),
     };
 }
 
@@ -102,7 +103,7 @@ function cargar() {
 function actualizarRack(id, cambios) {
     const idx = state.racks.findIndex(r => r.id === id);
     if (idx === -1) return false;
-    state.racks[idx] = { ...state.racks[idx], ...cambios };
+    state.racks[idx] = { ...state.racks[idx], ...cambios, _updatedAt: new Date().toISOString() };
     guardar();
     return true;
 }
@@ -547,7 +548,7 @@ function guardarNuevoRack() {
     const nuevoId = uid();
     const identificadorAutogenerado = nuevoId.toUpperCase();
 
-    state.racks.push({ id: nuevoId, identificador: identificadorAutogenerado, estado: 'inventario', numero: '', ...datos });
+    state.racks.push({ id: nuevoId, identificador: identificadorAutogenerado, estado: 'inventario', numero: '', _updatedAt: new Date().toISOString(), ...datos });
     guardar(); renderTodo(); MM.cerrar('modal-rack-nuevo');
     toast(`Rack agregado al inventario`);
 }
@@ -1058,15 +1059,23 @@ function importarDatos(modo) {
             renderTodo(); toast(`Datos reemplazados (${state.racks.length} racks)`);
         });
     } else {
-        confirmar('¿Combinar datos?', alerta + 'Se agregarán los racks que no existan (por número de rack).', () => {
+        confirmar('¿Combinar datos?', alerta + 'Se agregarán los racks que no existan actualmente.', () => {
             historial.empujar('Combinar datos importados');
-            const nums = new Set(state.racks.map(r => r.numero.toLowerCase()));
+            
+            // Usar IDs para combinar de forma segura
+            const idsActuales = new Set(state.racks.map(r => r.id));
             let n = 0;
-            (parsed.racks || []).forEach(r => { if (!nums.has(r.numero.toLowerCase())) { state.racks.push(r); nums.add(r.numero.toLowerCase()); n++; } });
-            // Combinar edificios (sin duplicados)
+            (parsed.racks || []).forEach(r => { 
+                if (!idsActuales.has(r.id)) { 
+                    state.racks.push(r); 
+                    idsActuales.add(r.id); 
+                    n++; 
+                } 
+            });
             const edsExist = new Set(state.edificios.map(e => e.toLowerCase()));
             (parsed.edificios || []).forEach(e => { if (!edsExist.has(e.toLowerCase())) { state.edificios.push(e); edsExist.add(e.toLowerCase()); } });
             state.edificios.sort((a, b) => a.localeCompare(b, 'es'));
+            
             guardar(); MM.cerrar('modal-importar'); _importarParsed = null;
             renderTodo(); toast(n > 0 ? `+${n} racks combinados` : 'Sin cambios', n > 0 ? 'success' : 'info');
         });
@@ -1092,7 +1101,7 @@ const GistSync = (() => {
     const CFG_KEY = APP_KEY + 'gist_cfg', FILENAME = 'racks_data.json', DEBOUNCE_MS = 3000;
     const RE_GIST = /^[a-f0-9]{20,40}$/i;
     let _cfg = { token: '', gistId: '', lastSync: null, auto: false };
-    let _debounceTimer = null, _subiendo = false;
+    let _debounceTimer = null, _subiendo = false, _bajarAutoTimer = null;
     let _maxRacksVistos = 0;
     let _alertaBorradoMostrada = false;
 
@@ -1209,23 +1218,86 @@ const GistSync = (() => {
             const esValida = await verificarFirma(rawRemoto);
             const remoto = sanitizarEstado(rawRemoto);
             if (!remoto) throw new Error('Formato inválido');
-            const nums = new Set(state.racks.map(r => r.numero.toLowerCase()));
-            const novedades = (remoto.racks || []).filter(r => !nums.has(r.numero.toLowerCase())).length;
+            
             const procesarBajada = () => {
                 _setBusy(true);
-                if (novedades === 0) {
-                    _cfg.token = token; _cfg.gistId = gistId; _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync(); toast('Sin cambios', 'info'); _setBusy(false); return;
+                let nuevos = 0, actualizados = 0;
+                (remoto.racks || []).forEach(r => {
+                    const idx = state.racks.findIndex(x => x.id === r.id);
+                    if (idx === -1) {
+                        // Rack nuevo: agregar
+                        state.racks.push(r);
+                        nuevos++;
+                    } else {
+                        // Rack existente: reemplazar solo si el remoto es más nuevo
+                        const tsRemoto = new Date(r._updatedAt || 0).getTime();
+                        const tsLocal  = new Date(state.racks[idx]._updatedAt || 0).getTime();
+                        if (tsRemoto > tsLocal) {
+                            state.racks[idx] = r;
+                            actualizados++;
+                        }
+                    }
+                });
+                if (nuevos === 0 && actualizados === 0) {
+                    _cfg.token = token; _cfg.gistId = gistId; _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync();
+                    toast('Sin cambios', 'info'); _setBusy(false); return;
                 }
                 historial.empujar(esValida ? 'Bajar desde Gist' : 'Bajar desde Gist (Forzado)');
-                (remoto.racks || []).forEach(r => { if (!nums.has(r.numero.toLowerCase())) { state.racks.push(r); nums.add(r.numero.toLowerCase()); } });
                 guardar(); renderTodo();
                 _cfg.token = token; _cfg.gistId = gistId; _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync();
-                toast(`Datos combinados (+${novedades} racks)`, esValida ? 'success' : 'info'); _setBusy(false);
+                const resumen = [nuevos > 0 ? `+${nuevos} nuevos` : '', actualizados > 0 ? `${actualizados} actualizados` : ''].filter(Boolean).join(', ');
+                toast(`Sincronizado: ${resumen}`, esValida ? 'success' : 'info'); _setBusy(false);
             };
             if (!esValida) { _setBusy(false); confirmar('Datos alterados', 'Los datos fueron modificados externamente. ¿Combinar de todos modos?', procesarBajada); }
             else procesarBajada();
         } catch (err) { _setStatus(`Error: ${err.message}`); toast(`Error al bajar: ${err.message}`, 'error'); }
         finally { _setBusy(false); }
+    }
+    async function bajarAuto() {
+        if (!_cfg.auto || !_cfg.gistId) return;
+        if (!RE_GIST.test(_cfg.gistId)) return;
+        // Mismo debounce que subirAuto para no disparar en cada recarga rápida
+        clearTimeout(_bajarAutoTimer);
+        _bajarAutoTimer = setTimeout(async () => {
+            if (_subiendo) return;
+            _setBusy(true); _setStatus('Sincronizando…');
+            try {
+                const headers = {}; if (_cfg.token) headers['Authorization'] = `token ${_cfg.token}`;
+                const res = await fetch(`https://api.github.com/gists/${_cfg.gistId}`, { headers });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const file = data.files?.[FILENAME];
+                if (!file) throw new Error(`No se encontró "${FILENAME}"`);
+                let contenido = file.content;
+                if (file.truncated) {
+                    const rawOrigin = new URL(file.raw_url).hostname;
+                    if (!rawOrigin.endsWith('.githubusercontent.com')) throw new Error('raw_url inválida');
+                    const r2 = await fetch(file.raw_url); contenido = await r2.text();
+                }
+                const rawRemoto = parseSeguro(contenido);
+                const remoto = sanitizarEstado(rawRemoto);
+                if (!remoto) throw new Error('Formato inválido');
+                let nuevos = 0, actualizados = 0;
+                (remoto.racks || []).forEach(r => {
+                    const idx = state.racks.findIndex(x => x.id === r.id);
+                    if (idx === -1) {
+                        state.racks.push(r); nuevos++;
+                    } else {
+                        const tsRemoto = new Date(r._updatedAt || 0).getTime();
+                        const tsLocal  = new Date(state.racks[idx]._updatedAt || 0).getTime();
+                        if (tsRemoto > tsLocal) { state.racks[idx] = r; actualizados++; }
+                    }
+                });
+                if (nuevos > 0 || actualizados > 0) {
+                    // No empuja al historial para no contaminar undo en el arranque
+                    guardar(); renderTodo();
+                    const resumen = [nuevos > 0 ? `+${nuevos} nuevos` : '', actualizados > 0 ? `${actualizados} actualizados` : ''].filter(Boolean).join(', ');
+                    toast(`AutoSync: ${resumen}`, 'success');
+                }
+                _cfg.lastSync = new Date().toISOString(); _guardarCfg(); _setStatusSync();
+            } catch (err) { _setStatus(`Error auto-sync: ${err.message}`); }
+            finally { _setBusy(false); }
+        }, DEBOUNCE_MS);
     }
     function poblarModal() {
         const te = document.getElementById('gist-token'), ie = document.getElementById('gist-id'), to = document.getElementById('gist-autosync-toggle');
@@ -1234,8 +1306,8 @@ const GistSync = (() => {
         if (_cfg.lastSync) _setStatusSync(); else _setStatus('Sin sincronizar');
         _linkBtn();
     }
-    function init() { _cargarCfg(); _maxRacksVistos = state.racks.length; }
-    return { init, subir, subirAuto, bajar, poblarModal, guardarConfig, toggleToken, toggleAuto, _linkBtn };
+    function init() { _cargarCfg(); _maxRacksVistos = state.racks.length; bajarAuto(); }
+    return { init, subir, subirAuto, bajar, bajarAuto, poblarModal, guardarConfig, toggleToken, toggleAuto, _linkBtn };
 })();
 
 // ═══════════════════════════════════════════════════════
