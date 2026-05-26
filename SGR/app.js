@@ -1522,7 +1522,7 @@ function _initBindings() {
     // Modal Gist
     document.getElementById('gist-cerrar-btn')?.addEventListener('click', () => UI.cerrarGist());
     document.getElementById('gist-token-eye')?.addEventListener('click', () => GistSync.toggleToken());
-    document.getElementById('gist-autosync-toggle')?.addEventListener('click', () => GistSync.toggleAuto());
+    document.getElementById('gist-autosync-label')?.addEventListener('click', () => GistSync.toggleAuto());
     document.getElementById('gist-id')?.addEventListener('input', () => GistSync._linkBtn());
     document.getElementById('gist-guardar-config-btn')?.addEventListener('click', () => GistSync.guardarConfig());
     document.getElementById('btn-gist-subir')?.addEventListener('click', () => GistSync.subir());

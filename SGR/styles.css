@@ -924,8 +924,91 @@ input[type="file"].hidden {
     display: none;
 }
 
-.stat-chip-label-filtro {
-    color: var(--c-orange);
+#gist-link-btn.show {
+    display: flex;
+}
+
+.icon-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gist-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.btn-gist-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0.5rem;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text-main);
+    transition: filter var(--t-fast), opacity var(--t-fast), transform var(--t-fast);
+}
+
+.btn-gist-action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-gist-action:not(:disabled):hover {
+    filter: brightness(0.95);
+}
+
+.gist-autosync-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+}
+
+.gist-autosync-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.gist-autosync-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.gist-privacy-note {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    background: var(--input-bg);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+    margin-top: 0.75rem;
+    line-height: 1.55;
+}
+
+.gist-sync-status {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: right;
+    min-height: 1.2em;
+    margin-top: 0.5rem;
 }
 
 /* Label de distribución coloreado */
@@ -952,37 +1035,6 @@ input[type="file"].hidden {
 }
 
 /* toggle-row */
-.toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-}
-
-.toggle-row label {
-    margin: 0;
-    padding: 0;
-    text-transform: none;
-    font-size: 0.9rem;
-    color: var(--text-main);
-    font-weight: 600;
-    letter-spacing: 0;
-}
-
-.gist-link-a {
-    display: none;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    color: var(--accent);
-    text-decoration: none;
-    padding: 0.3rem 0;
-}
-
-.gist-link-a.show {
-    display: flex;
-}
-
 /* Enlace de Gist con ícono pequeño */
 .gist-link-icon {
     width: 14px;
@@ -1521,14 +1573,6 @@ tr.rack-estado-baja td {
     min-height: 1.2em;
     margin-top: 0.1rem;
 }
-
-.gist-status {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin: 0.5rem 0;
-    padding-left: 0.5rem;
-}
-
 
 /* ════════════════════════════════════════════════════════
    IMPORTAR

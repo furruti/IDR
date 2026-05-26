@@ -690,64 +690,99 @@
 
     <!-- MODAL GIST -->
     <div class="modal" id="modal-gist">
-        <div class="modal-content modal-content-md">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3><svg class="svg-icon">
+                <h3>
+                    <svg class="svg-icon">
                         <use href="#icon-gist" />
-                    </svg> Gist Sync</h3>
+                    </svg>
+                    GitHub Gist
+                </h3>
             </div>
             <div class="modal-body modal-body-pb">
+
+                <!-- Token -->
                 <div class="form-group">
-                    <label>Token de GitHub</label>
+                    <label>Personal Access Token</label>
                     <div class="gist-input-row">
-                        <input type="password" id="gist-token" placeholder="ghp_…" autocomplete="off">
-                        <button class="icon-btn gist-eye-btn" id="gist-token-eye">
+                        <input type="password" id="gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+                        <button class="icon-btn gist-eye-btn" id="gist-token-eye" title="Mostrar/ocultar">
                             <svg class="svg-icon">
                                 <use href="#icon-eye" id="gist-eye-icon" />
                             </svg>
                         </button>
+                        <a class="icon-btn gist-eye-btn icon-link"
+                            href="https://github.com/settings/tokens/new?description=Racks+sync&scopes=gist"
+                            target="_blank" rel="noopener" title="Crear token en GitHub">
+                            <svg class="svg-icon">
+                                <use href="#icon-add" />
+                            </svg>
+                        </a>
                     </div>
                 </div>
+
+                <!-- Gist ID -->
                 <div class="form-group">
                     <label>Gist ID</label>
-                    <input type="text" id="gist-id" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-                    <a class="gist-link-a" id="gist-link-btn" target="_blank" rel="noopener">
-                        <svg class="svg-icon gist-link-icon">
-                            <use href="#icon-external-link" />
-                        </svg> Ver en GitHub
-                    </a>
+                    <div class="gist-input-row">
+                        <input type="text" id="gist-id" placeholder="Dejar vacío para crear uno nuevo" autocomplete="off" spellcheck="false">
+                        <a id="gist-link-btn" class="icon-btn gist-eye-btn icon-link" target="_blank" rel="noopener" title="Abrir en GitHub">
+                            <svg class="svg-icon">
+                                <use href="#icon-external-link" />
+                            </svg>
+                        </a>
+                    </div>
                 </div>
-                <div class="toggle-row">
-                    <label>Sincronización automática</label>
-                    <button class="toggle-switch" id="gist-autosync-toggle"></button>
-                </div>
-                <p class="gist-status" id="gist-sync-status">Sin sincronizar</p>
-            </div>
-            <div class="modal-footer modal-footer-col-gap">
-                <div class="modal-footer-btn-row">
-                    <button class="btn-success btn-flex" id="btn-gist-bajar">
-                        <svg class="svg-icon">
-                            <use href="#icon-download" />
-                        </svg> Bajar
-                    </button>
-                    <button class="btn-primary btn-flex" id="btn-gist-subir">
+
+                <!-- Acciones -->
+                <p class="ajustes-section-label">Acciones</p>
+                <div class="gist-actions-row">
+                    <button class="btn-gist-action" id="btn-gist-subir">
                         <svg class="svg-icon">
                             <use href="#icon-upload" />
-                        </svg> Subir
+                        </svg>
+                        Subir
+                    </button>
+                    <button class="btn-gist-action" id="btn-gist-bajar">
+                        <svg class="svg-icon">
+                            <use href="#icon-download" />
+                        </svg>
+                        Bajar
                     </button>
                 </div>
-                <div class="modal-footer-btn-row">
-                    <button class="btn-primary btn-flex" id="gist-guardar-config-btn">
-                        <svg class="svg-icon">
-                            <use href="#icon-save" />
-                        </svg> Guardar config
-                    </button>
-                    <button class="btn-flex" id="gist-cerrar-btn">
-                        <svg class="svg-icon">
-                            <use href="#icon-back" />
-                        </svg> Volver
-                    </button>
+
+                <!-- Auto-sync toggle -->
+                <label class="gist-autosync-row" id="gist-autosync-label">
+                    <span class="gist-autosync-text">
+                        <span class="gist-autosync-title">Subir automáticamente y comprobar cambios al cargar la página</span>
+                    </span>
+                    <div class="toggle-switch" id="gist-autosync-toggle">
+                        <div class="toggle-thumb"></div>
+                    </div>
+                </label>
+
+                <!-- Aviso de confidencialidad -->
+                <div class="gist-privacy-note">
+                    🔒 <strong>Datos sensibles:</strong> Configurar el gist como <strong>secreto</strong> y con el permiso de <strong>gist</strong> solamente en GitHub. No compartir el link.
                 </div>
+
+                <!-- Estado sync -->
+                <p id="gist-sync-status" class="gist-sync-status"></p>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary btn-flex" id="gist-guardar-config-btn">
+                    <svg class="svg-icon">
+                        <use href="#icon-save" />
+                    </svg>
+                    Guardar
+                </button>
+                <button class="btn-flex" id="gist-cerrar-btn">
+                    <svg class="svg-icon">
+                        <use href="#icon-back" />
+                    </svg>
+                    Volver
+                </button>
             </div>
         </div>
     </div>
