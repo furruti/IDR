@@ -1093,7 +1093,6 @@ function _htmlTablaGrupo(racks) {
 //  RENDER INVENTARIO
 // ═══════════════════════════════════════════════════════
 function renderInventario() {
-    _actualizarIndicadoresSort('panel-inventario', _sortInv);
     const racks = _getRacksFiltrados();
     const empty = DOM.inventarioEmpty || document.getElementById('inventario-empty');
     const count = DOM.inventarioCount || document.getElementById('inventario-count');
@@ -1108,6 +1107,7 @@ function renderInventario() {
         gruposWrap?.setAttribute('hidden', '');
         if (tbody) tbody.innerHTML = '';
         empty?.classList.remove('empty-state-hidden');
+        _actualizarIndicadoresSort('panel-inventario', _sortInv); // Mantenlo aquí para el caso vacío
         return;
     }
     empty?.classList.add('empty-state-hidden');
@@ -1115,7 +1115,6 @@ function renderInventario() {
     const grupos = _getGrupos(racks);
 
     if (!grupos) {
-        // Vista plana
         gruposWrap?.setAttribute('hidden', '');
         tablaWrap?.removeAttribute('hidden');
         if (tbody) tbody.innerHTML = racks.map(_filaRackInv).join('');
@@ -1124,9 +1123,16 @@ function renderInventario() {
         tablaWrap?.setAttribute('hidden', '');
         gruposWrap?.removeAttribute('hidden');
 
-        // Mantener estado open de grupos entre renders
-        const abiertos = new Set();
-        gruposWrap?.querySelectorAll('.inv-grupo-tr-header.open').forEach(el => abiertos.add(el.dataset.grupoKey));
+        // ── NUEVO: Determinar qué grupos mostrar abiertos (Búsqueda vs LocalStorage) ──
+        const busq = normalizarTexto(document.getElementById('busq-global')?.value || '');
+        let abiertos = null;
+
+        if (!busq) {
+            try {
+                const saved = localStorage.getItem(APP_KEY + 'grupos_abiertos');
+                if (saved !== null) abiertos = new Set(JSON.parse(saved));
+            } catch (_) {}
+        }
 
         if (gruposWrap) {
             const thead = `<thead class="inv-thead-sticky">
@@ -1152,13 +1158,15 @@ function renderInventario() {
 
             const tbodyRows = grupos.map((g, i) => {
                 const key = g.titulo;
-                const isOpen = abiertos.size ? abiertos.has(key) : i === 0;
+                // Si hay búsqueda se fuerza 'true', de lo contrario se lee del LocalStorage o por defecto el primero
+                const isOpen = busq ? true : (abiertos !== null ? abiertos.has(key) : i === 0);
 
                 if (g.subgrupos) {
                     // Grupo padre (edificio) con subgrupos de pisos
                     const subRows = g.subgrupos.map(sg => {
                         const subKey = `${key}__${sg.titulo}`;
-                        const subOpen = abiertos.size ? abiertos.has(subKey) : isOpen;
+                        // Si hay búsqueda se fuerza 'true', si no, LocalStorage o hereda del padre
+                        const subOpen = busq ? true : (abiertos !== null ? abiertos.has(subKey) : isOpen);
                         const filasSub = sg.racks.map(r => _filaRack(r, isOpen && subOpen)).join('');
                         return `<tr class="inv-grupo-tr-header inv-grupo-tr-sub${subOpen ? ' open' : ''}" data-grupo-key="${esc(subKey)}"${isOpen ? '' : ' hidden'}>
                             <td colspan="6">
@@ -1202,6 +1210,7 @@ function renderInventario() {
             </div>`;
         }
     }
+    _actualizarIndicadoresSort('panel-inventario', _sortInv);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1794,15 +1803,16 @@ function _initBindings() {
     });
     document.getElementById('confirmar-cancelar')?.addEventListener('click', () => { _confirmarCb = null; MM.cerrar('modal-confirmar'); });
 
-    // Ordenamiento de tablas al hacer clic en los headers
-    document.querySelectorAll('#panel-inventario th.th-sortable').forEach(th => {
-        th.addEventListener('click', () => {
-            const col = th.dataset.sort;
-            if (_sortInv.col === col) _sortInv.dir *= -1;
-            else { _sortInv.col = col; _sortInv.dir = 1; }
-            try { localStorage.setItem(APP_KEY + 'sort_inv', JSON.stringify(_sortInv)); } catch (_) { }
-            renderInventario();
-        });
+    // Ordenamiento de tablas con delegación de eventos (Soporta clics en la vista plana y agrupada)
+    document.getElementById('panel-inventario')?.addEventListener('click', e => {
+        const th = e.target.closest('th.th-sortable');
+        if (!th || !th.dataset.sort) return;
+        
+        const col = th.dataset.sort;
+        if (_sortInv.col === col) _sortInv.dir *= -1;
+        else { _sortInv.col = col; _sortInv.dir = 1; }
+        try { localStorage.setItem(APP_KEY + 'sort_inv', JSON.stringify(_sortInv)); } catch (_) { }
+        renderInventario();
     });
 
     document.querySelectorAll('#panel-servicio th.th-sortable').forEach(th => {
@@ -1950,6 +1960,18 @@ function _initBindings() {
         let startY = 0;
         let startX = 0;
 
+        // Función para guardar los grupos abiertos en LocalStorage (Solo si no hay búsqueda activa)
+        const guardarGruposAbiertos = () => {
+            const busq = normalizarTexto(document.getElementById('busq-global')?.value || '');
+            if (busq) return; // Evita machacar la configuración real con los resultados abiertos de la búsqueda
+            
+            const arr = [];
+            invGruposWrap.querySelectorAll('.inv-grupo-tr-header.open').forEach(el => {
+                if (el.dataset.grupoKey) arr.push(el.dataset.grupoKey);
+            });
+            localStorage.setItem(APP_KEY + 'grupos_abiertos', JSON.stringify(arr));
+        };
+
         // Función para recalcular la visibilidad de toda la tabla de una vez
         const syncGlobal = () => {
             const allMains = invGruposWrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
@@ -1972,7 +1994,6 @@ function _initBindings() {
 
         const cancelPress = () => clearTimeout(pressTimer);
 
-        // Detectar cuando se empieza a presionar
         invGruposWrap.addEventListener('pointerdown', e => {
             const header = e.target.closest('.inv-grupo-tr-header');
             if (!header) return;
@@ -1986,29 +2007,25 @@ function _initBindings() {
                 const isSub = header.classList.contains('inv-grupo-tr-sub');
                 const targetState = !header.classList.contains('open');
 
-                // Si el dispositivo lo soporta, damos un pequeño feedback táctil
                 if (navigator.vibrate) navigator.vibrate(40);
 
                 if (isSub) {
-                    // Mantener apretado un Subgrupo: Abrir/Cerrar todos los subgrupos
                     const allSubs = invGruposWrap.querySelectorAll('.inv-grupo-tr-sub');
                     allSubs.forEach(sub => sub.classList.toggle('open', targetState));
                 } else {
-                    // Mantener apretado un Grupo Principal: Abrir/Cerrar todos
                     const allMains = invGruposWrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
                     allMains.forEach(main => main.classList.toggle('open', targetState));
                     
-                    // Si la acción es CERRAR, también forzamos a cerrar los subgrupos
                     if (!targetState) {
                         const allSubs = invGruposWrap.querySelectorAll('.inv-grupo-tr-sub');
                         allSubs.forEach(sub => sub.classList.remove('open'));
                     }
                 }
                 syncGlobal();
-            }, 500); // 500 milisegundos para considerarlo "mantener presionado"
+                guardarGruposAbiertos(); // Almacenar estado macro
+            }, 500);
         });
 
-        // Cancelar el timer si el usuario suelta el click o scrollea (mueve el dedo)
         invGruposWrap.addEventListener('pointerup', cancelPress);
         invGruposWrap.addEventListener('pointercancel', cancelPress);
         invGruposWrap.addEventListener('pointermove', e => {
@@ -2017,7 +2034,6 @@ function _initBindings() {
             }
         });
 
-        // Lógica de clic normal
         invGruposWrap.addEventListener('click', e => {
             const tr = e.target.closest('tr[data-rack-id]');
             if (tr) { abrirModalEditarRack(tr.dataset.rackId); return; }
@@ -2025,14 +2041,12 @@ function _initBindings() {
             const header = e.target.closest('.inv-grupo-tr-header');
             if (!header) return;
 
-            // Si el clic fue parte de un "mantener presionado", lo ignoramos para no ejecutar la acción dos veces
             if (isLongPress) {
                 e.preventDefault();
                 e.stopPropagation();
                 return;
             }
 
-            // Expansión/Colapso individual (clic rápido normal)
             const isSub = header.classList.contains('inv-grupo-tr-sub');
             const isOpen = header.classList.toggle('open');
 
@@ -2055,6 +2069,7 @@ function _initBindings() {
                     next = next.nextElementSibling;
                 }
             }
+            guardarGruposAbiertos(); // Almacenar estado individual
         });
     }
 }

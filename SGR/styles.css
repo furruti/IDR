@@ -2115,9 +2115,7 @@ kbd {
 
 /* Sub-grupo (piso dentro de edificio) */
 .inv-grupo-tr-sub .inv-grupo-header {
-    padding-left: 1.5rem;
-    background: var(--bg-card);
-    border-top-color: transparent;
+    border-left: 2px solid var(--c-orange);
 }
 
 .inv-grupo-tr-sub .inv-grupo-header:hover {
