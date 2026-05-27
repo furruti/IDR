@@ -1073,7 +1073,7 @@ function _getGrupos(racks) {
             } else {
                 // Con pisos: grupo padre con subgrupos
                 const subgrupos = keys.map(piso => ({
-                    titulo: `PISO: ${piso}`,
+                    titulo: `${piso}`,
                     racks: pisos[piso],
                 }));
                 grupos.push({ titulo: ed, racks: [], totalCount: totalEd, subgrupos });
@@ -1943,38 +1943,120 @@ function _initBindings() {
     });
 
     // ── Colapso de grupos (delegado en el wrapper) ──
-    document.getElementById('inv-grupos-wrap')?.addEventListener('click', e => {
-        const tr = e.target.closest('tr[data-rack-id]');
-        if (tr) { abrirModalEditarRack(tr.dataset.rackId); return; }
-        const header = e.target.closest('.inv-grupo-tr-header');
-        if (!header) return;
+    const invGruposWrap = document.getElementById('inv-grupos-wrap');
+    if (invGruposWrap) {
+        let pressTimer = null;
+        let isLongPress = false;
+        let startY = 0;
+        let startX = 0;
 
-        const isSub = header.classList.contains('inv-grupo-tr-sub');
-        const isOpen = header.classList.toggle('open');
-
-        if (isSub) {
-            // Subgrupo (piso): mostrar/ocultar solo las filas de rack directas
-            let next = header.nextElementSibling;
-            while (next && !next.classList.contains('inv-grupo-tr-header')) {
-                next.hidden = !isOpen;
-                next = next.nextElementSibling;
-            }
-        } else {
-            // Grupo padre (edificio): mostrar/ocultar todos los hijos (sub-headers y sus filas)
-            let next = header.nextElementSibling;
-            while (next && next.classList.contains('inv-grupo-tr-header') && next.classList.contains('inv-grupo-tr-sub')) {
-                next.hidden = !isOpen;
-                // También ocultar/mostrar sus filas de rack según el estado abierto del sub-header
-                const subOpen = next.classList.contains('open');
-                let rack = next.nextElementSibling;
-                while (rack && !rack.classList.contains('inv-grupo-tr-header')) {
-                    rack.hidden = !isOpen || !subOpen;
-                    rack = rack.nextElementSibling;
+        // Función para recalcular la visibilidad de toda la tabla de una vez
+        const syncGlobal = () => {
+            const allMains = invGruposWrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
+            allMains.forEach(main => {
+                const isOpen = main.classList.contains('open');
+                let next = main.nextElementSibling;
+                let isSubOpen = true;
+                
+                while (next && !(next.classList.contains('inv-grupo-tr-header') && !next.classList.contains('inv-grupo-tr-sub'))) {
+                    if (next.classList.contains('inv-grupo-tr-sub')) {
+                        next.hidden = !isOpen;
+                        isSubOpen = next.classList.contains('open');
+                    } else {
+                        next.hidden = !isOpen || !isSubOpen;
+                    }
+                    next = next.nextElementSibling;
                 }
-                next = rack;
+            });
+        };
+
+        const cancelPress = () => clearTimeout(pressTimer);
+
+        // Detectar cuando se empieza a presionar
+        invGruposWrap.addEventListener('pointerdown', e => {
+            const header = e.target.closest('.inv-grupo-tr-header');
+            if (!header) return;
+            
+            isLongPress = false;
+            startY = e.clientY;
+            startX = e.clientX;
+
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                const isSub = header.classList.contains('inv-grupo-tr-sub');
+                const targetState = !header.classList.contains('open');
+
+                // Si el dispositivo lo soporta, damos un pequeño feedback táctil
+                if (navigator.vibrate) navigator.vibrate(40);
+
+                if (isSub) {
+                    // Mantener apretado un Subgrupo: Abrir/Cerrar todos los subgrupos
+                    const allSubs = invGruposWrap.querySelectorAll('.inv-grupo-tr-sub');
+                    allSubs.forEach(sub => sub.classList.toggle('open', targetState));
+                } else {
+                    // Mantener apretado un Grupo Principal: Abrir/Cerrar todos
+                    const allMains = invGruposWrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
+                    allMains.forEach(main => main.classList.toggle('open', targetState));
+                    
+                    // Si la acción es CERRAR, también forzamos a cerrar los subgrupos
+                    if (!targetState) {
+                        const allSubs = invGruposWrap.querySelectorAll('.inv-grupo-tr-sub');
+                        allSubs.forEach(sub => sub.classList.remove('open'));
+                    }
+                }
+                syncGlobal();
+            }, 500); // 500 milisegundos para considerarlo "mantener presionado"
+        });
+
+        // Cancelar el timer si el usuario suelta el click o scrollea (mueve el dedo)
+        invGruposWrap.addEventListener('pointerup', cancelPress);
+        invGruposWrap.addEventListener('pointercancel', cancelPress);
+        invGruposWrap.addEventListener('pointermove', e => {
+            if (Math.abs(e.clientY - startY) > 8 || Math.abs(e.clientX - startX) > 8) {
+                cancelPress();
             }
-        }
-    });
+        });
+
+        // Lógica de clic normal
+        invGruposWrap.addEventListener('click', e => {
+            const tr = e.target.closest('tr[data-rack-id]');
+            if (tr) { abrirModalEditarRack(tr.dataset.rackId); return; }
+            
+            const header = e.target.closest('.inv-grupo-tr-header');
+            if (!header) return;
+
+            // Si el clic fue parte de un "mantener presionado", lo ignoramos para no ejecutar la acción dos veces
+            if (isLongPress) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
+            // Expansión/Colapso individual (clic rápido normal)
+            const isSub = header.classList.contains('inv-grupo-tr-sub');
+            const isOpen = header.classList.toggle('open');
+
+            if (isSub) {
+                let next = header.nextElementSibling;
+                while (next && !next.classList.contains('inv-grupo-tr-header')) {
+                    next.hidden = !isOpen;
+                    next = next.nextElementSibling;
+                }
+            } else {
+                let next = header.nextElementSibling;
+                let isSubOpen = true; 
+                while (next && !(next.classList.contains('inv-grupo-tr-header') && !next.classList.contains('inv-grupo-tr-sub'))) {
+                    if (next.classList.contains('inv-grupo-tr-sub')) {
+                        next.hidden = !isOpen;
+                        isSubOpen = next.classList.contains('open');
+                    } else {
+                        next.hidden = !isOpen || !isSubOpen;
+                    }
+                    next = next.nextElementSibling;
+                }
+            }
+        });
+    }
 }
 
 if (document.readyState === 'loading') {
