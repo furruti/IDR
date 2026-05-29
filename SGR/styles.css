@@ -509,7 +509,9 @@ body.modal-open {
         transform 0.2s var(--t-popup);
 }
 
-.busq-filtro-menu.open {
+.busq-filtro-menu.open,
+.fab-menu.show,
+.inv-vista-menu.open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
@@ -524,7 +526,9 @@ body.modal-open {
     background: var(--bg-header);
 }
 
-.busq-filtro-header>span {
+.busq-filtro-header>span,
+.reporte-section-label,
+.inv-vista-label {
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -759,16 +763,19 @@ tbody td {
 }
 
 /* rack table badges */
-.rack-badge {
+.rack-badge,
+.badge {
     display: inline-flex;
     align-items: center;
-    font-size: 0.8rem;
     font-weight: 700;
     border-radius: var(--radius);
     padding: 0.15rem 0.6rem;
     white-space: nowrap;
     letter-spacing: 0.03em;
 }
+
+.rack-badge { font-size: 0.8rem; }
+.badge      { font-size: 0.7rem; }
 
 /* Columnas de tabla con ancho fijo */
 .col-estado {
@@ -854,8 +861,8 @@ input[type="number"] {
     /* Firefox */
 }
 
-label {
-    display: block;
+label,
+.ajustes-section-label {
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--text-muted);
@@ -864,6 +871,10 @@ label {
     letter-spacing: 0.04em;
     padding-left: 0.5rem;
 }
+
+label { display: block; }
+
+.ajustes-section-label { font-size: 0.7rem; }
 
 .form-row {
     display: grid;
@@ -888,16 +899,7 @@ label {
     color: var(--text-muted);
 }
 
-/* ── Ajustes ── */
-.ajustes-section-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    margin-bottom: 0.25rem;
-    padding-left: 0.5rem;
-}
+/* .ajustes-section-label — base heredada del selector agrupado con label */
 
 .ajustes-section-label+.ajustes-section-label,
 p+.ajustes-section-label {
@@ -1138,11 +1140,9 @@ input[type="file"].hidden {
     transform-origin: center;
 }
 
-/* ── Botón scroll top ── */
-.btn-scroll-top {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 5rem;
+/* ── Botón scroll top & FAB — base compartida ── */
+.btn-scroll-top,
+.fab-main-btn {
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -1152,14 +1152,28 @@ input[type="file"].hidden {
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.btn-scroll-top .svg-icon,
+.fab-main-btn .svg-icon {
+    width: 24px;
+    height: 24px;
+    fill: var(--c-white);
+}
+
+/* ── Botón scroll top ── */
+.btn-scroll-top {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 5rem;
     z-index: 150;
     opacity: 0;
     pointer-events: none;
     transform: translateY(20px) scale(0.9);
     transition: opacity 0.3s ease, transform 0.3s var(--t-spring), filter var(--t-fast);
-    border: none;
-    cursor: pointer;
-    padding: 0;
 }
 
 .btn-scroll-top.show {
@@ -1170,12 +1184,6 @@ input[type="file"].hidden {
 
 .btn-scroll-top:active {
     transform: scale(0.92);
-}
-
-.btn-scroll-top .svg-icon {
-    width: 24px;
-    height: 24px;
-    fill: var(--c-white);
 }
 
 .fab-menu-item {
@@ -1351,31 +1359,14 @@ input[type="file"].hidden {
     align-items: flex-end;
 }
 
-/* Ajustamos el tamaño a 46px y unificamos el color */
+/* ── FAB principal ── */
 .fab-main-btn {
-    background: var(--c-blue);
-    color: var(--c-white);
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    border: none;
-    cursor: pointer;
     transition: transform 0.25s var(--t-spring), filter var(--t-ui);
 }
 
 .fab-main-btn.active {
     transform: rotate(45deg);
     filter: brightness(0.85);
-}
-
-.fab-main-btn .svg-icon {
-    width: 24px;
-    height: 24px;
-    fill: var(--c-white);
 }
 
 .fab-menu {
@@ -1398,13 +1389,7 @@ input[type="file"].hidden {
     min-width: 210px;
 }
 
-.fab-menu.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-}
-
-/* Overlay del FAB: reutiliza los estilos de .modal pero sin contenido y con z-index menor */
+/* Overlay del FAB */
 .fab-overlay {
     z-index: 140;
     pointer-events: auto;
@@ -1538,17 +1523,6 @@ input[type="file"].hidden {
    ════════════════════════════════════════════════════════ */
 
 /* ── Badge ── */
-.badge {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.7rem;
-    font-weight: 700;
-    border-radius: var(--radius);
-    padding: 0.15rem 0.6rem;
-    white-space: nowrap;
-    letter-spacing: 0.03em;
-}
-
 .badge-gray {
     background: var(--input-bg);
     color: var(--text-muted);
@@ -1595,17 +1569,21 @@ input[type="file"].hidden {
     margin-bottom: 0;
 }
 
-.ajustes-gist-quick-btn {
-    flex-shrink: 0;
+.ajustes-gist-quick-btn,
+.btn-dark-mode-modal {
     width: 44px;
     padding: 0;
     border-radius: var(--radius);
     background: var(--input-bg);
     border: var(--border-w) solid var(--border);
-    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.ajustes-gist-quick-btn {
+    flex-shrink: 0;
+    color: var(--text-muted);
     transition: filter var(--t-fast), color var(--t-fast), border-color var(--t-fast);
     margin-bottom: 0;
 }
@@ -2068,12 +2046,6 @@ kbd {
         transform 0.2s var(--t-popup);
 }
 
-.inv-vista-menu.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-}
-
 .inv-vista-label {
     display: flex;
     justify-content: space-between;
@@ -2081,11 +2053,6 @@ kbd {
     padding: 0.6rem 0.85rem;
     border-bottom: var(--border-w) solid var(--border);
     background: var(--bg-header);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    text-transform: uppercase;
     margin: 0;
 }
 
@@ -2231,13 +2198,7 @@ kbd {
     margin-bottom: 0.75rem;
 }
 
-.reporte-section-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-}
+/* .reporte-section-label — tipografía heredada del selector agrupado con busq-filtro-header>span */
 
 .reporte-toggle-all-btn {
     background: none;
@@ -2321,16 +2282,9 @@ kbd {
 /* Estilo para el botón de modo oscuro dentro del modal de ajustes */
 .btn-dark-mode-modal {
     flex: none;
-    width: 44px;
     height: 44px;
-    padding: 0;
     border-radius: 50% !important;
-    background: var(--input-bg);
-    border: var(--border-w) solid var(--border);
     color: var(--text-main);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .btn-dark-mode-modal:hover {
