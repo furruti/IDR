@@ -610,12 +610,27 @@ body.modal-open {
    ════════════════════════════════════════════════════════ */
 
 /* ── Grid de Estadísticas del Dashboard ── */
-.dash-stats-grid {
+.dash-layout {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    /* Crea 3 columnas iguales */
+    grid-template-columns: 70% 1fr;
     gap: 0.75rem;
     align-items: start;
+    margin-bottom: 0.75rem;
+}
+
+.dash-resumen-col {
+    margin-bottom: 0;
+}
+
+.dash-chips-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 /* ── Card ── */
@@ -1731,14 +1746,19 @@ input[type="file"].hidden {
 }
 
 @media (max-width: 700px) {
-    .dash-stats-grid {
+    .dash-layout {
         grid-template-columns: 1fr;
     }
 
-    /* Limpiamos las reglas viejas que aplastaban el chip */
+    .dash-stats-grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
     .stat-chip {
         width: 100%;
         min-width: 0;
+        flex: 1 1 140px;
     }
 
     .form-row,
@@ -2011,17 +2031,15 @@ kbd {
 }
 
 .card-action-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-sm);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     color: var(--text-muted);
     transition: color var(--t-fast), background var(--t-fast);
 }
 
-.card-action-btn:hover,
-.card-action-btn.activo {
-    color: var(--text-main);
-    background: var(--input-bg);
+.card-action-btn:hover {
+    filter: var(--hover);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -2141,8 +2159,8 @@ kbd {
     font-size: 0.75rem;
     font-weight: 600;
     background: transparent;
-    border: 1.5px solid var(--c-orange);
-    border-radius: 999px;
+    border: 1px solid var(--c-orange);
+    border-radius: var(--radius);
     padding: 0.1rem 0.55rem;
     color: var(--c-orange);
     flex-shrink: 0;
@@ -2150,7 +2168,6 @@ kbd {
 
 /* Sub-grupo (piso dentro de edificio) */
 .inv-grupo-tr-sub .inv-grupo-header {
-    border-left: 2px solid var(--c-orange);
     border-bottom: none;
 }
 
@@ -2164,6 +2181,8 @@ kbd {
     color: var(--text-muted);
     text-transform: none;
     letter-spacing: 0.02em;
+    padding-left: 1rem;
+    border-left: 2px solid var(--c-orange);
 }
 
 .inv-grupo-tr-sub .inv-grupo-chevron {
@@ -2291,3 +2310,123 @@ kbd {
     filter: var(--hover);
 }
 
+
+/* ════════════════════════════════════════════════════════
+   CARD RESUMEN DE RACKS (dashboard)
+   ════════════════════════════════════════════════════════ */
+
+.resumen-edificio-selector {
+    margin-left: auto;
+}
+
+.resumen-edificio-selector select {
+    width: auto;
+    height: 34px;
+    font-size: 0.82rem;
+    padding: 0 0.65rem;
+    border-radius: var(--radius-sm);
+    min-width: 160px;
+    cursor: pointer;
+}
+
+.resumen-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    table-layout: auto;
+}
+
+.resumen-th-activo {
+    text-align: left;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    width: 100%;
+}
+
+.resumen-th-num {
+    text-align: right;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.resumen-th-total {
+    color: var(--c-blue);
+}
+
+.resumen-fila td {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.resumen-fila:last-child td {
+    border-bottom: none;
+}
+
+.resumen-td-label {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.resumen-td-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.resumen-td-total {
+    color: var(--c-blue);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.resumen-td-con {
+    color: var(--c-green);
+}
+
+.resumen-td-sin {
+    color: var(--c-red);
+}
+
+.resumen-td-rel {
+    color: var(--text-muted);
+}
+
+/* Sub-filas (en uso / depósito) */
+.resumen-fila-sub .resumen-td-label {
+    padding-left: 2rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.resumen-fila-sub .resumen-td-num {
+    font-weight: 500;
+    font-size: 0.88rem;
+}
+
+.resumen-fila-sub .resumen-td-total {
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+/* Fila de inventario disponible */
+.resumen-fila-inv .resumen-td-label {
+    color: var(--c-green);
+    font-weight: 600;
+}
+
+.resumen-fila-inv .resumen-td-total {
+    color: var(--c-green);
+}

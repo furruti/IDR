@@ -44,7 +44,7 @@
             <symbol id="icon-dashboard" viewBox="0 0 24 24">
                 <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
             </symbol>
-            <symbol id="icon-service" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            <symbol id="icon-pc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="3" width="20" height="14" rx="2" />
                 <path d="M8 21h8M12 17v4" />
@@ -180,6 +180,9 @@
                 stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9" />
             </symbol>
+            <symbol id="icon-plus" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+            </symbol>
             <symbol id="icon-baja" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -262,7 +265,7 @@
             </button>
             <button class="tab-btn" id="tab-servicio">
                 <svg class="svg-icon">
-                    <use href="#icon-service" />
+                    <use href="#icon-rack" />
                 </svg> Servicio
             </button>
             <button class="tab-btn" id="tab-inventario">
@@ -298,7 +301,25 @@
 
         <!-- ═══ PANEL DASHBOARD ═══ -->
         <div class="tab-panel activa" id="panel-dashboard">
-            <div class="dash-stats-grid" id="stats-grid"></div>
+            <div class="dash-layout">
+                <!-- Tarjeta resumen de racks (70%) -->
+                <div class="card card-no-mb dash-resumen-col" id="card-resumen-racks">
+                    <div class="card-header">
+                        <svg class="svg-icon"><use href="#icon-rack" /></svg>
+                        <h2>Resumen de Racks</h2>
+                        <div class="resumen-edificio-selector">
+                            <select id="resumen-edificio-select">
+                                <option value="">Todos los edificios</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="resumen-racks-tabla"></div>
+                </div>
+                <!-- Chips de stats (30%) -->
+                <div class="dash-chips-col">
+                    <div class="dash-stats-grid" id="stats-grid"></div>
+                </div>
+            </div>
         </div>
 
         <!-- ═══ PANEL SERVICIO ═══ -->
@@ -306,7 +327,7 @@
             <div class="card card-no-mb">
                 <div class="card-header">
                     <svg class="svg-icon">
-                        <use href="#icon-service" />
+                        <use href="#icon-rack" />
                     </svg>
                     <h2>Racks en Servicio</h2>
                     <span id="servicio-count" class="badge badge-gray">0</span>
@@ -386,13 +407,13 @@
         <div class="fab-menu" id="fab-menu">
             <button class="fab-menu-item" id="fab-nuevo-rack">
                 <svg class="svg-icon">
-                    <use href="#icon-rack" />
+                    <use href="#icon-plus" />
                 </svg>
                 <span>Ingreso de rack</span>
             </button>
             <button class="fab-menu-item" id="fab-rack-servicio">
                 <svg class="svg-icon">
-                    <use href="#icon-service" />
+                    <use href="#icon-rack" />
                 </svg>
                 <span>Rack en servicio</span>
             </button>
@@ -417,7 +438,7 @@
         <div class="modal-content modal-content-md">
             <div class="modal-header">
                 <h3><svg class="svg-icon">
-                        <use href="#icon-service" />
+                        <use href="#icon-rack" />
                     </svg> Poner en servicio</h3>
             </div>
             <div class="modal-body modal-body-pb">
@@ -467,7 +488,7 @@
         <div class="modal-content modal-content-md">
             <div class="modal-header">
                 <h3><svg class="svg-icon">
-                        <use href="#icon-rack" />
+                        <use href="#icon-plus" />
                     </svg> Ingreso de rack</h3>
             </div>
             <div class="modal-body modal-body-pb">
@@ -519,7 +540,7 @@
         <div class="modal-content modal-content-md">
             <div class="modal-header">
                 <h3><svg class="svg-icon">
-                        <use href="#icon-service" />
+                        <use href="#icon-rack" />
                     </svg> Editar Servicio</h3>
             </div>
             <div class="modal-body modal-body-pb">

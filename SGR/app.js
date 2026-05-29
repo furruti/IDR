@@ -385,7 +385,7 @@ function toggleFab() {
 //  TABS
 // ═══════════════════════════════════════════════════════
 let _tabActual = 'dashboard';
-const TAB_ICONS = { dashboard: '#icon-dashboard', servicio: '#icon-service', inventario: '#icon-inventory' };
+const TAB_ICONS = { dashboard: '#icon-dashboard', servicio: '#icon-rack', inventario: '#icon-inventory' };
 const TAB_LABELS = { dashboard: 'Dashboard', servicio: 'Servicio', inventario: 'Inventario' };
 
 function switchTab(tab) {
@@ -1011,6 +1011,88 @@ function renderDashboard() {
         </div>
         `;
 
+    _poblarSelectResumen();
+    renderResumenRacks();
+
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESUMEN DE RACKS (card dashboard)
+// ═══════════════════════════════════════════════════════
+
+function _poblarSelectResumen() {
+    const sel = document.getElementById('resumen-edificio-select');
+    if (!sel) return;
+    const valorActual = sel.value;
+    sel.innerHTML = '<option value="">Todos los edificios</option>';
+    state.edificios.forEach(ed => {
+        const opt = document.createElement('option');
+        opt.value = ed;
+        opt.textContent = ed;
+        sel.appendChild(opt);
+    });
+    // Restaurar selección si el edificio sigue existiendo
+    if (valorActual && state.edificios.includes(valorActual)) sel.value = valorActual;
+}
+
+function renderResumenRacks() {
+    const contenedor = document.getElementById('resumen-racks-tabla');
+    if (!contenedor) return;
+
+    const edificioFiltro = document.getElementById('resumen-edificio-select')?.value || '';
+
+    // Racks en servicio filtrados por edificio
+    const enServicio = state.racks.filter(r =>
+        r.estado === 'servicio' && (!edificioFiltro || r.edificio === edificioFiltro)
+    );
+    const enInventario = state.racks.filter(r =>
+        r.estado !== 'servicio' && r.estado !== 'baja'
+    );
+
+    const _patNorm = r => (r.patrimonio || '').trim().toLowerCase();
+    const conPat  = r => { const p = _patNorm(r); return p && p !== 'relevar' && p !== 'no'; };
+    const sinPat  = r => _patNorm(r) === 'no';
+    const sinRel  = r => { const p = _patNorm(r); return !p || p === 'relevar'; };
+
+    const totalRacks = edificioFiltro
+        ? enServicio
+        : state.racks.filter(r => r.estado !== 'baja');
+
+    const filas = [
+        {
+            label: 'Racks (todos)',
+            total: totalRacks.length,
+            conP:  totalRacks.filter(conPat).length,
+            sinP:  totalRacks.filter(sinPat).length,
+            sinR:  totalRacks.filter(sinRel).length,
+            cls:   '',
+        },
+    ];
+
+    contenedor.innerHTML = `
+        <div class="table-wrap">
+            <table class="resumen-table">
+                <thead>
+                    <tr>
+                        <th class="resumen-th-activo">ACTIVO</th>
+                        <th class="resumen-th-num resumen-th-total">TOTAL</th>
+                        <th class="resumen-th-num">CON PAT.</th>
+                        <th class="resumen-th-num">SIN PAT.</th>
+                        <th class="resumen-th-num">SIN REL.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filas.map(f => `
+                    <tr class="resumen-fila ${f.cls}">
+                        <td class="resumen-td-label">${esc(f.label)}</td>
+                        <td class="resumen-td-num resumen-td-total">${f.total}</td>
+                        <td class="resumen-td-num resumen-td-con">${f.conP}</td>
+                        <td class="resumen-td-num resumen-td-sin">${f.sinP}</td>
+                        <td class="resumen-td-num resumen-td-rel">${f.sinR}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1244,7 +1326,7 @@ function renderInventario() {
                         return `<tr class="inv-grupo-tr-header inv-grupo-tr-sub${subOpen ? ' open' : ''}" data-grupo-key="${esc(subKey)}"${isOpen ? '' : ' hidden'}>
                             <td colspan="6">
                                 <div class="inv-grupo-header inv-grupo-header-sub">
-                                    <span class="inv-grupo-titulo">${esc(sg.titulo)}</span>
+                                    <span class="inv-grupo-titulo">PISO: ${esc(sg.titulo)}</span>
                                     <span class="inv-grupo-badge">${sg.racks.length}</span>
                                     <svg class="svg-icon inv-grupo-chevron"><use href="#icon-chevron-right"/></svg>
                                 </div>
@@ -1974,6 +2056,7 @@ function _initBindings() {
 
     document.getElementById('ajustes-edificios-btn')?.addEventListener('click', () => GestorEdificios.abrir());
 
+    document.getElementById('resumen-edificio-select')?.addEventListener('change', renderResumenRacks);
     // Ajustes
     document.getElementById('ajustes-cerrar-btn')?.addEventListener('click', () => UI.cerrarAjustes());
     document.getElementById('ajustes-exportar-btn')?.addEventListener('click', exportarDatos);
