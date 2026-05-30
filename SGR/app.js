@@ -1023,39 +1023,58 @@ function _poblarSelectResumen() {
     const sel = document.getElementById('resumen-edificio-select');
     if (!sel) return;
     const valorActual = sel.value;
-    sel.innerHTML = '<option value="">Todos los edificios</option>';
+    sel.innerHTML = '<option value="">Todos</option>';
+    const ESTADOS_EXTRA = [
+        { value: '__inventario__', label: 'Disponible' },
+        { value: '__baja__',       label: 'Baja' },
+    ];
+    ESTADOS_EXTRA.forEach(({ value, label }) => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        sel.appendChild(opt);
+    });
+    if (state.edificios.length) {
+        const sep = document.createElement('option');
+        sep.disabled = true;
+        sep.textContent = '──────────';
+        sel.appendChild(sep);
+    }
     state.edificios.forEach(ed => {
         const opt = document.createElement('option');
         opt.value = ed;
         opt.textContent = ed;
         sel.appendChild(opt);
     });
-    // Restaurar selección si el edificio sigue existiendo
-    if (valorActual && state.edificios.includes(valorActual)) sel.value = valorActual;
+    // Restaurar selección si sigue siendo válida
+    const valoresValidos = ['', '__inventario__', '__baja__', ...state.edificios];
+    if (valoresValidos.includes(valorActual)) sel.value = valorActual;
 }
 
 function renderResumenRacks() {
     const contenedor = document.getElementById('resumen-racks-tabla');
     if (!contenedor) return;
 
-    const edificioFiltro = document.getElementById('resumen-edificio-select')?.value || '';
-
-    // Racks en servicio filtrados por edificio
-    const enServicio = state.racks.filter(r =>
-        r.estado === 'servicio' && (!edificioFiltro || r.edificio === edificioFiltro)
-    );
-    const enInventario = state.racks.filter(r =>
-        r.estado !== 'servicio' && r.estado !== 'baja'
-    );
+    const filtroVal = document.getElementById('resumen-edificio-select')?.value || '';
+    const edificioFiltro = (filtroVal && filtroVal !== '__inventario__' && filtroVal !== '__baja__') ? filtroVal : '';
 
     const _patNorm = r => (r.patrimonio || '').trim().toLowerCase();
     const conPat  = r => { const p = _patNorm(r); return p && p !== 'relevar' && p !== 'no'; };
     const sinPat  = r => _patNorm(r) === 'no';
     const sinRel  = r => { const p = _patNorm(r); return !p || p === 'relevar'; };
 
-    const totalRacks = edificioFiltro
-        ? enServicio
-        : state.racks.filter(r => r.estado !== 'baja');
+    let totalRacks;
+    if (filtroVal === '__inventario__') {
+        totalRacks = state.racks.filter(r => r.estado === 'inventario');
+    } else if (filtroVal === '__baja__') {
+        totalRacks = state.racks.filter(r => r.estado === 'baja');
+    } else if (edificioFiltro) {
+        totalRacks = state.racks.filter(r => r.estado === 'servicio' && r.edificio === edificioFiltro);
+    } else {
+        totalRacks = state.racks;
+    }
+
+    const totalGeneral = state.racks.length;
 
     const filas = [
         {
@@ -1083,10 +1102,11 @@ function renderResumenRacks() {
                 <tbody>
                     ${filas.map(f => {
                         const pct = n => f.total > 0 ? ` <span class="resumen-pct">(${Math.round((n / f.total) * 100)}%)</span>` : '';
+                        const pctTotal = totalGeneral > 0 ? ` <span class="resumen-pct">(${Math.round((f.total / totalGeneral) * 100)}%)</span>` : '';
                         return `
                     <tr class="resumen-fila ${f.cls}">
                         <td class="resumen-td-label">${esc(f.label)}</td>
-                        <td class="resumen-td-num resumen-td-total">${f.total}</td>
+                        <td class="resumen-td-num resumen-td-total">${f.total}${pctTotal}</td>
                         <td class="resumen-td-num resumen-td-con">${f.conP}${pct(f.conP)}</td>
                         <td class="resumen-td-num resumen-td-sin">${f.sinP}${pct(f.sinP)}</td>
                         <td class="resumen-td-num resumen-td-rel">${f.sinR}${pct(f.sinR)}</td>

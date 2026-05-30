@@ -2383,7 +2383,7 @@ kbd {
 }
 
 .resumen-th-total {
-    color: var(--c-blue);
+    color: var(--text-muted);
 }
 
 .resumen-fila td {
@@ -2409,17 +2409,17 @@ kbd {
 }
 
 .resumen-td-total {
-    color: var(--c-blue);
+    color: var(--text-muted);
     font-weight: 700;
     font-size: var(--fs-lg);
 }
 
 .resumen-td-con {
-    color: var(--c-green);
+    color: var(--text-muted);
 }
 
 .resumen-td-sin {
-    color: var(--c-red);
+    color: var(--text-muted);
 }
 
 .resumen-td-rel {
