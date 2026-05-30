@@ -1237,6 +1237,21 @@ function _getGrupos(racks) {
         return grupos;
     }
 
+    if (_agrupInv === 'unidades') {
+        const porU = {};
+        racks.forEach(r => {
+            const key = r.unidades != null ? `${r.unidades}U` : 'Sin especificar';
+            if (!porU[key]) porU[key] = { u: r.unidades, racks: [] };
+            porU[key].racks.push(r);
+        });
+        return Object.keys(porU).sort((a, b) => {
+            const ua = porU[a].u, ub = porU[b].u;
+            if (ua == null) return 1;
+            if (ub == null) return -1;
+            return ua - ub;
+        }).map(k => ({ titulo: k, racks: porU[k].racks }));
+    }
+
     return null;
 }
 
@@ -2206,6 +2221,7 @@ function _initBindings() {
             <button class="inv-vista-opt" data-agrup="patrimonio">Patrimonio</button>
             <button class="inv-vista-opt" data-agrup="estado">Estado</button>
             <button class="inv-vista-opt" data-agrup="edificio">Edificio</button>
+            <button class="inv-vista-opt" data-agrup="unidades">Unidades</button>
         `;
         // Mover al body para evitar clipping del card
         document.body.appendChild(vistaMenu);

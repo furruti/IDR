@@ -9,7 +9,7 @@
          style-src 'self';
          img-src 'self' data: blob:; 
          font-src 'self' data:; 
-         connect-src 'self' https://api.github.com; 
+         connect-src 'self' https://api.github.com https://raw.githubusercontent.com; 
          object-src 'none'; 
          base-uri 'none'; 
          form-action 'none'; 
@@ -494,7 +494,7 @@
             <div class="modal-body modal-body-pb">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Patrimonio <span class="required">*</span></label>
+                        <label>Patrimonio</label>
                         <input type="text" id="rack-patrimonio-nuevo" placeholder="ej: 48491" maxlength="30"
                             autocomplete="off">
                     </div>
