@@ -1275,7 +1275,7 @@ input[type="file"].hidden {
     border-top: 1px solid var(--border);
 }
 
-.modal-footer button:not(.btn-dark-mode-modal) {
+.modal-footer button:not(.btn-dark-mode-modal):not(.btn-icon-only) {
     flex: 1;
 }
 

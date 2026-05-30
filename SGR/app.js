@@ -833,8 +833,9 @@ const ESTADO_BADGE = {
 };
 function _badgeEstado(r) {
     if (r.estado === 'servicio') {
-        const label = r.numero ? esc(r.numero) : 'En servicio';
-        return `<span class="rack-badge rack-badge-servicio">${label}</span>`;
+        const num = r.numero ? esc(r.numero) : 'En servicio';
+        const dep = r.dependencia ? ` <span class="rack-badge-dep">— ${esc(r.dependencia)}</span>` : '';
+        return `<span class="rack-badge rack-badge-servicio rack-badge-servicio--con-dep">${num}${dep}</span>`;
     }
     return ESTADO_BADGE[r.estado] || '';
 }

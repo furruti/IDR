@@ -765,7 +765,13 @@
                     </svg> Edificios</h3>
             </div>
             <div class="modal-body modal-body-pb">
-                <p class="ajustes-section-label">Agregar</p>
+                <p class="ajustes-section-label">Lista</p>
+                <ul class="edificios-lista" id="edificios-lista">
+                    <!-- poblado por JS -->
+                </ul>
+                <p class="edificios-empty td-muted td-sm hidden" id="edificios-empty">No hay edificios registrados.</p>
+            </div>
+            <div class="modal-footer modal-footer-col">
                 <div class="edificios-add-row">
                     <input type="text" id="edificios-nuevo-input" placeholder="Nombre del edificio…" maxlength="80"
                         autocomplete="off">
@@ -775,13 +781,6 @@
                         </svg>
                     </button>
                 </div>
-                <p class="ajustes-section-label ajustes-section-label-mt">Lista</p>
-                <ul class="edificios-lista" id="edificios-lista">
-                    <!-- poblado por JS -->
-                </ul>
-                <p class="edificios-empty td-muted td-sm hidden" id="edificios-empty">No hay edificios registrados.</p>
-            </div>
-            <div class="modal-footer">
                 <button class="btn-full" id="edificios-cerrar-btn">
                     <svg class="svg-icon">
                         <use href="#icon-back" />
