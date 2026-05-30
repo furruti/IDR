@@ -1505,7 +1505,10 @@ input[type="file"].hidden {
     background: var(--c-blue);
 }
 
-.rack-dist-bar-fill.dist-servicio,
+.rack-dist-bar-fill.dist-servicio {
+    background: var(--c-green);
+}
+
 .rack-dist-bar-fill.dist-baja,
 .btn-input-side--baja {
     background: var(--c-red);
@@ -1813,6 +1816,14 @@ input[type="file"].hidden {
     align-items: center;
     justify-content: center;
     transition: color var(--t-fast), filter var(--t-fast);
+}
+
+.btn-input-side.btn-input-side--baja {
+    background: var(--c-red);
+}
+
+.btn-input-side.btn-input-side--baja.btn-baja--reactivar {
+    background: var(--c-green);
 }
 
 .btn-input-side[hidden] {
