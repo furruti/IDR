@@ -67,6 +67,14 @@
     --t-collapse: 0.35s cubic-bezier(0.25, 1, 0.5, 1);
     --t-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --t-spring-soft: cubic-bezier(0.34, 1.3, 0.64, 1);
+    --t-theme: 0.3s ease;
+
+    /* Escala tipográfica */
+    --fs-xs:   0.72rem;   /* badges, labels caps, thead */
+    --fs-sm:   0.80rem;   /* texto secundario, rack-badge */
+    --fs-base: 0.88rem;   /* tabla, items de lista */
+    --fs-md:   0.92rem;   /* inputs, botones, texto normal */
+    --fs-lg:   1rem;      /* modal-header, stat-chip-label */
 }
 
 /* ════════════════════════════════════════════════════════
@@ -88,10 +96,6 @@ html.dark-mode body {
     --hover: brightness(1.2);
 }
 
-html.dark-mode .th-sortable:hover {
-    background: rgba(255, 255, 255, 0.03);
-}
-
 
 /* ════════════════════════════════════════════════════════
    RESET & BASE
@@ -105,7 +109,7 @@ body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-body);
     color: var(--text-main);
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background var(--t-theme), color var(--t-theme);
     min-height: 100vh;
 }
 
@@ -252,7 +256,7 @@ body.modal-open {
 }
 
 .card-header h2 {
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
     font-weight: 700;
     flex: 1;
     letter-spacing: -0.01em;
@@ -267,13 +271,13 @@ body.modal-open {
 }
 
 .modal-header h3 {
-    font-size: 1rem;
+    font-size: var(--fs-lg);
     font-weight: 700;
 }
 
 .modal-header-version {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: var(--fs-sm);
+    font-weight: 700;
     color: var(--text-muted);
     letter-spacing: 0.04em;
 }
@@ -321,8 +325,8 @@ body.modal-open {
 .tab-btn {
     flex: 1;
     padding: 0.55rem 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: var(--fs-base);
+    font-weight: 700;
     background: transparent;
     border: none;
     border-radius: var(--radius);
@@ -529,7 +533,7 @@ body.modal-open {
 .busq-filtro-header>span,
 .reporte-section-label,
 .inv-vista-label {
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     font-weight: 700;
     letter-spacing: 0.08em;
     color: var(--text-muted);
@@ -540,7 +544,7 @@ body.modal-open {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     padding: 0.15rem 0.4rem;
     border-radius: var(--radius-sm);
@@ -563,7 +567,7 @@ body.modal-open {
     justify-content: space-between;
     padding: 0.6rem 0.85rem;
     cursor: pointer;
-    font-size: 0.88rem;
+    font-size: var(--fs-base);
     transition: background var(--t-fast);
     user-select: none;
     overflow: hidden;
@@ -580,7 +584,7 @@ body.modal-open {
 
 .busq-filtro-item span {
     color: var(--c-green);
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -589,7 +593,7 @@ body.modal-open {
 .busq-filtro-item::after {
     content: '\2713';
     color: var(--c-green);
-    font-size: 1rem;
+    font-size: var(--fs-lg);
     font-weight: 700;
     flex-shrink: 0;
     margin-left: 0.3rem;
@@ -701,14 +705,14 @@ body.modal-open {
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    font-size: var(--fs-base);
     table-layout: fixed;
 }
 
 thead th {
     text-align: left;
     padding: 0.6rem 0.85rem;
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -755,7 +759,7 @@ tbody td {
 }
 
 .empty-state p {
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
 }
 
 /* Celdas de tabla */
@@ -770,7 +774,7 @@ tbody td {
 }
 
 .td-sm {
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
 }
 
 .td-center {
@@ -789,8 +793,8 @@ tbody td {
     letter-spacing: 0.03em;
 }
 
-.rack-badge { font-size: 0.8rem; }
-.badge      { font-size: 0.7rem; }
+.rack-badge { font-size: var(--fs-sm); }
+.badge      { font-size: var(--fs-xs); }
 
 /* Columnas de tabla con ancho fijo */
 .col-estado {
@@ -835,7 +839,7 @@ textarea {
     padding: 0.65rem 0.85rem;
     border: var(--border-w) solid var(--border);
     border-radius: var(--radius);
-    font-size: 0.95rem;
+    font-size: var(--fs-md);
     background: var(--input-bg);
     color: var(--text-main);
     height: 44px;
@@ -878,7 +882,7 @@ input[type="number"] {
 
 label,
 .ajustes-section-label {
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     font-weight: 600;
     color: var(--text-muted);
     margin-bottom: 0.25rem;
@@ -889,7 +893,7 @@ label,
 
 label { display: block; }
 
-.ajustes-section-label { font-size: 0.7rem; }
+.ajustes-section-label { font-size: var(--fs-xs); }
 
 .form-row {
     display: grid;
@@ -907,7 +911,7 @@ label { display: block; }
 }
 
 .stat-chip-label {
-    font-size: 1rem;
+    font-size: var(--fs-lg);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -1014,8 +1018,8 @@ input[type="file"].hidden {
     gap: 0.5rem;
     padding: 0.7rem 0.5rem;
     border-radius: var(--radius);
-    font-size: 0.92rem;
-    font-weight: 600;
+    font-size: var(--fs-md);
+    font-weight: 700;
     cursor: pointer;
     border: 1px solid var(--border);
     background: var(--input-bg);
@@ -1029,7 +1033,7 @@ input[type="file"].hidden {
 }
 
 .btn-gist-action:not(:disabled):hover {
-    filter: brightness(0.95);
+    filter: var(--hover);
 }
 
 .gist-autosync-row {
@@ -1052,13 +1056,13 @@ input[type="file"].hidden {
 }
 
 .gist-autosync-title {
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
     font-weight: 500;
     color: var(--text-main);
 }
 
 .gist-privacy-note {
-    font-size: 0.74rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     background: var(--input-bg);
     border-radius: var(--radius-sm);
@@ -1069,7 +1073,7 @@ input[type="file"].hidden {
 
 /* Label de distribución coloreado */
 .rack-dist-label {
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     font-weight: 700;
     min-width: 85px;
 }
@@ -1214,7 +1218,7 @@ input[type="file"].hidden {
     text-align: left;
     cursor: pointer;
     border-radius: var(--radius);
-    font-size: 0.95rem;
+    font-size: var(--fs-md);
     transition: background-color var(--t-fast);
 }
 
@@ -1256,7 +1260,7 @@ input[type="file"].hidden {
     border: 1px solid color-mix(in srgb, var(--c-red) 40%, transparent);
     border-radius: var(--radius);
     color: var(--c-red);
-    font-size: 0.88rem;
+    font-size: var(--fs-base);
     font-weight: 500;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
@@ -1348,7 +1352,7 @@ input[type="file"].hidden {
 
 /* ── Confirmar ── */
 .confirmar-texto {
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
     color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
@@ -1453,7 +1457,7 @@ input[type="file"].hidden {
 }
 
 .stat-chip-sub {
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
 }
 
@@ -1526,7 +1530,7 @@ input[type="file"].hidden {
 }
 
 .rack-dist-count {
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     font-weight: 600;
     color: var(--text-muted);
     text-align: right;
@@ -1553,7 +1557,7 @@ input[type="file"].hidden {
     background: var(--input-bg);
     border: var(--border-w) solid var(--border);
     border-radius: var(--radius);
-    font-size: 0.92rem;
+    font-size: var(--fs-md);
     font-weight: 500;
     cursor: pointer;
     text-align: left;
@@ -1604,7 +1608,7 @@ input[type="file"].hidden {
 }
 
 .gist-sync-status {
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     text-align: right;
     min-height: 1.2em;
@@ -1655,7 +1659,7 @@ input[type="file"].hidden {
 }
 
 .import-sub {
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     font-weight: 400;
 }
@@ -1696,7 +1700,7 @@ input[type="file"].hidden {
     justify-content: center;
     text-align: center;
     gap: 0.6rem;
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
     font-weight: 500;
     pointer-events: none;
     max-width: 380px;
@@ -1842,8 +1846,8 @@ button {
     padding: 0.75rem 1rem;
     border: 1px solid transparent;
     border-radius: var(--radius);
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: var(--fs-md);
     cursor: pointer;
     transition: filter var(--t-fast), transform var(--t-fast);
     display: inline-flex;
@@ -1893,7 +1897,7 @@ kbd {
     border-radius: var(--radius-sm);
     padding: 0.15rem 0.45rem;
     font-family: inherit;
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     font-weight: 600;
     color: var(--text-main);
     box-shadow: 0 1px 0 var(--border);
@@ -2004,7 +2008,7 @@ kbd {
 
 .edificios-item-nombre {
     flex: 1;
-    font-size: 0.92rem;
+    font-size: var(--fs-md);
     font-weight: 500;
 }
 
@@ -2079,7 +2083,7 @@ kbd {
     align-items: center;
     width: 100%;
     padding: 0.6rem 0.85rem;
-    font-size: 0.88rem;
+    font-size: var(--fs-base);
     font-weight: 500;
     text-align: left;
     background: var(--bg-card);
@@ -2148,7 +2152,7 @@ kbd {
 }
 
 .inv-grupo-titulo {
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -2156,8 +2160,8 @@ kbd {
 }
 
 .inv-grupo-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: var(--fs-xs);
+    font-weight: 700;
     background: transparent;
     border: 1px solid var(--c-orange);
     border-radius: var(--radius);
@@ -2176,7 +2180,7 @@ kbd {
 }
 
 .inv-grupo-tr-sub .inv-grupo-titulo {
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     font-weight: 600;
     color: var(--text-muted);
     text-transform: none;
@@ -2200,7 +2204,7 @@ kbd {
 }
 
 .inv-grupo-tr-sub .inv-grupo-badge {
-    font-size: 0.7rem;
+    font-size: var(--fs-xs);
     padding: 0.05rem 0.45rem;
     border-color: var(--text-muted);
     color: var(--text-muted);
@@ -2223,7 +2227,7 @@ kbd {
     background: none;
     border: none;
     padding: 0;
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
     font-weight: 500;
     cursor: pointer;
     transition: opacity var(--t-fast);
@@ -2274,7 +2278,7 @@ kbd {
 }
 
 .reporte-grupo-nombre {
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
     font-weight: 700;
     color: var(--text-main);
     text-transform: uppercase;
@@ -2282,7 +2286,7 @@ kbd {
 }
 
 .reporte-grupo-sub {
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -2322,7 +2326,7 @@ kbd {
 .resumen-edificio-selector select {
     width: auto;
     height: 34px;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     padding: 0 0.65rem;
     border-radius: var(--radius-sm);
     min-width: 160px;
@@ -2332,14 +2336,14 @@ kbd {
 .resumen-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    font-size: var(--fs-base);
     table-layout: auto;
 }
 
 .resumen-th-activo {
     text-align: left;
     padding: 0.55rem 0.85rem;
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -2351,7 +2355,7 @@ kbd {
 .resumen-th-num {
     text-align: right;
     padding: 0.55rem 0.85rem;
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -2375,20 +2379,20 @@ kbd {
 }
 
 .resumen-td-label {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-main);
 }
 
 .resumen-td-num {
     text-align: right;
     font-variant-numeric: tabular-nums;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .resumen-td-total {
     color: var(--c-blue);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: var(--fs-lg);
 }
 
 .resumen-td-con {
@@ -2408,23 +2412,23 @@ kbd {
     padding-left: 2rem;
     font-weight: 500;
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: var(--fs-base);
 }
 
 .resumen-fila-sub .resumen-td-num {
     font-weight: 500;
-    font-size: 0.88rem;
+    font-size: var(--fs-base);
 }
 
 .resumen-fila-sub .resumen-td-total {
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: var(--fs-base);
+    font-weight: 700;
 }
 
 /* Fila de inventario disponible */
 .resumen-fila-inv .resumen-td-label {
     color: var(--c-green);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .resumen-fila-inv .resumen-td-total {
