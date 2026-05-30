@@ -2354,7 +2354,7 @@ kbd {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--fs-base);
-    table-layout: auto;
+    table-layout: fixed;
 }
 
 .resumen-th-activo {
@@ -2379,7 +2379,7 @@ kbd {
     color: var(--text-muted);
     border-bottom: 2px solid var(--border);
     white-space: nowrap;
-    min-width: 70px;
+    width: 100px;
 }
 
 .resumen-th-total {
@@ -2404,6 +2404,8 @@ kbd {
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .resumen-td-total {
@@ -2422,6 +2424,13 @@ kbd {
 
 .resumen-td-rel {
     color: var(--text-muted);
+}
+
+.resumen-pct {
+    font-size: var(--fs-xs, 0.7rem);
+    font-weight: 400;
+    opacity: 0.65;
+    margin-left: 0.2em;
 }
 
 /* Sub-filas (en uso / depósito) */

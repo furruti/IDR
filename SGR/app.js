@@ -1081,14 +1081,17 @@ function renderResumenRacks() {
                     </tr>
                 </thead>
                 <tbody>
-                    ${filas.map(f => `
+                    ${filas.map(f => {
+                        const pct = n => f.total > 0 ? ` <span class="resumen-pct">(${Math.round((n / f.total) * 100)}%)</span>` : '';
+                        return `
                     <tr class="resumen-fila ${f.cls}">
                         <td class="resumen-td-label">${esc(f.label)}</td>
                         <td class="resumen-td-num resumen-td-total">${f.total}</td>
-                        <td class="resumen-td-num resumen-td-con">${f.conP}</td>
-                        <td class="resumen-td-num resumen-td-sin">${f.sinP}</td>
-                        <td class="resumen-td-num resumen-td-rel">${f.sinR}</td>
-                    </tr>`).join('')}
+                        <td class="resumen-td-num resumen-td-con">${f.conP}${pct(f.conP)}</td>
+                        <td class="resumen-td-num resumen-td-sin">${f.sinP}${pct(f.sinP)}</td>
+                        <td class="resumen-td-num resumen-td-rel">${f.sinR}${pct(f.sinR)}</td>
+                    </tr>`;
+                    }).join('')}
                 </tbody>
             </table>
         </div>`;
