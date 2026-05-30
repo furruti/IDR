@@ -561,10 +561,6 @@ body.modal-open {
     transition: background var(--t-fast), color var(--t-fast);
 }
 
-.busq-filtro-header button:hover {
-    filter: var(--hover);
-}
-
 .busq-filtro-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -581,10 +577,6 @@ body.modal-open {
     user-select: none;
     overflow: hidden;
     background: var(--bg-card);
-}
-
-.busq-filtro-item:hover {
-    filter: var(--hover);
 }
 
 .busq-filtro-item input[type="checkbox"] {
@@ -670,10 +662,6 @@ body.modal-open {
     position: relative;
     padding-right: 1.5rem !important;
     transition: background var(--t-fast), color var(--t-fast);
-}
-
-.th-sortable:hover {
-    filter: var(--hover);
 }
 
 .th-sortable::after {
@@ -1050,10 +1038,6 @@ input[type="file"].hidden {
     cursor: not-allowed;
 }
 
-.btn-gist-action:not(:disabled):hover {
-    filter: var(--hover);
-}
-
 .gist-autosync-row {
     display: flex;
     align-items: center;
@@ -1274,8 +1258,6 @@ input[type="file"].hidden {
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     width: 100%;
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--c-red) 40%, transparent);
     border-radius: var(--radius);
     color: var(--c-red);
     font-size: var(--fs-base);
@@ -1283,22 +1265,6 @@ input[type="file"].hidden {
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
 }
-
-.btn-baja:hover {
-    background: color-mix(in srgb, var(--c-red) 8%, transparent);
-    border-color: var(--c-red);
-}
-
-.btn-baja--reactivar {
-    border-color: color-mix(in srgb, var(--c-green) 40%, transparent);
-    color: var(--c-green);
-}
-
-.btn-baja--reactivar:hover {
-    background: color-mix(in srgb, var(--c-green) 8%, transparent);
-    border-color: var(--c-green);
-}
-
 
 /* ════════════════════════════════════════════════════════
    MODALES
@@ -1539,12 +1505,14 @@ input[type="file"].hidden {
     background: var(--c-blue);
 }
 
-.rack-dist-bar-fill.dist-servicio {
-    background: var(--c-green);
+.rack-dist-bar-fill.dist-servicio,
+.rack-dist-bar-fill.dist-baja,
+.btn-input-side--baja {
+    background: var(--c-red);
 }
 
-.rack-dist-bar-fill.dist-baja {
-    background: var(--c-red);
+.btn-input-side--baja.btn-baja--reactivar {
+    background: var(--c-green);
 }
 
 .rack-dist-count {
@@ -1754,7 +1722,19 @@ input[type="file"].hidden {
     button:not(:disabled):hover,
     .ajustes-row:hover,
     .btn-scroll-top:hover,
-    .stat-chip-clickable:hover {
+    .stat-chip-clickable:hover,
+    .btn-dark-mode-modal:hover,
+    .reporte-grupo-item:hover,
+    .inv-vista-opt:hover,
+    .card-action-btn:hover,
+    .edificios-item-eliminar:hover,
+    .btn-input-side:hover,
+    .btn-input-side--baja:hover,
+    .btn-input-side--baja.btn-baja--reactivar:hover,
+    .btn-gist-action:not(:disabled):hover,
+    .th-sortable:hover,
+    .busq-filtro-item:hover,
+    .busq-filtro-header button:hover {
         filter: var(--hover);
     }
 
@@ -1833,10 +1813,6 @@ input[type="file"].hidden {
     align-items: center;
     justify-content: center;
     transition: color var(--t-fast), filter var(--t-fast);
-}
-
-.btn-input-side:hover {
-    filter: var(--hover);
 }
 
 .btn-input-side[hidden] {
@@ -2035,10 +2011,6 @@ kbd {
     transition: filter var(--t-fast);
 }
 
-.edificios-item-eliminar:hover {
-    filter: var(--hover);
-}
-
 /* ════════════════════════════════════════════════════════
    CARD HEADER ACTIONS
    ════════════════════════════════════════════════════════ */
@@ -2056,10 +2028,6 @@ kbd {
     border-radius: 50%;
     color: var(--text-muted);
     transition: color var(--t-fast), background var(--t-fast);
-}
-
-.card-action-btn:hover {
-    filter: var(--hover);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -2107,10 +2075,6 @@ kbd {
     color: var(--text-main);
     cursor: pointer;
     transition: background var(--t-fast);
-}
-
-.inv-vista-opt:hover {
-    filter: var(--hover);
 }
 
 .inv-vista-opt.activo {
@@ -2275,10 +2239,6 @@ kbd {
     user-select: none;
 }
 
-.reporte-grupo-item:hover {
-    filter: var(--hover);
-}
-
 .reporte-grupo-check {
     width: 18px;
     height: 18px;
@@ -2326,11 +2286,6 @@ kbd {
     border-radius: 50% !important;
     color: var(--text-main);
 }
-
-.btn-dark-mode-modal:hover {
-    filter: var(--hover);
-}
-
 
 /* ════════════════════════════════════════════════════════
    CARD RESUMEN DE RACKS (dashboard)

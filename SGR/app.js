@@ -647,10 +647,9 @@ function abrirModalEditarRack(id) {
 
     // Botón baja
     const bajaBtn = document.getElementById('rack-editar-baja-btn');
-    const bajaLabel = document.getElementById('baja-btn-label');
-    if (bajaBtn && bajaLabel) {
+    if (bajaBtn) {
         const esBaja = rack.estado === 'baja';
-        bajaLabel.textContent = esBaja ? 'Reactivar al inventario' : 'Dar de baja';
+        bajaBtn.title = esBaja ? 'Reactivar al inventario' : 'Dar de baja';
         bajaBtn.classList.toggle('btn-baja--reactivar', esBaja);
     }
 
@@ -1078,7 +1077,7 @@ function renderResumenRacks() {
 
     const filas = [
         {
-            label: 'Racks (todos)',
+            label: 'Racks',
             total: totalRacks.length,
             conP:  totalRacks.filter(conPat).length,
             sinP:  totalRacks.filter(sinPat).length,
