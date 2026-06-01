@@ -1453,8 +1453,9 @@
                 const remoto = S.safeParse(contenido);
                 if (!remoto || typeof remoto !== 'object') throw new Error('Formato inválido');
 
+                const tieneFirmaRemota = !!remoto.hash;
                 let esValida = true;
-                if (remoto.hash) esValida = await S.verificarFirma(remoto);
+                if (tieneFirmaRemota) esValida = await S.verificarFirma(remoto);
 
                 const _simularMerge = () => {
                     const backupData = S.deepClone(_data);
@@ -1489,7 +1490,12 @@
                     _mostrarNovedades(remoto, esValida, resMerge, 'manual');
                 };
 
-                if (!esValida) {
+                if (!tieneFirmaRemota) {
+                    _setBusy(false);
+                    confirmarModal('Los datos en el Gist no tienen firma de integridad. No se puede verificar si fueron modificados manualmente. ¿Querés continuar?', 'Continuar').then(ok => {
+                        if (ok) _abrirNovedades();
+                    });
+                } else if (!esValida) {
                     _setBusy(false);
                     confirmarModal('Los datos en GitHub han sido modificados manualmente. ¿Querés continuar?', 'Continuar').then(ok => {
                         if (ok) _abrirNovedades();
@@ -1567,8 +1573,9 @@
                 const remoto = S.safeParse(contenido);
                 if (!remoto) return;
 
+                const tieneFirmaRemota = !!remoto.hash;
                 let esValida = true;
-                if (remoto.hash) {
+                if (tieneFirmaRemota) {
                     esValida = await S.verificarFirma(remoto);
                 }
 
@@ -5303,16 +5310,21 @@
                     const newDisps = Array.isArray(data.dispositivos) ? data.dispositivos.map(d => S.sanitizarDisp(d, data.tiposCustom || {})).filter(Boolean) : [];
                     const newGrabs = Array.isArray(data.grabadores) ? data.grabadores.map(g => S.sanitizarGrab(g)).filter(Boolean) : [];
 
+                    const tieneFirma = !!data.hash;
                     let esValida = true;
-                    if (data.hash) {
+                    if (tieneFirma) {
                         esValida = await S.verificarFirma(data);
                     }
 
-                    _importarParsed = { ...data, _disps: newDisps, _grabs: newGrabs, _valida: esValida };
+                    _importarParsed = { ...data, _disps: newDisps, _grabs: newGrabs, _valida: esValida, _tieneFirma: tieneFirma };
 
-                    const textoAlerta = !esValida ? `<span class="import-warn">⚠️ Archivo alterado externamente</span>` : '';
+                    const textoAlerta = !tieneFirma
+                        ? `<span class="import-warn">⚠️ Archivo sin firma de integridad</span>`
+                        : !esValida
+                            ? `<span class="import-warn">⚠️ Archivo alterado externamente</span>`
+                            : '';
                     label.innerHTML = `<span class="import-ok">✓ ${esc(file.name)}</span><span class="import-sub">${newDisps.length} dispositivos · ${newGrabs.length} grabadores</span>${textoAlerta}`;
-                    zone.style.borderColor = !esValida ? 'var(--c-orange)' : 'var(--c-green)';
+                    zone.style.borderColor = (!tieneFirma || !esValida) ? 'var(--c-orange)' : 'var(--c-green)';
 
                     btnComb.disabled = false; btnReem.disabled = false;
                 } catch (err) {
@@ -5329,7 +5341,10 @@
             if (!_importarParsed) { toast('Seleccioná un archivo válido', 'error'); return; }
             const data = _importarParsed;
 
-            if (!data._valida) {
+            if (!data._tieneFirma) {
+                const ok = await confirmarModal('Este archivo no tiene firma de integridad. No se puede verificar si fue modificado externamente. ¿Importar de todas formas?', 'Importar');
+                if (!ok) return;
+            } else if (!data._valida) {
                 const ok = await confirmarModal('El hash de integridad no coincide. El archivo puede haber sido modificado. ¿Importar de todas formas?', 'Importar');
                 if (!ok) return;
             }
