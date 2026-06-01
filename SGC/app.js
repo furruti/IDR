@@ -163,14 +163,24 @@
             if (!obj) return '0';
             const core = {
                 d: (obj.dispositivos || []).map(x => [
-                    x.id, x.tipo, x.estado || null, x.mac || null, x.serial || null, x.canales || null
+                    x.id, x.tipo, x.estado || null, x.mac || null, x.serial || null, x.canales || null,
+                    x.marca || null, x.modelo || null, x.patrimonio || null, x.firmware || null, x.forma || null
                 ]),
                 g: (obj.grabadores || []).map(x => [
                     x.id, x.dispositivoId || null, x.canales_n || 16,
-                    (x.canales_data || []).map(c => [c.canal, c.dispositivoId || null])
+                    x.descripcion || null, x.tipo || null, x.marca || null, x.modelo || null,
+                    x.ip || null, x.edificio || null, x.piso || null, x.rack || null,
+                    x.puerto || null, x.mac || null, x.comentarios || null,
+                    (x.canales_data || []).map(c => [
+                        c.canal, c.dispositivoId || null, c.descripcion || null,
+                        c.ip || null, c.puerto || null, c.edificio || null,
+                        c.piso || null, c.rack || null, c.comentarios || null
+                    ])
                 ]),
                 op: (obj.otros_prod || []).map(x => [
-                    x.id, x.dispositivoId || null, x.descripcion || null
+                    x.id, x.dispositivoId || null, x.descripcion || null,
+                    x.ip || null, x.puerto || null, x.edificio || null,
+                    x.piso || null, x.rack || null, x.comentarios || null
                 ]),
                 t: obj.tiposCustom || {},
                 e: obj.edificios || []
