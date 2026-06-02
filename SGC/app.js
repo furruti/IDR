@@ -1098,8 +1098,7 @@
                     </div>
                 </div>`;
 
-            const panel = document.getElementById('modal-gist') || document.body;
-            panel.prepend(div);
+            document.body.appendChild(div);
 
             div.querySelector('#gist-guard-btn-bajar').addEventListener('click', () => {
                 div.remove();
@@ -3597,6 +3596,7 @@
         abrirGist() {
             MM.cerrar('modal-ajustes');
             setTimeout(() => {
+                document.getElementById('gist-guard-alert')?.remove();
                 GistSync.poblarModal();
                 MM.abrir('modal-gist', { onEscape: () => UI.cerrarGist() });
             }, 150);
