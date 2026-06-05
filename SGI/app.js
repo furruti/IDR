@@ -695,7 +695,6 @@ function importarDatos(modo) {
     if (!_importarParsed) { toast('Seleccioná un archivo válido', 'error'); return; }
     const parsed = _importarParsed;
 
-    // Si la firma es inválida, inyectamos una advertencia en el modal de confirmación
     const alerta = parsed._firmaValida ? '' : '⚠️ ATENCIÓN: El archivo ha sido alterado externamente o esta corrupto.\n\n';
 
     if (modo === 'reemplazar') {
@@ -705,19 +704,15 @@ function importarDatos(modo) {
             state.movimientos = parsed.movimientos || [];
             state.categorias = parsed.categorias || [];
             state.herramientas = parsed.herramientas || [];
-            const _r = parsed;
-            _finalizarImport(`Datos reemplazados (${_resumenCambios(_r.materiales.length, _r.movimientos.length, _r.categorias.length, _r.herramientas.length)})`);
+            
+            const resumen = _resumenCambios({ matsNuevos: state.materiales.length, movsNuevos: state.movimientos.length, cats: state.categorias.length, herr: state.herramientas.length });
+            _finalizarImport(`Datos reemplazados (${resumen})`);
         });
     } else {
-        confirmar('¿Combinar datos?', alerta + 'Se agregarán los materiales y movimientos del archivo que no existan actualmente.', () => {
-            const matIds = new Set(state.materiales.map(m => m.id));
-            const movIds = new Set(state.movimientos.map(m => m.id));
-            const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
-            const herrIds = new Set(state.herramientas.map(h => h.id));
+        confirmar('¿Combinar datos?', alerta + 'Se agregarán los registros nuevos y se actualizarán los modificados.', () => {
+            const novedades = _contarNovedades(parsed, false);
 
-            const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(parsed, false);
-
-            if (_cMats === 0 && _cMovs === 0 && _cCats === 0 && _cHerr === 0) {
+            if (!novedades.matsNuevos && !novedades.matsEditados && !novedades.movsNuevos && !novedades.movsEditados && !novedades.cats && !novedades.herr) {
                 MM.cerrar('modal-importar');
                 _importarParsed = null;
                 toast('Sin cambios', 'info');
@@ -725,56 +720,42 @@ function importarDatos(modo) {
             }
 
             historial.empujar('Combinar datos importados');
-
-            (parsed.materiales || []).forEach(m => {
-                if (!matIds.has(m.id)) {
-                    state.materiales.push(m);
-                    matIds.add(m.id);
-                } else {
-                    const existente = state.materiales.find(x => x.id === m.id);
-                    if (existente) {
-                        if (existente.umbralBajo === null && m.umbralBajo !== null) existente.umbralBajo = m.umbralBajo;
-                        if (existente.umbralAlto === null && m.umbralAlto !== null) existente.umbralAlto = m.umbralAlto;
-                    }
-                }
-            });
-            (parsed.movimientos || []).forEach(m => { if (!movIds.has(m.id)) state.movimientos.push(m); });
-            (parsed.categorias || []).forEach(c => { if (!catSet.has(c.toLowerCase())) state.categorias.push(c); });
-            (parsed.herramientas || []).forEach(h => { if (!herrIds.has(h.id)) state.herramientas.push(h); });
-
-            _finalizarImport(`Datos combinados (${_resumenCambios(_cMats, _cMovs, _cCats, _cHerr)})`);
+            const combinados = _combinarDatosRemotos(parsed, false);
+            _finalizarImport(`Datos combinados (${_resumenCambios(combinados)})`);
         });
     }
 }
 
+// Cuenta ítems del remoto que serían novedad respecto al state actual
 function _contarNovedades(remoto, sanitizar = true) {
     const matIds = new Set(state.materiales.map(m => m.id));
     const movIds = new Set(state.movimientos.map(m => m.id));
     const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
     const herrIds = new Set(state.herramientas.map(h => h.id));
-    let matsNuevos = 0, matsEditados = 0, movs = 0, cats = 0, herr = 0;
+    let matsNuevos = 0, matsEditados = 0, movsNuevos = 0, movsEditados = 0, cats = 0, herr = 0;
 
     (remoto.materiales || []).forEach(m => {
         const item = sanitizar ? _sanitizarMaterial(m) : m;
         if (!item) return;
-        if (!matIds.has(item.id)) { 
-            matsNuevos++; 
-        } else {
+        if (!matIds.has(item.id)) { matsNuevos++; } 
+        else {
             const ex = state.materiales.find(x => x.id === item.id);
-            if (ex && (
-                ex.nombre !== item.nombre ||
-                ex.categoria !== item.categoria ||
-                ex.unidad !== item.unidad ||
-                ex.umbralBajo !== item.umbralBajo ||
-                ex.umbralAlto !== item.umbralAlto
-            )) { 
-                matsEditados++; 
-            }
+            if (ex && (ex.nombre !== item.nombre || ex.categoria !== item.categoria || ex.unidad !== item.unidad || ex.umbralBajo !== item.umbralBajo || ex.umbralAlto !== item.umbralAlto)) { matsEditados++; }
         }
     });
     (remoto.movimientos || []).forEach(m => {
         const item = sanitizar ? _sanitizarMovimiento(m) : m;
-        if (item && !movIds.has(item.id)) movs++;
+        if (!item) return;
+        if (!movIds.has(item.id)) { movsNuevos++; } 
+        else {
+            const ex = state.movimientos.find(x => x.id === item.id);
+            if (ex) {
+                // Convertimos las líneas a string para ver si cambió alguna cantidad o material internamente
+                const lineasEx = JSON.stringify(ex.lineas);
+                const lineasItem = JSON.stringify(item.lineas);
+                if (ex.ticket !== item.ticket || ex.fecha !== item.fecha || ex.tipo !== item.tipo || lineasEx !== lineasItem) { movsEditados++; }
+            }
+        }
     });
     (remoto.categorias || []).forEach(c => {
         const item = sanitizar ? _sanitizarCategoria(c) : c;
@@ -785,16 +766,85 @@ function _contarNovedades(remoto, sanitizar = true) {
         if (item && !herrIds.has(item.id)) herr++;
     });
 
-    return { matsNuevos, matsEditados, movs, cats, herr };
+    return { matsNuevos, matsEditados, movsNuevos, movsEditados, cats, herr };
 }
 
-// Arma un resumen legible de cambios: "+3 mat · +12 mov · +1 cat"
-function _resumenCambios(mats, movs, cats, herr = 0) {
+// Combina e impacta los datos detectados
+function _combinarDatosRemotos(remoto, sanitizar = true) {
+    let matsNuevos = 0, matsEditados = 0, movsNuevos = 0, movsEditados = 0, cats = 0, herr = 0;
+    const matIds = new Set(state.materiales.map(m => m.id));
+    const movIds = new Set(state.movimientos.map(m => m.id));
+    const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
+    const herrIds = new Set(state.herramientas.map(h => h.id));
+
+    (remoto.materiales || []).forEach(m => {
+        const limpio = sanitizar ? _sanitizarMaterial(m) : m;
+        if (!limpio) return;
+        if (!matIds.has(limpio.id)) {
+            state.materiales.push(limpio);
+            matIds.add(limpio.id);
+            matsNuevos++;
+        } else {
+            const ex = state.materiales.find(x => x.id === limpio.id);
+            if (ex) {
+                let mod = false;
+                if (ex.nombre !== limpio.nombre) { ex.nombre = limpio.nombre; mod = true; }
+                if (ex.categoria !== limpio.categoria) { ex.categoria = limpio.categoria; mod = true; }
+                if (ex.unidad !== limpio.unidad) { ex.unidad = limpio.unidad; mod = true; }
+                if (ex.umbralBajo !== limpio.umbralBajo) { ex.umbralBajo = limpio.umbralBajo; mod = true; }
+                if (ex.umbralAlto !== limpio.umbralAlto) { ex.umbralAlto = limpio.umbralAlto; mod = true; }
+                if (mod) matsEditados++;
+            }
+        }
+    });
+
+    (remoto.movimientos || []).forEach(m => {
+        const limpio = sanitizar ? _sanitizarMovimiento(m) : m;
+        if (!limpio) return;
+        if (!movIds.has(limpio.id)) { 
+            state.movimientos.push(limpio); 
+            movIds.add(limpio.id); 
+            movsNuevos++; 
+        } else {
+            const ex = state.movimientos.find(x => x.id === limpio.id);
+            if (ex) {
+                let mod = false;
+                if (ex.ticket !== limpio.ticket) { ex.ticket = limpio.ticket; mod = true; }
+                if (ex.fecha !== limpio.fecha) { ex.fecha = limpio.fecha; mod = true; }
+                if (ex.tipo !== limpio.tipo) { ex.tipo = limpio.tipo; mod = true; }
+                const lineasEx = JSON.stringify(ex.lineas);
+                const lineasLimpio = JSON.stringify(limpio.lineas);
+                if (lineasEx !== lineasLimpio) {
+                    ex.lineas = limpio.lineas;
+                    mod = true;
+                }
+                if (mod) movsEditados++;
+            }
+        }
+    });
+
+    (remoto.categorias || []).forEach(c => {
+        const limpio = sanitizar ? _sanitizarCategoria(c) : c;
+        if (limpio && !catSet.has(limpio.toLowerCase())) { state.categorias.push(limpio); catSet.add(limpio.toLowerCase()); cats++; }
+    });
+
+    (remoto.herramientas || []).forEach(h => {
+        const limpio = sanitizar ? _sanitizarHerramienta(h) : h;
+        if (limpio && !herrIds.has(limpio.id)) { state.herramientas.push(limpio); herrIds.add(limpio.id); herr++; }
+    });
+
+    return { matsNuevos, matsEditados, movsNuevos, movsEditados, cats, herr };
+}
+
+// Arma un resumen legible de cambios usando el nuevo objeto estructurado
+function _resumenCambios(novedades) {
     const partes = [];
-    if (mats > 0) partes.push(`+${mats} mat`);
-    if (movs > 0) partes.push(`+${movs} mov`);
-    if (cats > 0) partes.push(`+${cats} cat`);
-    if (herr > 0) partes.push(`+${herr} herr`);
+    if (novedades.matsNuevos) partes.push(`+${novedades.matsNuevos} mat`);
+    if (novedades.matsEditados) partes.push(`~${novedades.matsEditados} mat act`);
+    if (novedades.movsNuevos) partes.push(`+${novedades.movsNuevos} mov`);
+    if (novedades.movsEditados) partes.push(`~${novedades.movsEditados} mov act`);
+    if (novedades.cats) partes.push(`+${novedades.cats} cat`);
+    if (novedades.herr) partes.push(`+${novedades.herr} herr`);
     return partes.join(' · ');
 }
 
@@ -3080,58 +3130,6 @@ const GistSync = (() => {
         }, DEBOUNCE_MS);
     }
 
-    function _combinarDatosRemotos(remoto) {
-        let matsNuevos = 0, matsEditados = 0, movs = 0, cats = 0, herr = 0;
-
-        const matIds = new Set(state.materiales.map(m => m.id));
-        const movIds = new Set(state.movimientos.map(m => m.id));
-        const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
-        const herrIds = new Set(state.herramientas.map(h => h.id));
-
-        (remoto.materiales || []).forEach(m => {
-            const limpio = _sanitizarMaterial(m);
-            if (!limpio) return;
-            if (!matIds.has(limpio.id)) {
-                state.materiales.push(limpio);
-                matIds.add(limpio.id);
-                matsNuevos++;
-            } else {
-                const existente = state.materiales.find(x => x.id === limpio.id);
-                if (existente) {
-                    let seActualizo = false;
-                    if (existente.nombre !== limpio.nombre) { existente.nombre = limpio.nombre; seActualizo = true; }
-                    if (existente.categoria !== limpio.categoria) { existente.categoria = limpio.categoria; seActualizo = true; }
-                    if (existente.unidad !== limpio.unidad) { existente.unidad = limpio.unidad; seActualizo = true; }
-                    if (existente.umbralBajo !== limpio.umbralBajo) { existente.umbralBajo = limpio.umbralBajo; seActualizo = true; }
-                    if (existente.umbralAlto !== limpio.umbralAlto) { existente.umbralAlto = limpio.umbralAlto; seActualizo = true; }
-                    
-                    if (seActualizo) matsEditados++;
-                }
-            }
-        });
-
-        (remoto.movimientos || []).forEach(m => {
-            const limpio = _sanitizarMovimiento(m);
-            if (limpio && !movIds.has(limpio.id)) { state.movimientos.push(limpio); movIds.add(limpio.id); movs++; }
-        });
-
-        (remoto.categorias || []).forEach(c => {
-            const limpio = _sanitizarCategoria(c);
-            if (limpio && !catSet.has(limpio.toLowerCase())) { state.categorias.push(limpio); catSet.add(limpio.toLowerCase()); cats++; }
-        });
-
-        (remoto.herramientas || []).forEach(h => {
-            const limpio = _sanitizarHerramienta(h);
-            if (limpio && !herrIds.has(limpio.id)) {
-                state.herramientas.push(limpio);
-                herrIds.add(limpio.id);
-                herr++;
-            }
-        });
-
-        return { matsNuevos, matsEditados, movs, cats, herr };
-    }
-
     async function bajar() {
         const token = document.getElementById('gist-token')?.value.trim() || _cfg.token;
         const gistId = document.getElementById('gist-id')?.value.trim() || _cfg.gistId;
@@ -3167,13 +3165,12 @@ const GistSync = (() => {
             const remoto = sanitizarEstado(rawRemoto);
             if (!remoto) throw new Error('Formato inválido');
 
-            // Función interna para procesar la integración si el usuario acepta
             const procesarBajada = () => {
                 _setBusy(true);
 
-                const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto);
+                const novedades = _contarNovedades(remoto, false);
 
-                if (_cMats === 0 && _cMovs === 0 && _cCats === 0 && _cHerr === 0) {
+                if (!novedades.matsNuevos && !novedades.matsEditados && !novedades.movsNuevos && !novedades.movsEditados && !novedades.cats && !novedades.herr) {
                     _cfg.token = token;
                     _cfg.gistId = gistId;
                     _cfg.lastSync = new Date().toISOString();
@@ -3184,11 +3181,9 @@ const GistSync = (() => {
                     return;
                 }
 
-                // Empujamos ANTES de mutar para que el snapshot guarde el state previo
                 historial.empujar(esValida ? 'Bajar desde Gist' : 'Bajar desde Gist (Forzado)');
 
-                // ── NUEVO: Extraemos herr de la combinacion ──
-                const { mats, movs, cats, herr } = _combinarDatosRemotos(remoto);
+                const combinados = _combinarDatosRemotos(remoto, false);
 
                 guardar();
                 historial.refrescarTodo();
@@ -3198,8 +3193,7 @@ const GistSync = (() => {
                 _guardarCfg();
                 _setStatusSync();
 
-                // ── NUEVO: Pasamos herr a la función resumenCambios ──
-                toast(esValida ? `Datos combinados (${_resumenCambios(mats, movs, cats, herr)})` : `Datos alterados combinados (${_resumenCambios(mats, movs, cats, herr)})`, esValida ? 'success' : 'info');
+                toast(esValida ? `Datos combinados (${_resumenCambios(combinados)})` : `Datos alterados combinados (${_resumenCambios(combinados)})`, esValida ? 'success' : 'info');
                 _setBusy(false);
             };
 
@@ -3280,9 +3274,9 @@ const GistSync = (() => {
                 if (!remoto) return;
 
                 // Calcular diferencias
-                const { matsNuevos: _cMatsN, matsEditados: _cMatsE, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto, false);
+                const novedades = _contarNovedades(remoto, false);
 
-                if (!_cMatsN && !_cMatsE && !_cMovs && !_cCats && !_cHerr) return;
+                if (!novedades.matsNuevos && !novedades.matsEditados && !novedades.movsNuevos && !novedades.movsEditados && !novedades.cats && !novedades.herr) return;
 
                 // ── AVISO VISUAL SI FUE MODIFICADO MANUALMENTE ──
                 const desc = document.querySelector('.gist-novedades-desc');
@@ -3296,11 +3290,12 @@ const GistSync = (() => {
                 const detalle = document.getElementById('gist-novedades-detalle');
                 if (detalle) {
                     const chips = [];
-                    if (_cMatsN) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Nuevos</span><span class="gist-novedades-chip-count">+${_cMatsN}</span></div>`);
-                    if (_cMatsE) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Actualizados</span><span class="gist-novedades-chip-count">~${_cMatsE}</span></div>`);
-                    if (_cMovs) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Movimientos</span><span class="gist-novedades-chip-count">+${_cMovs}</span></div>`);
-                    if (_cCats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${_cCats}</span></div>`);
-                    if (_cHerr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${_cHerr}</span></div>`);
+                    if (novedades.matsNuevos) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Nuevos</span><span class="gist-novedades-chip-count">+${novedades.matsNuevos}</span></div>`);
+                    if (novedades.matsEditados) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Actualizados</span><span class="gist-novedades-chip-count">~${novedades.matsEditados}</span></div>`);
+                    if (novedades.movsNuevos) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mov. Nuevos</span><span class="gist-novedades-chip-count">+${novedades.movsNuevos}</span></div>`);
+                    if (novedades.movsEditados) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mov. Actualizados</span><span class="gist-novedades-chip-count">~${novedades.movsEditados}</span></div>`);
+                    if (novedades.cats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${novedades.cats}</span></div>`);
+                    if (novedades.herr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${novedades.herr}</span></div>`);
                     detalle.innerHTML = chips.join('');
                 }
 
@@ -3310,21 +3305,12 @@ const GistSync = (() => {
                     btnOk.onclick = () => {
                         historial.empujar(esValida ? 'Bajar novedades desde Gist' : 'Bajar novedades desde Gist (Forzado)');
 
-                        const { matsNuevos, matsEditados, movs, cats, herr } = _combinarDatosRemotos(remoto);
-                        
-                        // Armar el string del toast
-                        const strCambios = [];
-                        if (matsNuevos) strCambios.push(`${matsNuevos} mat nuevos`);
-                        if (matsEditados) strCambios.push(`${matsEditados} mat act`);
-                        if (movs) strCambios.push(`${movs} movs`);
-                        if (cats) strCambios.push(`${cats} cats`);
-                        if (herr) strCambios.push(`${herr} herr`);
-                        const resumenFinal = strCambios.length ? strCambios.join(', ') : 'sin cambios';
+                        const combinados = _combinarDatosRemotos(remoto, false);
 
                         guardar();
                         historial.refrescarTodo();
                         MM.cerrar('modal-gist-novedades');
-                        toast(esValida ? `Datos combinados (${resumenFinal})` : `Datos alterados combinados (${resumenFinal})`, esValida ? 'success' : 'info');
+                        toast(esValida ? `Datos combinados (${_resumenCambios(combinados)})` : `Datos alterados combinados (${_resumenCambios(combinados)})`, esValida ? 'success' : 'info');
                     };
                 }
 
