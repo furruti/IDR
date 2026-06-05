@@ -747,22 +747,29 @@ function importarDatos(modo) {
     }
 }
 
-// Cuenta ítems del remoto que serían novedad respecto al state actual.
-// sanitizar=true: pasa cada ítem por su _sanitizar* (Gist). false: datos ya limpios (import local).
 function _contarNovedades(remoto, sanitizar = true) {
     const matIds = new Set(state.materiales.map(m => m.id));
     const movIds = new Set(state.movimientos.map(m => m.id));
     const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
     const herrIds = new Set(state.herramientas.map(h => h.id));
-    let mats = 0, movs = 0, cats = 0, herr = 0;
+    let matsNuevos = 0, matsEditados = 0, movs = 0, cats = 0, herr = 0;
 
     (remoto.materiales || []).forEach(m => {
         const item = sanitizar ? _sanitizarMaterial(m) : m;
         if (!item) return;
-        if (!matIds.has(item.id)) { mats++; }
-        else {
+        if (!matIds.has(item.id)) { 
+            matsNuevos++; 
+        } else {
             const ex = state.materiales.find(x => x.id === item.id);
-            if (ex && ((ex.umbralBajo === null && item.umbralBajo !== null) || (ex.umbralAlto === null && item.umbralAlto !== null))) mats++;
+            if (ex && (
+                ex.nombre !== item.nombre ||
+                ex.categoria !== item.categoria ||
+                ex.unidad !== item.unidad ||
+                ex.umbralBajo !== item.umbralBajo ||
+                ex.umbralAlto !== item.umbralAlto
+            )) { 
+                matsEditados++; 
+            }
         }
     });
     (remoto.movimientos || []).forEach(m => {
@@ -778,7 +785,7 @@ function _contarNovedades(remoto, sanitizar = true) {
         if (item && !herrIds.has(item.id)) herr++;
     });
 
-    return { mats, movs, cats, herr };
+    return { matsNuevos, matsEditados, movs, cats, herr };
 }
 
 // Arma un resumen legible de cambios: "+3 mat · +12 mov · +1 cat"
@@ -3073,9 +3080,8 @@ const GistSync = (() => {
         }, DEBOUNCE_MS);
     }
 
-    // ── BAJAR ────────────────────────────────────────────
     function _combinarDatosRemotos(remoto) {
-        let mats = 0, movs = 0, cats = 0, herr = 0;
+        let matsNuevos = 0, matsEditados = 0, movs = 0, cats = 0, herr = 0;
 
         const matIds = new Set(state.materiales.map(m => m.id));
         const movIds = new Set(state.movimientos.map(m => m.id));
@@ -3088,20 +3094,18 @@ const GistSync = (() => {
             if (!matIds.has(limpio.id)) {
                 state.materiales.push(limpio);
                 matIds.add(limpio.id);
-                mats++;
+                matsNuevos++;
             } else {
                 const existente = state.materiales.find(x => x.id === limpio.id);
                 if (existente) {
                     let seActualizo = false;
-                    if (existente.umbralBajo === null && limpio.umbralBajo !== null) {
-                        existente.umbralBajo = limpio.umbralBajo;
-                        seActualizo = true;
-                    }
-                    if (existente.umbralAlto === null && limpio.umbralAlto !== null) {
-                        existente.umbralAlto = limpio.umbralAlto;
-                        seActualizo = true;
-                    }
-                    if (seActualizo) mats++;
+                    if (existente.nombre !== limpio.nombre) { existente.nombre = limpio.nombre; seActualizo = true; }
+                    if (existente.categoria !== limpio.categoria) { existente.categoria = limpio.categoria; seActualizo = true; }
+                    if (existente.unidad !== limpio.unidad) { existente.unidad = limpio.unidad; seActualizo = true; }
+                    if (existente.umbralBajo !== limpio.umbralBajo) { existente.umbralBajo = limpio.umbralBajo; seActualizo = true; }
+                    if (existente.umbralAlto !== limpio.umbralAlto) { existente.umbralAlto = limpio.umbralAlto; seActualizo = true; }
+                    
+                    if (seActualizo) matsEditados++;
                 }
             }
         });
@@ -3125,7 +3129,7 @@ const GistSync = (() => {
             }
         });
 
-        return { mats, movs, cats, herr };
+        return { matsNuevos, matsEditados, movs, cats, herr };
     }
 
     async function bajar() {
@@ -3276,9 +3280,9 @@ const GistSync = (() => {
                 if (!remoto) return;
 
                 // Calcular diferencias
-                const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto, false);
+                const { matsNuevos: _cMatsN, matsEditados: _cMatsE, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto, false);
 
-                if (!_cMats && !_cMovs && !_cCats && !_cHerr) return;
+                if (!_cMatsN && !_cMatsE && !_cMovs && !_cCats && !_cHerr) return;
 
                 // ── AVISO VISUAL SI FUE MODIFICADO MANUALMENTE ──
                 const desc = document.querySelector('.gist-novedades-desc');
@@ -3292,7 +3296,8 @@ const GistSync = (() => {
                 const detalle = document.getElementById('gist-novedades-detalle');
                 if (detalle) {
                     const chips = [];
-                    if (_cMats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Materiales</span><span class="gist-novedades-chip-count">+${_cMats}</span></div>`);
+                    if (_cMatsN) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Nuevos</span><span class="gist-novedades-chip-count">+${_cMatsN}</span></div>`);
+                    if (_cMatsE) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Actualizados</span><span class="gist-novedades-chip-count">~${_cMatsE}</span></div>`);
                     if (_cMovs) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Movimientos</span><span class="gist-novedades-chip-count">+${_cMovs}</span></div>`);
                     if (_cCats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${_cCats}</span></div>`);
                     if (_cHerr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${_cHerr}</span></div>`);
@@ -3303,16 +3308,23 @@ const GistSync = (() => {
                 const btnOk = document.getElementById('gist-novedades-ok');
                 if (btnOk) {
                     btnOk.onclick = () => {
-                        // Empujamos ANTES de mutar para que el snapshot guarde el state previo
                         historial.empujar(esValida ? 'Bajar novedades desde Gist' : 'Bajar novedades desde Gist (Forzado)');
 
-                        // ── NUEVO: Extraemos herr y lo pasamos al toast ──
-                        const { mats, movs, cats, herr } = _combinarDatosRemotos(remoto);
+                        const { matsNuevos, matsEditados, movs, cats, herr } = _combinarDatosRemotos(remoto);
+                        
+                        // Armar el string del toast
+                        const strCambios = [];
+                        if (matsNuevos) strCambios.push(`${matsNuevos} mat nuevos`);
+                        if (matsEditados) strCambios.push(`${matsEditados} mat act`);
+                        if (movs) strCambios.push(`${movs} movs`);
+                        if (cats) strCambios.push(`${cats} cats`);
+                        if (herr) strCambios.push(`${herr} herr`);
+                        const resumenFinal = strCambios.length ? strCambios.join(', ') : 'sin cambios';
 
                         guardar();
                         historial.refrescarTodo();
                         MM.cerrar('modal-gist-novedades');
-                        toast(esValida ? `Datos combinados (${_resumenCambios(mats, movs, cats, herr)})` : `Datos alterados combinados (${_resumenCambios(mats, movs, cats, herr)})`, esValida ? 'success' : 'info');
+                        toast(esValida ? `Datos combinados (${resumenFinal})` : `Datos alterados combinados (${resumenFinal})`, esValida ? 'success' : 'info');
                     };
                 }
 
