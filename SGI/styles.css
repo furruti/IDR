@@ -1828,7 +1828,7 @@
 
         .gist-novedades-chip-count {
             font-weight: 800;
-            color: var(--accent);
+            color: var(--c-green);
             font-size: 1rem;
         }
 

@@ -279,11 +279,11 @@ function cargar() {
     // ── Migración de claves mat_ → SGI_ (una sola vez) ──
     try {
         const migKeys = [
-            ['mat_activos',     'SGI_activos'],
-            ['mat_dark',        'SGI_dark'],
-            ['mat_tab',         'SGI_tab'],
-            ['mat_tab_time',    'SGI_tab_time'],
-            ['mat_gist_cfg',    'SGI_gist_cfg'],
+            ['mat_activos', 'SGI_activos'],
+            ['mat_dark', 'SGI_dark'],
+            ['mat_tab', 'SGI_tab'],
+            ['mat_tab_time', 'SGI_tab_time'],
+            ['mat_gist_cfg', 'SGI_gist_cfg'],
         ];
         migKeys.forEach(([oldKey, newKey]) => {
             const val = localStorage.getItem(oldKey);
@@ -2141,8 +2141,8 @@ function mostrarSugerencias(tipo, lid, val) {
     if (inputEl) {
         const r = inputEl.getBoundingClientRect();
         el.style.position = 'fixed';
-        el.style.top  = (r.bottom + 4) + 'px';
-        el.style.left  = r.left + 'px';
+        el.style.top = (r.bottom + 4) + 'px';
+        el.style.left = r.left + 'px';
         el.style.width = r.width + 'px';
         el.style.right = 'auto';
     }
@@ -3242,85 +3242,89 @@ const GistSync = (() => {
     }
 
     // ── Verificar al abrir (auto-sync ON) ───────────────
-    async function verificarAlAbrir() {
+    function verificarAlAbrir() {
         if (!_cfg.auto || !_cfg.gistId) return;
-        _spinStart();
-        try {
-            const headers = {};
-            if (_cfg.token) {
-                headers['Authorization'] = `token ${_cfg.token}`;
+
+        // Debounce / Delay de 3 segundos al iniciar
+        setTimeout(async () => {
+            _spinStart();
+            try {
+                const headers = {};
+                if (_cfg.token) {
+                    headers['Authorization'] = `token ${_cfg.token}`;
+                }
+
+                const res = await fetch(`https://api.github.com/gists/${_cfg.gistId}`, { headers });
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const file = data.files?.[FILENAME];
+                if (!file) return;
+
+                let contenido = file.content;
+                if (file.truncated) {
+                    const rawOrigin = new URL(file.raw_url).hostname;
+                    if (!rawOrigin.endsWith('.githubusercontent.com')) return;
+                    const r2 = await fetch(file.raw_url);
+                    contenido = await r2.text();
+                }
+
+                // ── VERIFICACIÓN DE FIRMA ──
+                const rawRemoto = parseSeguro(contenido);
+                const esValida = await verificarFirma(rawRemoto);
+                const remoto = sanitizarEstado(rawRemoto);
+                if (!remoto) return;
+
+                // Calcular diferencias
+                const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto, false);
+
+                if (!_cMats && !_cMovs && !_cCats && !_cHerr) return;
+
+                // ── AVISO VISUAL SI FUE MODIFICADO MANUALMENTE ──
+                const desc = document.querySelector('.gist-novedades-desc');
+                if (desc) {
+                    desc.innerHTML = esValida
+                        ? 'Se encontraron registros en el Gist que no están en este dispositivo:'
+                        : 'Se encontraron registros en el Gist.<br><strong class="text-orange-block">⚠️ Atención: Los datos fueron alterados manualmente en GitHub.</strong>';
+                }
+
+                // Construir detalle para el modal
+                const detalle = document.getElementById('gist-novedades-detalle');
+                if (detalle) {
+                    const chips = [];
+                    if (_cMats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Materiales</span><span class="gist-novedades-chip-count">+${_cMats}</span></div>`);
+                    if (_cMovs) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Movimientos</span><span class="gist-novedades-chip-count">+${_cMovs}</span></div>`);
+                    if (_cCats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${_cCats}</span></div>`);
+                    if (_cHerr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${_cHerr}</span></div>`);
+                    detalle.innerHTML = chips.join('');
+                }
+
+                // Callback del botón Agregar
+                const btnOk = document.getElementById('gist-novedades-ok');
+                if (btnOk) {
+                    btnOk.onclick = () => {
+                        // Empujamos ANTES de mutar para que el snapshot guarde el state previo
+                        historial.empujar(esValida ? 'Bajar novedades desde Gist' : 'Bajar novedades desde Gist (Forzado)');
+
+                        // ── NUEVO: Extraemos herr y lo pasamos al toast ──
+                        const { mats, movs, cats, herr } = _combinarDatosRemotos(remoto);
+
+                        guardar();
+                        historial.refrescarTodo();
+                        MM.cerrar('modal-gist-novedades');
+                        toast(esValida ? `Datos combinados (${_resumenCambios(mats, movs, cats, herr)})` : `Datos alterados combinados (${_resumenCambios(mats, movs, cats, herr)})`, esValida ? 'success' : 'info');
+                    };
+                }
+
+                // Pequeño delay para que la UI termine de renderizar antes de abrir el modal
+                setTimeout(() => MM.abrir('modal-gist-novedades'), 600);
+
+            } catch (_) {
+                // silencioso
+            } finally {
+                _spinStop();
             }
-
-            const res = await fetch(`https://api.github.com/gists/${_cfg.gistId}`, { headers });
-            if (!res.ok) return;
-
-            const data = await res.json();
-            const file = data.files?.[FILENAME];
-            if (!file) return;
-
-            let contenido = file.content;
-            if (file.truncated) {
-                const rawOrigin = new URL(file.raw_url).hostname;
-                if (!rawOrigin.endsWith('.githubusercontent.com')) return;
-                const r2 = await fetch(file.raw_url);
-                contenido = await r2.text();
-            }
-
-            // ── VERIFICACIÓN DE FIRMA ──
-            const rawRemoto = parseSeguro(contenido);
-            const esValida = await verificarFirma(rawRemoto);
-            const remoto = sanitizarEstado(rawRemoto);
-            if (!remoto) return;
-
-            // Calcular diferencias
-            const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto, false);
-
-            if (!_cMats && !_cMovs && !_cCats && !_cHerr) return;
-
-            // ── AVISO VISUAL SI FUE MODIFICADO MANUALMENTE ──
-            const desc = document.querySelector('.gist-novedades-desc');
-            if (desc) {
-                desc.innerHTML = esValida
-                    ? 'Se encontraron registros en el Gist que no están en este dispositivo:'
-                    : 'Se encontraron registros en el Gist.<br><strong class="text-orange-block">⚠️ Atención: Los datos fueron alterados manualmente en GitHub.</strong>';
-            }
-
-            // Construir detalle para el modal
-            const detalle = document.getElementById('gist-novedades-detalle');
-            if (detalle) {
-                const chips = [];
-                if (_cMats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Materiales</span><span class="gist-novedades-chip-count">+${_cMats}</span></div>`);
-                if (_cMovs) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Movimientos</span><span class="gist-novedades-chip-count">+${_cMovs}</span></div>`);
-                if (_cCats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${_cCats}</span></div>`);
-                if (_cHerr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${_cHerr}</span></div>`);
-                detalle.innerHTML = chips.join('');
-            }
-
-            // Callback del botón Agregar
-            const btnOk = document.getElementById('gist-novedades-ok');
-            if (btnOk) {
-                btnOk.onclick = () => {
-                    // Empujamos ANTES de mutar para que el snapshot guarde el state previo
-                    historial.empujar(esValida ? 'Bajar novedades desde Gist' : 'Bajar novedades desde Gist (Forzado)');
-
-                    // ── NUEVO: Extraemos herr y lo pasamos al toast ──
-                    const { mats, movs, cats, herr } = _combinarDatosRemotos(remoto);
-
-                    guardar();
-                    historial.refrescarTodo();
-                    MM.cerrar('modal-gist-novedades');
-                    toast(esValida ? `Datos combinados (${_resumenCambios(mats, movs, cats, herr)})` : `Datos alterados combinados (${_resumenCambios(mats, movs, cats, herr)})`, esValida ? 'success' : 'info');
-                };
-            }
-
-            // Pequeño delay para que la UI termine de renderizar antes de abrir el modal
-            setTimeout(() => MM.abrir('modal-gist-novedades'), 600);
-
-        } catch (_) {
-            // silencioso
-        } finally {
-            _spinStop();
-        }
+        }, 3000);
     }
 
     return { subir, bajar, subirAuto, verificarAlAbrir, toggleToken, toggleAuto, guardarConfig, poblarModal, init, actualizarBotonesAjustes: _actualizarBotonesAjustes };
@@ -3514,9 +3518,9 @@ function _ejecutarReporte() {
     // Descargamos el reporte como archivo HTML para evitar restricciones CSP
     // El usuario lo abre en el navegador y los estilos inline funcionan sin restricciones
     const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `reporte-inventario-${labelPeriodo.replace(/\s+/g, '-').toLowerCase()}.html`;
     document.body.appendChild(a);
     a.click();
