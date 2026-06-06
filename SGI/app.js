@@ -131,7 +131,7 @@ async function generarFirma(obj) {
     // Extraemos solo los valores críticos para garantizar un orden determinista
     const core = {
         m: (obj.materiales || []).map(x => [x.id, x.nombre, x.categoria, x.unidad, x.umbralBajo ?? null, x.umbralAlto ?? null]),
-        v: (obj.movimientos || []).map(x => [x.id, x.tipo, x.fecha, x.ticket, (x.lineas || []).map(l => [l.materialId, l.cantidad])]),
+        v: (obj.movimientos || []).map(x => [x.id, x.tipo, x.fecha, x.ticket, (x.lineas || []).map(l => [l.materialId, l.cantidad]), x.comentarios ?? null]),
         c: obj.categorias || [],
         h: (obj.herramientas || []).map(x => [x.id, x.nombre, x.fecha, x.cantidad])
     };
@@ -217,7 +217,8 @@ function _sanitizarMovimiento(m) {
     if (!Array.isArray(m.lineas) || !m.lineas.length) return null;
     const lineas = m.lineas.map(_sanitizarLinea).filter(Boolean);
     if (!lineas.length) return null;
-    return { id, tipo: m.tipo, fecha, ticket, lineas };
+    const comentarios = _strSeguro(m.comentarios, 300) ?? null;
+    return { id, tipo: m.tipo, fecha, ticket, lineas, comentarios };
 }
 
 function _sanitizarCategoria(c) {
@@ -753,7 +754,7 @@ function _contarNovedades(remoto, sanitizar = true) {
                 // Convertimos las líneas a string para ver si cambió alguna cantidad o material internamente
                 const lineasEx = JSON.stringify(ex.lineas);
                 const lineasItem = JSON.stringify(item.lineas);
-                if (ex.ticket !== item.ticket || ex.fecha !== item.fecha || ex.tipo !== item.tipo || lineasEx !== lineasItem) { movsEditados++; }
+                if (ex.ticket !== item.ticket || ex.fecha !== item.fecha || ex.tipo !== item.tipo || lineasEx !== lineasItem || (ex.comentarios ?? null) !== (item.comentarios ?? null)) { movsEditados++; }
             }
         }
     });
@@ -818,6 +819,7 @@ function _combinarDatosRemotos(remoto, sanitizar = true) {
                     ex.lineas = limpio.lineas;
                     mod = true;
                 }
+                if ((ex.comentarios ?? null) !== (limpio.comentarios ?? null)) { ex.comentarios = limpio.comentarios; mod = true; }
                 if (mod) movsEditados++;
             }
         }
@@ -2464,6 +2466,11 @@ function guardarMovimiento(tipo) {
         fecha,
         ticket,
         lineas: lineasValidas.map(l => ({ materialId: l.materialId, cantidad: l.cantidad })),
+        comentarios: (() => {
+            const el = document.getElementById(`${tipo}-comentarios`);
+            const v = el ? el.value.trim().slice(0, 300) : '';
+            return v || null;
+        })(),
     };
 
     historial.empujar(`${tipo === 'entrada' ? 'Entrada' : 'Salida'} ${ticket}`);
@@ -2473,6 +2480,8 @@ function guardarMovimiento(tipo) {
     // limpiar el modal
     document.getElementById(fechaId).value = getHoyLocal();
     document.getElementById(ticketId).value = '';
+    const comentariosEl = document.getElementById(`${tipo}-comentarios`);
+    if (comentariosEl) comentariosEl.value = '';
     _lineasState[tipo].lineas = [];
     _lineasState[tipo].counter = 0;
     renderLineas(tipo);
@@ -2497,6 +2506,8 @@ function abrirModalEditarMov(id) {
     document.getElementById('edit-mov-id').value = mov.id;
     document.getElementById('edit-mov-ticket').value = mov.ticket;
     document.getElementById('edit-mov-fecha').value = mov.fecha;
+    const editComentariosEl = document.getElementById('edit-mov-comentarios');
+    if (editComentariosEl) editComentariosEl.value = mov.comentarios || '';
 
     // Listamos los materiales como solo lectura
     const linesHTML = mov.lineas.map(l => {
@@ -2520,6 +2531,8 @@ function guardarEdicionMov() {
 
     const nuevoTicket = document.getElementById('edit-mov-ticket').value.trim();
     const nuevaFecha = document.getElementById('edit-mov-fecha').value;
+    const editComentariosEl = document.getElementById('edit-mov-comentarios');
+    const nuevosComentarios = editComentariosEl ? (editComentariosEl.value.trim().slice(0, 300) || null) : (mov.comentarios ?? null);
 
     if (!nuevoTicket) { toast('El Nº de ticket es obligatorio', 'error'); return; }
     if (!nuevaFecha || !RE_FECHA.test(nuevaFecha)) {
@@ -2535,16 +2548,17 @@ function guardarEdicionMov() {
     }
 
     // ── VALIDACIÓN: DETECTAR SI HUBO CAMBIOS ──
-    if (mov.ticket === nuevoTicket && mov.fecha === nuevaFecha) {
+    if (mov.ticket === nuevoTicket && mov.fecha === nuevaFecha && (mov.comentarios ?? null) === nuevosComentarios) {
         MM.cerrar('modal-editar-mov');
         toast('Sin cambios', 'info');
         return; // Cortamos acá, no guarda ni sube a Gist
     }
 
-    // Aplicamos los cambios (solo fecha y ticket)
+    // Aplicamos los cambios (fecha, ticket y comentarios)
     historial.empujar(`Editar movimiento "${mov.ticket}"`);
     mov.ticket = nuevoTicket;
     mov.fecha = nuevaFecha;
+    mov.comentarios = nuevosComentarios;
 
     // Re-renderizamos toda la UI afectada
     historial.refrescarTodo();
@@ -2643,7 +2657,7 @@ function renderMovimientos() {
                     }).join(' ');
 
                     // Armamos el string completo donde buscar
-                    const textoMovimiento = `${m.tipo} ${m.ticket} ${nombresMateriales}`.toLowerCase();
+                    const textoMovimiento = `${m.tipo} ${m.ticket} ${nombresMateriales} ${m.comentarios || ''}`.toLowerCase();
 
                     // Verificamos que todas las palabras buscadas estén en este movimiento
                     return tokensTexto.every(token => textoMovimiento.includes(token));
@@ -2714,6 +2728,7 @@ function renderMovimientos() {
                 const tLimpio = m.ticket.trim();
                 const esDuplicado = /^\d+$/.test(tLimpio) && conteoTickets[tLimpio] > 1;
                 const htmlAlerta = esDuplicado ? `<span class="ticket-warning" title="Este número de ticket aparece duplicado en el historial">!</span>` : '';
+                const htmlComentarios = m.comentarios ? `<div class="mov-comentarios">${esc(m.comentarios)}</div>` : '';
 
                 return `
             <div class="mov-item mov-item-grid" data-mov-id="${m.id}" title="Tocar para editar">
@@ -2726,6 +2741,7 @@ function renderMovimientos() {
                     <div class="mov-ticket">
                         ${esc(m.ticket)}${htmlAlerta}
                     </div>
+                    ${htmlComentarios}
                 </div>
                 <div class="mov-col-right">
                     <div class="mov-materiales">${tags}</div>
