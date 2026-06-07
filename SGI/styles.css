@@ -1129,6 +1129,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 0.3rem;
+            border-left: 1px solid var(--text-muted);
         }
 
         .mov-mat-tag {
