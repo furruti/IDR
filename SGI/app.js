@@ -131,7 +131,7 @@ async function generarFirma(obj) {
     // Extraemos solo los valores críticos para garantizar un orden determinista
     const core = {
         m: (obj.materiales || []).map(x => [x.id, x.nombre, x.categoria, x.unidad, x.umbralBajo ?? null, x.umbralAlto ?? null]),
-        v: (obj.movimientos || []).map(x => [x.id, x.tipo, x.fecha, x.ticket, (x.lineas || []).map(l => [l.materialId, l.cantidad])]),
+        v: (obj.movimientos || []).map(x => [x.id, x.tipo, x.fecha, x.ticket, (x.lineas || []).map(l => [l.materialId, l.cantidad]), x.comentarios ?? null]),
         c: obj.categorias || [],
         h: (obj.herramientas || []).map(x => [x.id, x.nombre, x.fecha, x.cantidad])
     };
@@ -217,7 +217,8 @@ function _sanitizarMovimiento(m) {
     if (!Array.isArray(m.lineas) || !m.lineas.length) return null;
     const lineas = m.lineas.map(_sanitizarLinea).filter(Boolean);
     if (!lineas.length) return null;
-    return { id, tipo: m.tipo, fecha, ticket, lineas };
+    const comentarios = _strSeguro(m.comentarios, 300) ?? null;
+    return { id, tipo: m.tipo, fecha, ticket, lineas, comentarios };
 }
 
 function _sanitizarCategoria(c) {
@@ -279,11 +280,11 @@ function cargar() {
     // ── Migración de claves mat_ → SGI_ (una sola vez) ──
     try {
         const migKeys = [
-            ['mat_activos',     'SGI_activos'],
-            ['mat_dark',        'SGI_dark'],
-            ['mat_tab',         'SGI_tab'],
-            ['mat_tab_time',    'SGI_tab_time'],
-            ['mat_gist_cfg',    'SGI_gist_cfg'],
+            ['mat_activos', 'SGI_activos'],
+            ['mat_dark', 'SGI_dark'],
+            ['mat_tab', 'SGI_tab'],
+            ['mat_tab_time', 'SGI_tab_time'],
+            ['mat_gist_cfg', 'SGI_gist_cfg'],
         ];
         migKeys.forEach(([oldKey, newKey]) => {
             const val = localStorage.getItem(oldKey);
@@ -695,7 +696,6 @@ function importarDatos(modo) {
     if (!_importarParsed) { toast('Seleccioná un archivo válido', 'error'); return; }
     const parsed = _importarParsed;
 
-    // Si la firma es inválida, inyectamos una advertencia en el modal de confirmación
     const alerta = parsed._firmaValida ? '' : '⚠️ ATENCIÓN: El archivo ha sido alterado externamente o esta corrupto.\n\n';
 
     if (modo === 'reemplazar') {
@@ -705,19 +705,15 @@ function importarDatos(modo) {
             state.movimientos = parsed.movimientos || [];
             state.categorias = parsed.categorias || [];
             state.herramientas = parsed.herramientas || [];
-            const _r = parsed;
-            _finalizarImport(`Datos reemplazados (${_resumenCambios(_r.materiales.length, _r.movimientos.length, _r.categorias.length, _r.herramientas.length)})`);
+            
+            const resumen = _resumenCambios({ matsNuevos: state.materiales.length, movsNuevos: state.movimientos.length, cats: state.categorias.length, herr: state.herramientas.length });
+            _finalizarImport(`Datos reemplazados (${resumen})`);
         });
     } else {
-        confirmar('¿Combinar datos?', alerta + 'Se agregarán los materiales y movimientos del archivo que no existan actualmente.', () => {
-            const matIds = new Set(state.materiales.map(m => m.id));
-            const movIds = new Set(state.movimientos.map(m => m.id));
-            const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
-            const herrIds = new Set(state.herramientas.map(h => h.id));
+        confirmar('¿Combinar datos?', alerta + 'Se agregarán los registros nuevos y se actualizarán los modificados.', () => {
+            const novedades = _contarNovedades(parsed, false);
 
-            const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(parsed, false);
-
-            if (_cMats === 0 && _cMovs === 0 && _cCats === 0 && _cHerr === 0) {
+            if (!novedades.matsNuevos && !novedades.matsEditados && !novedades.movsNuevos && !novedades.movsEditados && !novedades.cats && !novedades.herr) {
                 MM.cerrar('modal-importar');
                 _importarParsed = null;
                 toast('Sin cambios', 'info');
@@ -725,49 +721,42 @@ function importarDatos(modo) {
             }
 
             historial.empujar('Combinar datos importados');
-
-            (parsed.materiales || []).forEach(m => {
-                if (!matIds.has(m.id)) {
-                    state.materiales.push(m);
-                    matIds.add(m.id);
-                } else {
-                    const existente = state.materiales.find(x => x.id === m.id);
-                    if (existente) {
-                        if (existente.umbralBajo === null && m.umbralBajo !== null) existente.umbralBajo = m.umbralBajo;
-                        if (existente.umbralAlto === null && m.umbralAlto !== null) existente.umbralAlto = m.umbralAlto;
-                    }
-                }
-            });
-            (parsed.movimientos || []).forEach(m => { if (!movIds.has(m.id)) state.movimientos.push(m); });
-            (parsed.categorias || []).forEach(c => { if (!catSet.has(c.toLowerCase())) state.categorias.push(c); });
-            (parsed.herramientas || []).forEach(h => { if (!herrIds.has(h.id)) state.herramientas.push(h); });
-
-            _finalizarImport(`Datos combinados (${_resumenCambios(_cMats, _cMovs, _cCats, _cHerr)})`);
+            const combinados = _combinarDatosRemotos(parsed, false);
+            _finalizarImport(`Datos combinados (${_resumenCambios(combinados)})`);
         });
     }
 }
 
-// Cuenta ítems del remoto que serían novedad respecto al state actual.
-// sanitizar=true: pasa cada ítem por su _sanitizar* (Gist). false: datos ya limpios (import local).
+// Cuenta ítems del remoto que serían novedad respecto al state actual
 function _contarNovedades(remoto, sanitizar = true) {
     const matIds = new Set(state.materiales.map(m => m.id));
     const movIds = new Set(state.movimientos.map(m => m.id));
     const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
     const herrIds = new Set(state.herramientas.map(h => h.id));
-    let mats = 0, movs = 0, cats = 0, herr = 0;
+    let matsNuevos = 0, matsEditados = 0, movsNuevos = 0, movsEditados = 0, cats = 0, herr = 0;
 
     (remoto.materiales || []).forEach(m => {
         const item = sanitizar ? _sanitizarMaterial(m) : m;
         if (!item) return;
-        if (!matIds.has(item.id)) { mats++; }
+        if (!matIds.has(item.id)) { matsNuevos++; } 
         else {
             const ex = state.materiales.find(x => x.id === item.id);
-            if (ex && ((ex.umbralBajo === null && item.umbralBajo !== null) || (ex.umbralAlto === null && item.umbralAlto !== null))) mats++;
+            if (ex && (ex.nombre !== item.nombre || ex.categoria !== item.categoria || ex.unidad !== item.unidad || ex.umbralBajo !== item.umbralBajo || ex.umbralAlto !== item.umbralAlto)) { matsEditados++; }
         }
     });
     (remoto.movimientos || []).forEach(m => {
         const item = sanitizar ? _sanitizarMovimiento(m) : m;
-        if (item && !movIds.has(item.id)) movs++;
+        if (!item) return;
+        if (!movIds.has(item.id)) { movsNuevos++; } 
+        else {
+            const ex = state.movimientos.find(x => x.id === item.id);
+            if (ex) {
+                // Convertimos las líneas a string para ver si cambió alguna cantidad o material internamente
+                const lineasEx = JSON.stringify(ex.lineas);
+                const lineasItem = JSON.stringify(item.lineas);
+                if (ex.ticket !== item.ticket || ex.fecha !== item.fecha || ex.tipo !== item.tipo || lineasEx !== lineasItem || (ex.comentarios ?? null) !== (item.comentarios ?? null)) { movsEditados++; }
+            }
+        }
     });
     (remoto.categorias || []).forEach(c => {
         const item = sanitizar ? _sanitizarCategoria(c) : c;
@@ -778,16 +767,86 @@ function _contarNovedades(remoto, sanitizar = true) {
         if (item && !herrIds.has(item.id)) herr++;
     });
 
-    return { mats, movs, cats, herr };
+    return { matsNuevos, matsEditados, movsNuevos, movsEditados, cats, herr };
 }
 
-// Arma un resumen legible de cambios: "+3 mat · +12 mov · +1 cat"
-function _resumenCambios(mats, movs, cats, herr = 0) {
+// Combina e impacta los datos detectados
+function _combinarDatosRemotos(remoto, sanitizar = true) {
+    let matsNuevos = 0, matsEditados = 0, movsNuevos = 0, movsEditados = 0, cats = 0, herr = 0;
+    const matIds = new Set(state.materiales.map(m => m.id));
+    const movIds = new Set(state.movimientos.map(m => m.id));
+    const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
+    const herrIds = new Set(state.herramientas.map(h => h.id));
+
+    (remoto.materiales || []).forEach(m => {
+        const limpio = sanitizar ? _sanitizarMaterial(m) : m;
+        if (!limpio) return;
+        if (!matIds.has(limpio.id)) {
+            state.materiales.push(limpio);
+            matIds.add(limpio.id);
+            matsNuevos++;
+        } else {
+            const ex = state.materiales.find(x => x.id === limpio.id);
+            if (ex) {
+                let mod = false;
+                if (ex.nombre !== limpio.nombre) { ex.nombre = limpio.nombre; mod = true; }
+                if (ex.categoria !== limpio.categoria) { ex.categoria = limpio.categoria; mod = true; }
+                if (ex.unidad !== limpio.unidad) { ex.unidad = limpio.unidad; mod = true; }
+                if (ex.umbralBajo !== limpio.umbralBajo) { ex.umbralBajo = limpio.umbralBajo; mod = true; }
+                if (ex.umbralAlto !== limpio.umbralAlto) { ex.umbralAlto = limpio.umbralAlto; mod = true; }
+                if (mod) matsEditados++;
+            }
+        }
+    });
+
+    (remoto.movimientos || []).forEach(m => {
+        const limpio = sanitizar ? _sanitizarMovimiento(m) : m;
+        if (!limpio) return;
+        if (!movIds.has(limpio.id)) { 
+            state.movimientos.push(limpio); 
+            movIds.add(limpio.id); 
+            movsNuevos++; 
+        } else {
+            const ex = state.movimientos.find(x => x.id === limpio.id);
+            if (ex) {
+                let mod = false;
+                if (ex.ticket !== limpio.ticket) { ex.ticket = limpio.ticket; mod = true; }
+                if (ex.fecha !== limpio.fecha) { ex.fecha = limpio.fecha; mod = true; }
+                if (ex.tipo !== limpio.tipo) { ex.tipo = limpio.tipo; mod = true; }
+                const lineasEx = JSON.stringify(ex.lineas);
+                const lineasLimpio = JSON.stringify(limpio.lineas);
+                if (lineasEx !== lineasLimpio) {
+                    ex.lineas = limpio.lineas;
+                    mod = true;
+                }
+                if ((ex.comentarios ?? null) !== (limpio.comentarios ?? null)) { ex.comentarios = limpio.comentarios; mod = true; }
+                if (mod) movsEditados++;
+            }
+        }
+    });
+
+    (remoto.categorias || []).forEach(c => {
+        const limpio = sanitizar ? _sanitizarCategoria(c) : c;
+        if (limpio && !catSet.has(limpio.toLowerCase())) { state.categorias.push(limpio); catSet.add(limpio.toLowerCase()); cats++; }
+    });
+
+    (remoto.herramientas || []).forEach(h => {
+        const limpio = sanitizar ? _sanitizarHerramienta(h) : h;
+        if (limpio && !herrIds.has(limpio.id)) { state.herramientas.push(limpio); herrIds.add(limpio.id); herr++; }
+    });
+
+    return { matsNuevos, matsEditados, movsNuevos, movsEditados, cats, herr };
+}
+
+// Arma un resumen legible de cambios usando el nuevo objeto estructurado
+function _resumenCambios(novedades) {
     const partes = [];
-    if (mats > 0) partes.push(`+${mats} mat`);
-    if (movs > 0) partes.push(`+${movs} mov`);
-    if (cats > 0) partes.push(`+${cats} cat`);
-    if (herr > 0) partes.push(`+${herr} herr`);
+    if (novedades.matsNuevos) partes.push(`+${novedades.matsNuevos} mat`);
+    if (novedades.matsEditados) partes.push(`~${novedades.matsEditados} mat act`);
+    if (novedades.movsNuevos) partes.push(`+${novedades.movsNuevos} mov`);
+    if (novedades.movsEditados) partes.push(`~${novedades.movsEditados} mov act`);
+    if (novedades.cats) partes.push(`+${novedades.cats} cat`);
+    if (novedades.herr) partes.push(`+${novedades.herr} herr`);
     return partes.join(' · ');
 }
 
@@ -2141,8 +2200,8 @@ function mostrarSugerencias(tipo, lid, val) {
     if (inputEl) {
         const r = inputEl.getBoundingClientRect();
         el.style.position = 'fixed';
-        el.style.top  = (r.bottom + 4) + 'px';
-        el.style.left  = r.left + 'px';
+        el.style.top = (r.bottom + 4) + 'px';
+        el.style.left = r.left + 'px';
         el.style.width = r.width + 'px';
         el.style.right = 'auto';
     }
@@ -2407,6 +2466,11 @@ function guardarMovimiento(tipo) {
         fecha,
         ticket,
         lineas: lineasValidas.map(l => ({ materialId: l.materialId, cantidad: l.cantidad })),
+        comentarios: (() => {
+            const el = document.getElementById(`${tipo}-comentarios`);
+            const v = el ? el.value.trim().slice(0, 300) : '';
+            return v || null;
+        })(),
     };
 
     historial.empujar(`${tipo === 'entrada' ? 'Entrada' : 'Salida'} ${ticket}`);
@@ -2416,6 +2480,8 @@ function guardarMovimiento(tipo) {
     // limpiar el modal
     document.getElementById(fechaId).value = getHoyLocal();
     document.getElementById(ticketId).value = '';
+    const comentariosEl = document.getElementById(`${tipo}-comentarios`);
+    if (comentariosEl) comentariosEl.value = '';
     _lineasState[tipo].lineas = [];
     _lineasState[tipo].counter = 0;
     renderLineas(tipo);
@@ -2440,6 +2506,8 @@ function abrirModalEditarMov(id) {
     document.getElementById('edit-mov-id').value = mov.id;
     document.getElementById('edit-mov-ticket').value = mov.ticket;
     document.getElementById('edit-mov-fecha').value = mov.fecha;
+    const editComentariosEl = document.getElementById('edit-mov-comentarios');
+    if (editComentariosEl) editComentariosEl.value = mov.comentarios || '';
 
     // Listamos los materiales como solo lectura
     const linesHTML = mov.lineas.map(l => {
@@ -2463,6 +2531,8 @@ function guardarEdicionMov() {
 
     const nuevoTicket = document.getElementById('edit-mov-ticket').value.trim();
     const nuevaFecha = document.getElementById('edit-mov-fecha').value;
+    const editComentariosEl = document.getElementById('edit-mov-comentarios');
+    const nuevosComentarios = editComentariosEl ? (editComentariosEl.value.trim().slice(0, 300) || null) : (mov.comentarios ?? null);
 
     if (!nuevoTicket) { toast('El Nº de ticket es obligatorio', 'error'); return; }
     if (!nuevaFecha || !RE_FECHA.test(nuevaFecha)) {
@@ -2478,16 +2548,17 @@ function guardarEdicionMov() {
     }
 
     // ── VALIDACIÓN: DETECTAR SI HUBO CAMBIOS ──
-    if (mov.ticket === nuevoTicket && mov.fecha === nuevaFecha) {
+    if (mov.ticket === nuevoTicket && mov.fecha === nuevaFecha && (mov.comentarios ?? null) === nuevosComentarios) {
         MM.cerrar('modal-editar-mov');
         toast('Sin cambios', 'info');
         return; // Cortamos acá, no guarda ni sube a Gist
     }
 
-    // Aplicamos los cambios (solo fecha y ticket)
+    // Aplicamos los cambios (fecha, ticket y comentarios)
     historial.empujar(`Editar movimiento "${mov.ticket}"`);
     mov.ticket = nuevoTicket;
     mov.fecha = nuevaFecha;
+    mov.comentarios = nuevosComentarios;
 
     // Re-renderizamos toda la UI afectada
     historial.refrescarTodo();
@@ -2586,7 +2657,7 @@ function renderMovimientos() {
                     }).join(' ');
 
                     // Armamos el string completo donde buscar
-                    const textoMovimiento = `${m.tipo} ${m.ticket} ${nombresMateriales}`.toLowerCase();
+                    const textoMovimiento = `${m.tipo} ${m.ticket} ${nombresMateriales} ${m.comentarios || ''}`.toLowerCase();
 
                     // Verificamos que todas las palabras buscadas estén en este movimiento
                     return tokensTexto.every(token => textoMovimiento.includes(token));
@@ -2657,6 +2728,7 @@ function renderMovimientos() {
                 const tLimpio = m.ticket.trim();
                 const esDuplicado = /^\d+$/.test(tLimpio) && conteoTickets[tLimpio] > 1;
                 const htmlAlerta = esDuplicado ? `<span class="ticket-warning" title="Este número de ticket aparece duplicado en el historial">!</span>` : '';
+                const htmlComentarios = m.comentarios ? `<div class="mov-comentarios">${esc(m.comentarios)}</div>` : '';
 
                 return `
             <div class="mov-item mov-item-grid" data-mov-id="${m.id}" title="Tocar para editar">
@@ -2669,6 +2741,7 @@ function renderMovimientos() {
                     <div class="mov-ticket">
                         ${esc(m.ticket)}${htmlAlerta}
                     </div>
+                    ${htmlComentarios}
                 </div>
                 <div class="mov-col-right">
                     <div class="mov-materiales">${tags}</div>
@@ -3073,61 +3146,6 @@ const GistSync = (() => {
         }, DEBOUNCE_MS);
     }
 
-    // ── BAJAR ────────────────────────────────────────────
-    function _combinarDatosRemotos(remoto) {
-        let mats = 0, movs = 0, cats = 0, herr = 0;
-
-        const matIds = new Set(state.materiales.map(m => m.id));
-        const movIds = new Set(state.movimientos.map(m => m.id));
-        const catSet = new Set(state.categorias.map(c => c.toLowerCase()));
-        const herrIds = new Set(state.herramientas.map(h => h.id));
-
-        (remoto.materiales || []).forEach(m => {
-            const limpio = _sanitizarMaterial(m);
-            if (!limpio) return;
-            if (!matIds.has(limpio.id)) {
-                state.materiales.push(limpio);
-                matIds.add(limpio.id);
-                mats++;
-            } else {
-                const existente = state.materiales.find(x => x.id === limpio.id);
-                if (existente) {
-                    let seActualizo = false;
-                    if (existente.umbralBajo === null && limpio.umbralBajo !== null) {
-                        existente.umbralBajo = limpio.umbralBajo;
-                        seActualizo = true;
-                    }
-                    if (existente.umbralAlto === null && limpio.umbralAlto !== null) {
-                        existente.umbralAlto = limpio.umbralAlto;
-                        seActualizo = true;
-                    }
-                    if (seActualizo) mats++;
-                }
-            }
-        });
-
-        (remoto.movimientos || []).forEach(m => {
-            const limpio = _sanitizarMovimiento(m);
-            if (limpio && !movIds.has(limpio.id)) { state.movimientos.push(limpio); movIds.add(limpio.id); movs++; }
-        });
-
-        (remoto.categorias || []).forEach(c => {
-            const limpio = _sanitizarCategoria(c);
-            if (limpio && !catSet.has(limpio.toLowerCase())) { state.categorias.push(limpio); catSet.add(limpio.toLowerCase()); cats++; }
-        });
-
-        (remoto.herramientas || []).forEach(h => {
-            const limpio = _sanitizarHerramienta(h);
-            if (limpio && !herrIds.has(limpio.id)) {
-                state.herramientas.push(limpio);
-                herrIds.add(limpio.id);
-                herr++;
-            }
-        });
-
-        return { mats, movs, cats, herr };
-    }
-
     async function bajar() {
         const token = document.getElementById('gist-token')?.value.trim() || _cfg.token;
         const gistId = document.getElementById('gist-id')?.value.trim() || _cfg.gistId;
@@ -3163,13 +3181,12 @@ const GistSync = (() => {
             const remoto = sanitizarEstado(rawRemoto);
             if (!remoto) throw new Error('Formato inválido');
 
-            // Función interna para procesar la integración si el usuario acepta
             const procesarBajada = () => {
                 _setBusy(true);
 
-                const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto);
+                const novedades = _contarNovedades(remoto, false);
 
-                if (_cMats === 0 && _cMovs === 0 && _cCats === 0 && _cHerr === 0) {
+                if (!novedades.matsNuevos && !novedades.matsEditados && !novedades.movsNuevos && !novedades.movsEditados && !novedades.cats && !novedades.herr) {
                     _cfg.token = token;
                     _cfg.gistId = gistId;
                     _cfg.lastSync = new Date().toISOString();
@@ -3180,11 +3197,9 @@ const GistSync = (() => {
                     return;
                 }
 
-                // Empujamos ANTES de mutar para que el snapshot guarde el state previo
                 historial.empujar(esValida ? 'Bajar desde Gist' : 'Bajar desde Gist (Forzado)');
 
-                // ── NUEVO: Extraemos herr de la combinacion ──
-                const { mats, movs, cats, herr } = _combinarDatosRemotos(remoto);
+                const combinados = _combinarDatosRemotos(remoto, false);
 
                 guardar();
                 historial.refrescarTodo();
@@ -3194,8 +3209,7 @@ const GistSync = (() => {
                 _guardarCfg();
                 _setStatusSync();
 
-                // ── NUEVO: Pasamos herr a la función resumenCambios ──
-                toast(esValida ? `Datos combinados (${_resumenCambios(mats, movs, cats, herr)})` : `Datos alterados combinados (${_resumenCambios(mats, movs, cats, herr)})`, esValida ? 'success' : 'info');
+                toast(esValida ? `Datos combinados (${_resumenCambios(combinados)})` : `Datos alterados combinados (${_resumenCambios(combinados)})`, esValida ? 'success' : 'info');
                 _setBusy(false);
             };
 
@@ -3242,85 +3256,89 @@ const GistSync = (() => {
     }
 
     // ── Verificar al abrir (auto-sync ON) ───────────────
-    async function verificarAlAbrir() {
+    function verificarAlAbrir() {
         if (!_cfg.auto || !_cfg.gistId) return;
-        _spinStart();
-        try {
-            const headers = {};
-            if (_cfg.token) {
-                headers['Authorization'] = `token ${_cfg.token}`;
+
+        // Debounce / Delay de 3 segundos al iniciar
+        setTimeout(async () => {
+            _spinStart();
+            try {
+                const headers = {};
+                if (_cfg.token) {
+                    headers['Authorization'] = `token ${_cfg.token}`;
+                }
+
+                const res = await fetch(`https://api.github.com/gists/${_cfg.gistId}`, { headers });
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const file = data.files?.[FILENAME];
+                if (!file) return;
+
+                let contenido = file.content;
+                if (file.truncated) {
+                    const rawOrigin = new URL(file.raw_url).hostname;
+                    if (!rawOrigin.endsWith('.githubusercontent.com')) return;
+                    const r2 = await fetch(file.raw_url);
+                    contenido = await r2.text();
+                }
+
+                // ── VERIFICACIÓN DE FIRMA ──
+                const rawRemoto = parseSeguro(contenido);
+                const esValida = await verificarFirma(rawRemoto);
+                const remoto = sanitizarEstado(rawRemoto);
+                if (!remoto) return;
+
+                // Calcular diferencias
+                const novedades = _contarNovedades(remoto, false);
+
+                if (!novedades.matsNuevos && !novedades.matsEditados && !novedades.movsNuevos && !novedades.movsEditados && !novedades.cats && !novedades.herr) return;
+
+                // ── AVISO VISUAL SI FUE MODIFICADO MANUALMENTE ──
+                const desc = document.querySelector('.gist-novedades-desc');
+                if (desc) {
+                    desc.innerHTML = esValida
+                        ? 'Se encontraron registros en el Gist que no están en este dispositivo:'
+                        : 'Se encontraron registros en el Gist.<br><strong class="text-orange-block">⚠️ Atención: Los datos fueron alterados manualmente en GitHub.</strong>';
+                }
+
+                // Construir detalle para el modal
+                const detalle = document.getElementById('gist-novedades-detalle');
+                if (detalle) {
+                    const chips = [];
+                    if (novedades.matsNuevos) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Nuevos</span><span class="gist-novedades-chip-count">+${novedades.matsNuevos}</span></div>`);
+                    if (novedades.matsEditados) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mat. Actualizados</span><span class="gist-novedades-chip-count">~${novedades.matsEditados}</span></div>`);
+                    if (novedades.movsNuevos) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mov. Nuevos</span><span class="gist-novedades-chip-count">+${novedades.movsNuevos}</span></div>`);
+                    if (novedades.movsEditados) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Mov. Actualizados</span><span class="gist-novedades-chip-count">~${novedades.movsEditados}</span></div>`);
+                    if (novedades.cats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${novedades.cats}</span></div>`);
+                    if (novedades.herr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${novedades.herr}</span></div>`);
+                    detalle.innerHTML = chips.join('');
+                }
+
+                // Callback del botón Agregar
+                const btnOk = document.getElementById('gist-novedades-ok');
+                if (btnOk) {
+                    btnOk.onclick = () => {
+                        historial.empujar(esValida ? 'Bajar novedades desde Gist' : 'Bajar novedades desde Gist (Forzado)');
+
+                        const combinados = _combinarDatosRemotos(remoto, false);
+
+                        guardar();
+                        historial.refrescarTodo();
+                        MM.cerrar('modal-gist-novedades');
+                        toast(esValida ? `Datos combinados (${_resumenCambios(combinados)})` : `Datos alterados combinados (${_resumenCambios(combinados)})`, esValida ? 'success' : 'info');
+                    };
+                }
+
+                // Pequeño delay para que la UI termine de renderizar antes de abrir el modal
+                setTimeout(() => MM.abrir('modal-gist-novedades'), 600);
+
+            } catch (_) {
+                // silencioso
+            } finally {
+                _spinStop();
             }
-
-            const res = await fetch(`https://api.github.com/gists/${_cfg.gistId}`, { headers });
-            if (!res.ok) return;
-
-            const data = await res.json();
-            const file = data.files?.[FILENAME];
-            if (!file) return;
-
-            let contenido = file.content;
-            if (file.truncated) {
-                const rawOrigin = new URL(file.raw_url).hostname;
-                if (!rawOrigin.endsWith('.githubusercontent.com')) return;
-                const r2 = await fetch(file.raw_url);
-                contenido = await r2.text();
-            }
-
-            // ── VERIFICACIÓN DE FIRMA ──
-            const rawRemoto = parseSeguro(contenido);
-            const esValida = await verificarFirma(rawRemoto);
-            const remoto = sanitizarEstado(rawRemoto);
-            if (!remoto) return;
-
-            // Calcular diferencias
-            const { mats: _cMats, movs: _cMovs, cats: _cCats, herr: _cHerr } = _contarNovedades(remoto, false);
-
-            if (!_cMats && !_cMovs && !_cCats && !_cHerr) return;
-
-            // ── AVISO VISUAL SI FUE MODIFICADO MANUALMENTE ──
-            const desc = document.querySelector('.gist-novedades-desc');
-            if (desc) {
-                desc.innerHTML = esValida
-                    ? 'Se encontraron registros en el Gist que no están en este dispositivo:'
-                    : 'Se encontraron registros en el Gist.<br><strong class="text-orange-block">⚠️ Atención: Los datos fueron alterados manualmente en GitHub.</strong>';
-            }
-
-            // Construir detalle para el modal
-            const detalle = document.getElementById('gist-novedades-detalle');
-            if (detalle) {
-                const chips = [];
-                if (_cMats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Materiales</span><span class="gist-novedades-chip-count">+${_cMats}</span></div>`);
-                if (_cMovs) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Movimientos</span><span class="gist-novedades-chip-count">+${_cMovs}</span></div>`);
-                if (_cCats) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Categorías</span><span class="gist-novedades-chip-count">+${_cCats}</span></div>`);
-                if (_cHerr) chips.push(`<div class="gist-novedades-chip"><span class="gist-novedades-chip-label">Herramientas</span><span class="gist-novedades-chip-count">+${_cHerr}</span></div>`);
-                detalle.innerHTML = chips.join('');
-            }
-
-            // Callback del botón Agregar
-            const btnOk = document.getElementById('gist-novedades-ok');
-            if (btnOk) {
-                btnOk.onclick = () => {
-                    // Empujamos ANTES de mutar para que el snapshot guarde el state previo
-                    historial.empujar(esValida ? 'Bajar novedades desde Gist' : 'Bajar novedades desde Gist (Forzado)');
-
-                    // ── NUEVO: Extraemos herr y lo pasamos al toast ──
-                    const { mats, movs, cats, herr } = _combinarDatosRemotos(remoto);
-
-                    guardar();
-                    historial.refrescarTodo();
-                    MM.cerrar('modal-gist-novedades');
-                    toast(esValida ? `Datos combinados (${_resumenCambios(mats, movs, cats, herr)})` : `Datos alterados combinados (${_resumenCambios(mats, movs, cats, herr)})`, esValida ? 'success' : 'info');
-                };
-            }
-
-            // Pequeño delay para que la UI termine de renderizar antes de abrir el modal
-            setTimeout(() => MM.abrir('modal-gist-novedades'), 600);
-
-        } catch (_) {
-            // silencioso
-        } finally {
-            _spinStop();
-        }
+        }, 3000);
     }
 
     return { subir, bajar, subirAuto, verificarAlAbrir, toggleToken, toggleAuto, guardarConfig, poblarModal, init, actualizarBotonesAjustes: _actualizarBotonesAjustes };
@@ -3514,9 +3532,9 @@ function _ejecutarReporte() {
     // Descargamos el reporte como archivo HTML para evitar restricciones CSP
     // El usuario lo abre en el navegador y los estilos inline funcionan sin restricciones
     const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `reporte-inventario-${labelPeriodo.replace(/\s+/g, '-').toLowerCase()}.html`;
     document.body.appendChild(a);
     a.click();

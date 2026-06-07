@@ -496,6 +496,12 @@
             transform-origin: center;
         }
 
+        /* Elevar el botón de ajustes por encima del overlay modal mientras gira */
+        #btn-ajustes.icon-btn-spinning {
+            position: relative;
+            z-index: 300;
+        }
+
         /* ── Botón agregar línea transparente ── */
         .btn-add-linea {
             background: transparent;
@@ -1090,6 +1096,27 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.04em;
+        }
+
+        .mov-comentarios {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+            font-style: italic;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .label-opcional {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        textarea.mov-comentarios-input {
+            height: auto;
+            resize: vertical;
+            min-height: 60px;
         }
 
         .mov-fecha {
@@ -1828,7 +1855,7 @@
 
         .gist-novedades-chip-count {
             font-weight: 800;
-            color: var(--accent);
+            color: var(--c-green);
             font-size: 1rem;
         }
 
