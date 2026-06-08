@@ -354,8 +354,18 @@
                     </svg>
                     <h2>Racks en Servicio</h2>
                     <span id="servicio-count" class="badge badge-gray">0</span>
+                    <div class="card-header-actions">
+                        <button class="icon-btn card-action-btn" id="btn-vista-serv" title="Opciones de vista">
+                            <svg class="svg-icon">
+                                <use href="#icon-sliders" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="table-wrap inv-tabla-agrupada">
+
+                <div id="serv-vista-menu" class="inv-vista-menu"></div>
+
+                <div id="serv-tabla-wrap" class="table-wrap inv-tabla-agrupada">
                     <table class="table-equal-cols table-eq-4">
                         <thead class="inv-thead-sticky">
                             <tr>
@@ -369,6 +379,8 @@
                         <tbody id="tabla-servicio"></tbody>
                     </table>
                 </div>
+                <div id="serv-grupos-wrap" class="inv-grupos-wrap" hidden></div>
+                
                 <div id="servicio-empty" class="empty-state empty-state-hidden">
                     <p>No hay racks en servicio.</p>
                 </div>

@@ -360,10 +360,14 @@ function _cerrarFiltro() {
     if (b) b.classList.remove('activo');
 }
 function _cerrarVistaSafe() {
-    const m = document.getElementById('inv-vista-menu');
-    const b = document.getElementById('btn-vista-inv');
-    if (m) m.classList.remove('open');
-    if (b) b.classList.remove('activo');
+    ['inv-vista-menu', 'serv-vista-menu'].forEach(id => {
+        const m = document.getElementById(id);
+        if (m) m.classList.remove('open');
+    });
+    ['btn-vista-inv', 'btn-vista-serv'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.classList.remove('activo');
+    });
 }
 function _cerrarTodosDropdowns() {
     cerrarFab();
@@ -1183,29 +1187,131 @@ function renderServicio() {
         racks = racks.filter(r => _coincideBusqueda(r, busq, campos));
     }
     racks = _ordenarArray(racks, _sortServ.col, _sortServ.dir);
-    _actualizarIndicadoresSort('panel-servicio', _sortServ);
 
-    const tbody = DOM.tablaServicio;
     const empty = DOM.servicioEmpty;
     const count = DOM.servicioCount;
+    const tablaWrap = document.getElementById('serv-tabla-wrap');
+    const gruposWrap = document.getElementById('serv-grupos-wrap');
+    const tbody = DOM.tablaServicio;
+
     if (count) count.textContent = racks.length;
 
     if (!racks.length) {
-        tbody.innerHTML = ''; empty.classList.remove('empty-state-hidden');
-    } else {
-        empty.classList.add('empty-state-hidden');
-        tbody.innerHTML = racks.map(_filaRackServicio).join('');
+        tablaWrap?.removeAttribute('hidden');
+        gruposWrap?.setAttribute('hidden', '');
+        if (tbody) tbody.innerHTML = '';
+        empty?.classList.remove('empty-state-hidden');
+        _actualizarIndicadoresSort('panel-servicio', _sortServ);
+        return;
     }
+    empty?.classList.add('empty-state-hidden');
+
+    const grupos = _getGrupos(racks, _agrupServ);
+
+    if (!grupos) {
+        gruposWrap?.setAttribute('hidden', '');
+        tablaWrap?.removeAttribute('hidden');
+        if (tbody) tbody.innerHTML = racks.map(_filaRackServicio).join('');
+    } else {
+        tablaWrap?.setAttribute('hidden', '');
+        gruposWrap?.removeAttribute('hidden');
+
+        let abiertos = null;
+        if (!busq) {
+            try {
+                const saved = localStorage.getItem(APP_KEY + 'grupos_serv_abiertos');
+                if (saved !== null) abiertos = new Set(JSON.parse(saved));
+            } catch (_) { }
+        }
+
+        if (gruposWrap) {
+            const thead = `<thead class="inv-thead-sticky">
+                <tr>
+                    <th data-sort="numero" class="th-sortable">Rack</th>
+                    <th data-sort="edificio" class="th-sortable">Edificio</th>
+                    <th data-sort="piso" class="th-sortable">Piso</th>
+                    <th data-sort="dependencia" class="th-sortable">Dependencia</th>
+                    <th>Patcheras</th>
+                </tr>
+            </thead>`;
+
+            // Construir fila pero con posibilidad de 'hidden'
+            const _buildFilaServicio = (r, visible) =>
+                `<tr class="tr-clickable rack-estado-${r.estado}" data-rack-id="${esc(r.id)}"${visible ? '' : ' hidden'}>
+                    <td class="td-rack-num">${esc(r.numero)}</td>
+                    <td>${esc(r.edificio || '—')}</td>
+                    <td class="td-muted">${esc(r.piso || '—')}</td>
+                    <td class="td-muted">${esc(r.dependencia || '—')}</td>
+                    <td class="td-muted">—</td>
+                </tr>`;
+
+            const tbodyRows = grupos.map((g, i) => {
+                const key = g.titulo;
+                const isOpen = busq ? true : (abiertos !== null ? abiertos.has(key) : i === 0);
+
+                if (g.subgrupos) {
+                    const subRows = g.subgrupos.map(sg => {
+                        const subKey = `${key}__${sg.titulo}`;
+                        const subOpen = busq ? true : (abiertos !== null ? abiertos.has(subKey) : isOpen);
+                        const filasSub = sg.racks.map(r => _buildFilaServicio(r, isOpen && subOpen)).join('');
+                        return `<tr class="inv-grupo-tr-header inv-grupo-tr-sub${subOpen ? ' open' : ''}" data-grupo-key="${esc(subKey)}"${isOpen ? '' : ' hidden'}>
+                            <td colspan="5">
+                                <div class="inv-grupo-header inv-grupo-header-sub">
+                                    <span class="inv-grupo-titulo">PISO: ${esc(sg.titulo)}</span>
+                                    <span class="inv-grupo-badge">${sg.racks.length}</span>
+                                    <svg class="svg-icon inv-grupo-chevron"><use href="#icon-chevron-right"/></svg>
+                                </div>
+                            </td>
+                        </tr>${filasSub}`;
+                    }).join('');
+                    return `<tr class="inv-grupo-tr-header${isOpen ? ' open' : ''}" data-grupo-key="${esc(key)}">
+                        <td colspan="5">
+                            <div class="inv-grupo-header">
+                                <span class="inv-grupo-titulo">${esc(g.titulo)}</span>
+                                <span class="inv-grupo-badge">${g.totalCount}</span>
+                                <svg class="svg-icon inv-grupo-chevron"><use href="#icon-chevron-right"/></svg>
+                            </div>
+                        </td>
+                    </tr>${subRows}`;
+                } else {
+                    const filas = g.racks.map(r => _buildFilaServicio(r, isOpen)).join('');
+                    return `<tr class="inv-grupo-tr-header${isOpen ? ' open' : ''}" data-grupo-key="${esc(key)}">
+                        <td colspan="5">
+                            <div class="inv-grupo-header">
+                                <span class="inv-grupo-titulo">${esc(g.titulo)}</span>
+                                <span class="inv-grupo-badge">${g.racks.length}</span>
+                                <svg class="svg-icon inv-grupo-chevron"><use href="#icon-chevron-right"/></svg>
+                            </div>
+                        </td>
+                    </tr>${filas}`;
+                }
+            }).join('');
+
+            gruposWrap.innerHTML = `<div class="table-wrap inv-tabla-agrupada">
+                <table class="table-equal-cols table-eq-4">
+                    ${thead}
+                    <tbody id="tabla-servicio-grupos">${tbodyRows}</tbody>
+                </table>
+            </div>`;
+        }
+    }
+    _actualizarIndicadoresSort('panel-servicio', _sortServ);
 }
 
 // ═══════════════════════════════════════════════════════
 //  AGRUPAMIENTO INVENTARIO
 // ═══════════════════════════════════════════════════════
 let _agrupInv = (() => { try { return localStorage.getItem(APP_KEY + 'agrup_inv') || 'ninguno'; } catch (_) { return 'ninguno'; } })();
+let _agrupServ = (() => { try { return localStorage.getItem(APP_KEY + 'agrup_serv') || 'ninguno'; } catch (_) { return 'ninguno'; } })();
 
 function _setAgrupInv(val) {
     _agrupInv = val;
     try { localStorage.setItem(APP_KEY + 'agrup_inv', val); } catch (_) { }
+}
+
+function _setAgrupServ(val) {
+    _agrupServ = val;
+    try { localStorage.setItem(APP_KEY + 'agrup_serv', val); } catch (_) { }
 }
 
 // Convierte un string de piso a un número de orden para ordenamiento jerárquico:
@@ -1259,10 +1365,10 @@ function _ordenarPisos(a, b) {
     return ra1 !== rb1 ? ra1 - rb1 : ra2 - rb2;
 }
 
-function _getGrupos(racks) {
-    if (_agrupInv === 'ninguno') return null;
+function _getGrupos(racks, agrupacion = _agrupInv) {
+    if (agrupacion === 'ninguno') return null;
 
-    if (_agrupInv === 'patrimonio') {
+    if (agrupacion === 'patrimonio') {
         const _patNorm = r => (r.patrimonio || '').trim().toLowerCase();
         const aRelevar = racks.filter(r => { const p = _patNorm(r); return !p || p === 'relevar'; });
         const sinPatr = racks.filter(r => _patNorm(r) === 'no');
@@ -2362,6 +2468,74 @@ function _initBindings() {
         });
     }
 
+    // ── Botón vista SERVICIO ──
+    const btnVistaServ = document.getElementById('btn-vista-serv');
+    const vistaMenuServ = document.getElementById('serv-vista-menu');
+    if (btnVistaServ && vistaMenuServ) {
+        // Poblar opciones
+        vistaMenuServ.innerHTML = `
+            <p class="inv-vista-label">Agrupar por</p>
+            <button class="inv-vista-opt" data-agrup="ninguno">Sin agrupar</button>
+            <button class="inv-vista-opt" data-agrup="edificio">Edificio</button>
+        `;
+        // Mover al body para evitar clipping del card
+        document.body.appendChild(vistaMenuServ);
+
+        const _syncVistaOptsServ = () => {
+            vistaMenuServ.querySelectorAll('.inv-vista-opt').forEach(b => {
+                b.classList.toggle('activo', b.dataset.agrup === _agrupServ);
+            });
+        };
+        _syncVistaOptsServ();
+
+        const _cerrarVistaServ = () => {
+            vistaMenuServ.classList.remove('open');
+            btnVistaServ.classList.remove('activo');
+        };
+
+        btnVistaServ.addEventListener('click', e => {
+            e.stopPropagation();
+            const abierto = vistaMenuServ.classList.contains('open');
+            if (abierto) { _cerrarVistaServ(); return; }
+            cerrarFab();
+            _cerrarFiltro();
+            _cerrarVistaSafe(); // Cierra el de inventario si estaba abierto
+            const rect = btnVistaServ.getBoundingClientRect();
+            vistaMenuServ.style.top = (rect.bottom + 6) + 'px';
+            vistaMenuServ.style.left = 'auto';
+            vistaMenuServ.style.right = (window.innerWidth - rect.right) + 'px';
+            vistaMenuServ.classList.add('open');
+            btnVistaServ.classList.add('activo');
+            _syncVistaOptsServ();
+        });
+
+        vistaMenuServ.addEventListener('click', e => {
+            e.stopPropagation();
+            const opt = e.target.closest('.inv-vista-opt');
+            if (!opt) return;
+            _setAgrupServ(opt.dataset.agrup);
+            _syncVistaOptsServ();
+            renderServicio();
+            
+            // Animar el contenedor tras el render
+            const tablaWrap = document.getElementById('serv-tabla-wrap');
+            const gruposWrap = document.getElementById('serv-grupos-wrap');
+            [tablaWrap, gruposWrap].forEach(el => {
+                if (el && !el.hasAttribute('hidden')) {
+                    el.classList.remove('inv-agrup-entrando');
+                    void el.offsetWidth;
+                    el.classList.add('inv-agrup-entrando');
+                    el.addEventListener('animationend', () => el.classList.remove('inv-agrup-entrando'), { once: true });
+                }
+            });
+            _cerrarVistaServ();
+        });
+
+        document.addEventListener('click', () => {
+            if (vistaMenuServ.classList.contains('open')) _cerrarVistaServ();
+        });
+    }
+
     // ── Botón reporte inventario ──
     document.getElementById('btn-reporte-inv')?.addEventListener('click', () => {
         const racks = _getRacksFiltrados();
@@ -2436,29 +2610,28 @@ function _initBindings() {
         generarReporteInventario(gruposFiltrados);
     });
 
-    // ── Colapso de grupos (delegado en el wrapper) ──
-    const invGruposWrap = document.getElementById('inv-grupos-wrap');
-    if (invGruposWrap) {
+    // ── Colapso de grupos (delegado en todos los wrappers: Inventario y Servicio) ──
+    document.querySelectorAll('.inv-grupos-wrap').forEach(wrap => {
         let pressTimer = null;
         let isLongPress = false;
         let startY = 0;
         let startX = 0;
 
-        // Función para guardar los grupos abiertos en LocalStorage (Solo si no hay búsqueda activa)
+        const localStorageKey = wrap.id === 'inv-grupos-wrap' ? 'grupos_abiertos' : 'grupos_serv_abiertos';
+
         const guardarGruposAbiertos = () => {
             const busq = normalizarTexto(document.getElementById('busq-global')?.value || '');
-            if (busq) return; // Evita machacar la configuración real con los resultados abiertos de la búsqueda
+            if (busq) return; 
 
             const arr = [];
-            invGruposWrap.querySelectorAll('.inv-grupo-tr-header.open').forEach(el => {
+            wrap.querySelectorAll('.inv-grupo-tr-header.open').forEach(el => {
                 if (el.dataset.grupoKey) arr.push(el.dataset.grupoKey);
             });
-            localStorage.setItem(APP_KEY + 'grupos_abiertos', JSON.stringify(arr));
+            localStorage.setItem(APP_KEY + localStorageKey, JSON.stringify(arr));
         };
 
-        // Función para recalcular la visibilidad de toda la tabla de una vez
         const syncGlobal = () => {
-            const allMains = invGruposWrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
+            const allMains = wrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
             allMains.forEach(main => {
                 const isOpen = main.classList.contains('open');
                 let next = main.nextElementSibling;
@@ -2478,7 +2651,7 @@ function _initBindings() {
 
         const cancelPress = () => clearTimeout(pressTimer);
 
-        invGruposWrap.addEventListener('pointerdown', e => {
+        wrap.addEventListener('pointerdown', e => {
             const header = e.target.closest('.inv-grupo-tr-header');
             if (!header) return;
 
@@ -2494,33 +2667,37 @@ function _initBindings() {
                 if (navigator.vibrate) navigator.vibrate(40);
 
                 if (isSub) {
-                    const allSubs = invGruposWrap.querySelectorAll('.inv-grupo-tr-sub');
+                    const allSubs = wrap.querySelectorAll('.inv-grupo-tr-sub');
                     allSubs.forEach(sub => sub.classList.toggle('open', targetState));
                 } else {
-                    const allMains = invGruposWrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
+                    const allMains = wrap.querySelectorAll('.inv-grupo-tr-header:not(.inv-grupo-tr-sub)');
                     allMains.forEach(main => main.classList.toggle('open', targetState));
 
                     if (!targetState) {
-                        const allSubs = invGruposWrap.querySelectorAll('.inv-grupo-tr-sub');
+                        const allSubs = wrap.querySelectorAll('.inv-grupo-tr-sub');
                         allSubs.forEach(sub => sub.classList.remove('open'));
                     }
                 }
                 syncGlobal();
-                guardarGruposAbiertos(); // Almacenar estado macro
+                guardarGruposAbiertos(); 
             }, 500);
         });
 
-        invGruposWrap.addEventListener('pointerup', cancelPress);
-        invGruposWrap.addEventListener('pointercancel', cancelPress);
-        invGruposWrap.addEventListener('pointermove', e => {
+        wrap.addEventListener('pointerup', cancelPress);
+        wrap.addEventListener('pointercancel', cancelPress);
+        wrap.addEventListener('pointermove', e => {
             if (Math.abs(e.clientY - startY) > 8 || Math.abs(e.clientX - startX) > 8) {
                 cancelPress();
             }
         });
 
-        invGruposWrap.addEventListener('click', e => {
+        wrap.addEventListener('click', e => {
             const tr = e.target.closest('tr[data-rack-id]');
-            if (tr) { abrirModalEditarRack(tr.dataset.rackId); return; }
+            if (tr) { 
+                if (wrap.id === 'inv-grupos-wrap') abrirModalEditarRack(tr.dataset.rackId);
+                if (wrap.id === 'serv-grupos-wrap') abrirModalEditarServicio(tr.dataset.rackId);
+                return; 
+            }
 
             const header = e.target.closest('.inv-grupo-tr-header');
             if (!header) return;
@@ -2553,11 +2730,10 @@ function _initBindings() {
                     next = next.nextElementSibling;
                 }
             }
-
-            guardarGruposAbiertos(); // Almacenar estado individual
+            guardarGruposAbiertos(); 
         });
-    }
-}
+    });
+} // <-- Este es el cierre correcto de _initBindings()
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _initBindings);

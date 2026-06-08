@@ -47,10 +47,10 @@ El flujo lógico del programa se ejecuta en los siguientes pasos:
      de forma oculta). Si lo deseas, guardará la clave en el S.O. para automatizar 
      futuras ejecuciones.
 
-2. Fase 1 - Extracción desde NVRs: 
-   El script se conecta a cada NVR listado mediante el protocolo ISAPI para 
-   extraer los canales IP activos (InputProxyChannel), descubriendo las IPs 
-   internas de cada cámara y su número de canal.
+2. Fase 1 - Extracción desde NVRs (asíncrona): 
+   El script se conecta a los NVRs listados en paralelo (hasta max_workers
+   simultáneos) mediante el protocolo ISAPI para extraer los canales IP activos
+   (InputProxyChannel), descubriendo las IPs internas de cada cámara y su canal.
 
 3. Fase 2 - Escaneo Directo Asíncrono: 
    Con la lista de cámaras en mano, el script lanza múltiples hilos concurrentes 
@@ -91,9 +91,11 @@ Explicación de los Campos:
   * "2": Escanea únicamente por protocolo básico HTTP (Puerto 80).
   * "3": Modo mixto. Recorre la cadena TLS completa en el puerto 443 y, como
     último recurso, cae a HTTP (80). Máxima compatibilidad.
-- max_workers (Integer): Cantidad de hilos de ejecución concurrentes para la Fase 2. 
-  Controla cuántas cámaras se consultan al mismo tiempo. Rango permitido de 1 a 50 
-  (recomendado entre 5 y 20).
+- max_workers (Integer): Cantidad de hilos de ejecución concurrentes para AMBAS fases.
+  En la Fase 1 controla cuántos NVRs se consultan en paralelo (se aplica un cap 
+  automático de min(max_workers, cant_nvrs) para no abrir hilos innecesarios).
+  En la Fase 2 controla cuántas cámaras se consultan al mismo tiempo.
+  Rango permitido de 1 a 50 (recomendado entre 5 y 20).
 - nvrs (Array/Lista): Contiene el listado de diccionarios con las direcciones IP de 
   los grabadores (NVRs) a procesar en la Fase 1.
 
@@ -124,23 +126,42 @@ Si ejecutas el script en una computadora nueva:
 ================================================================================
 """
 
+# 1. Importamos primero las librerías nativas de Python (nunca fallan)
 import os
 import sys
-import requests
-import urllib3
 import ssl
-from requests.adapters import HTTPAdapter
-from requests.auth import HTTPDigestAuth
 import xml.etree.ElementTree as ET
 import json
 import re
 import concurrent.futures
-import keyring
 import getpass
 import ipaddress
 
-# Silenciar advertencias de certificados autofirmados
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# 2. Intentamos importar las librerías externas
+try:
+    import requests
+    import urllib3
+    from requests.adapters import HTTPAdapter
+    from requests.auth import HTTPDigestAuth
+    import keyring
+except ImportError as e:
+    # Si falta alguna, atrapamos el error y mostramos este cartel
+    print("\n" + "="*70)
+    print(" [ERROR FATAL] Faltan dependencias para ejecutar el script.")
+    print("="*70)
+    print(f" Detalle técnico: {e}")
+    print("\n Para solucionarlo, abrí tu terminal (CMD o PowerShell) y ejecutá:\n")
+    print("      pip install requests keyring\n")
+    print(" Una vez instaladas, volvé a abrir este script.")
+    print("="*70 + "\n")
+    input(" Presioná Enter para salir...")
+    sys.exit(1) # Cerramos el programa de forma segura
+
+# Silenciar advertencias de certificados autofirmados (requiere urllib3)
+try:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except NameError:
+    pass # Si urllib3 falló arriba, evitamos un error secundario aquí
 
 # --- DEFINICIÓN DE CARPETAS ---
 CARPETA_CONFIG = "Config"
@@ -238,23 +259,19 @@ def pedir_puertos():
     }
     print("  ┌── Puerto de conexión (NVRs y Cámaras) ──────────┐")
     if _TLS13_SUPPORTED:
-        print("  │  1 · Solo HTTPS:443  (TLS 1.3 → 1.2 → 1.0)     │")
+        print("  │  1 · Solo HTTPS:443  (TLS 1.3 → 1.2 → 1.0)    │")
     else:
         print("  │  1 · Solo HTTPS:443  (TLS 1.2 → TLS 1.0)       │")
     print("  │  2 · Solo HTTP:80                               │")
-    print("  │  3 · HTTPS:443 primero, luego HTTP:80           │")
+    print("  │  3 · HTTPS:443 primero, luego HTTP:80 (default) │")
     print("  └─────────────────────────────────────────────────┘")
 
     while True:
         opcion = input("  Elegí una opción [1/2/3, Enter=3]: ").strip()
-        
-        # Si el usuario solo aprieta Enter, forzamos la opción 3
         if opcion == "":
             return OPCIONES["3"]
-            
         if opcion in OPCIONES:
             return OPCIONES[opcion]
-            
         print("  [!] Ingresá 1, 2 o 3.")
 
 def pedir_workers():
@@ -266,7 +283,7 @@ def pedir_workers():
 
     while True:
         try:
-            valor = input("  ¿Cuántas cámaras consultar al mismo tiempo? [Enter = 15]: ").strip()
+            valor = input("  ¿Cuántos NVRs/Cámaras consultar al mismo tiempo? [Enter = 15]: ").strip()
             if valor == "":
                 return 15
             workers = int(valor)
@@ -280,113 +297,128 @@ def pedir_workers():
 # FASE 1: Extracción desde NVRs
 # ---------------------------------------------------------------------------
 
-def obtener_camaras_desde_nvrs(nvr_list, puertos, user, password):
+def procesar_nvr(args):
+    """Procesa un único NVR en su propio hilo: obtiene info del dispositivo y
+    la lista de cámaras vinculadas. Retorna (lista_camaras, info_nvr)."""
+    nvr, puertos, user, password = args
+
+    nvr_name         = "NVR_Desconocido"
+    nvr_modelo       = "N/A"
+    nvr_serial       = "N/A"
+    nvr_mac          = "N/A"
+    nvr_firmware     = "N/A"
+    camaras_nvr_list = []
+
+    for protocolo_key, puerto in puertos:
+        proto_real = "https" if protocolo_key.startswith("https") else "http"
+        session = requests.Session()
+        session.mount(f"{proto_real}://", ADAPTERS[protocolo_key])
+
+        try:
+            url_info = f"{proto_real}://{nvr['ip']}:{puerto}/ISAPI/System/deviceInfo"
+            resp_info = session.get(
+                url_info, auth=HTTPDigestAuth(user, password),
+                timeout=5, verify=False
+            )
+            if resp_info.status_code == 200:
+                xml_info  = re.sub(' xmlns="[^"]+"', '', resp_info.text)
+                root_info = ET.fromstring(xml_info)
+
+                def _f(tag):
+                    el = root_info.find(tag)
+                    return el.text if el is not None else "N/A"
+
+                nvr_name     = _f('deviceName') or "NVR_Desconocido"
+                nvr_modelo   = _f('model')
+                serial_raw   = _f('serialNumber')
+                nvr_serial   = serial_raw[len(nvr_modelo):] if (serial_raw != "N/A" and serial_raw.startswith(nvr_modelo)) else serial_raw
+                nvr_mac      = _f('macAddress')
+                nvr_firmware = _f('firmwareVersion')
+
+            etiqueta      = " (Fallback)" if (protocolo_key, puerto) != puertos[0] else ""
+            proto_display = describir_protocolo(protocolo_key)
+            print(f"Consultando NVR: {nvr_name} ({nvr['ip']}) en {proto_display}:{puerto}{etiqueta}...")
+
+            url_cameras = f"{proto_real}://{nvr['ip']}:{puerto}/ISAPI/ContentMgmt/InputProxy/channels"
+            response = session.get(
+                url_cameras, auth=HTTPDigestAuth(user, password),
+                timeout=10, verify=False
+            )
+            response.raise_for_status()
+            xml_data = re.sub(' xmlns="[^"]+"', '', response.text)
+            root = ET.fromstring(xml_data)
+
+            camaras_nvr = 0
+            for channel in root.findall('InputProxyChannel'):
+                chan_id_elem = channel.find('id')
+                chan_id = chan_id_elem.text if chan_id_elem is not None else "N/A"
+
+                ip_address = "N/A"
+                descriptor = channel.find('sourceInputPortDescriptor')
+                if descriptor is not None:
+                    ip_elem = descriptor.find('ipAddress')
+                    if ip_elem is not None and ip_elem.text:
+                        ip_address = ip_elem.text
+
+                if ip_address and ip_address != "0.0.0.0" and ip_address != "N/A":
+                    camaras_nvr_list.append({
+                        "ip_address": ip_address,
+                        "channel_id": int(chan_id) if chan_id.isdigit() else chan_id,
+                        "nvr_ip":     nvr['ip'],
+                        "nvr_name":   nvr_name
+                    })
+                    camaras_nvr += 1
+
+            nvr_info = {
+                "ip":                nvr['ip'],
+                "nvr_name":          nvr_name,
+                "modelo":            nvr_modelo,
+                "nro_serie":         nvr_serial,
+                "mac_address":       nvr_mac,
+                "firmware":          nvr_firmware,
+                "protocolo_conexion": f"{describir_protocolo(protocolo_key)}:{puerto}",
+                "total_camaras":     camaras_nvr,
+            }
+            print(f"  -> OK: {camaras_nvr} cámaras extraídas de {nvr['ip']}.")
+            return camaras_nvr_list, nvr_info
+
+        except Exception as e:
+            if (protocolo_key, puerto) != puertos[-1]:
+                print(f"  -> [WARN] NVR {nvr['ip']} no respondió en {describir_protocolo(protocolo_key)}:{puerto}. Probando siguiente...")
+            else:
+                print(f"  -> [ERROR] Fallo total al consultar canales en NVR {nvr['ip']}: {e}")
+
+    # Todos los protocolos fallaron → NVR offline
+    return [], {
+        "ip":                nvr['ip'],
+        "nvr_name":          "Fallo/Offline",
+        "modelo":            "N/A",
+        "nro_serie":         "N/A",
+        "mac_address":       "N/A",
+        "firmware":          "N/A",
+        "protocolo_conexion": "Fallo/Offline",
+        "total_camaras":     0,
+    }
+
+
+def obtener_camaras_desde_nvrs(nvr_list, puertos, user, password, max_workers=5):
     if not nvr_list:
         return [], []
 
+    # Cap automático: no tiene sentido abrir más hilos que NVRs disponibles
+    workers_nvr = min(max_workers, len(nvr_list))
+    print(f"\n--- FASE 1: Extrayendo cámaras desde los NVRs ({workers_nvr} simultáneos) ---")
+
+    args_list = [(nvr, puertos, user, password) for nvr in nvr_list]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers_nvr) as executor:
+        resultados = list(executor.map(procesar_nvr, args_list))
+
     camaras_base = []
     nvrs_info    = []
-
-    print("\n--- FASE 1: Extrayendo cámaras desde los NVRs ---")
-    for nvr in nvr_list:
-        nvr_name     = "NVR_Desconocido"
-        nvr_modelo   = "N/A"
-        nvr_serial   = "N/A"
-        nvr_mac      = "N/A"
-        nvr_firmware = "N/A"
-        nvr_conectado = False
-
-        for protocolo_key, puerto in puertos:
-            proto_real = "https" if protocolo_key.startswith("https") else "http"
-            session = requests.Session()
-            session.mount(f"{proto_real}://", ADAPTERS[protocolo_key])
-
-            try:
-                url_info = f"{proto_real}://{nvr['ip']}:{puerto}/ISAPI/System/deviceInfo"
-                resp_info = session.get(
-                    url_info, auth=HTTPDigestAuth(user, password),
-                    timeout=5, verify=False
-                )
-                if resp_info.status_code == 200:
-                    xml_info  = re.sub(' xmlns="[^"]+"', '', resp_info.text)
-                    root_info = ET.fromstring(xml_info)
-
-                    def _f(tag):
-                        el = root_info.find(tag)
-                        return el.text if el is not None else "N/A"
-
-                    nvr_name     = _f('deviceName') or "NVR_Desconocido"
-                    nvr_modelo   = _f('model')
-                    serial_raw   = _f('serialNumber')
-                    nvr_serial   = serial_raw[len(nvr_modelo):] if (serial_raw != "N/A" and serial_raw.startswith(nvr_modelo)) else serial_raw
-                    nvr_mac      = _f('macAddress')
-                    nvr_firmware = _f('firmwareVersion')
-
-                etiqueta      = " (Fallback)" if (protocolo_key, puerto) != puertos[0] else ""
-                proto_display = describir_protocolo(protocolo_key)
-                print(f"Consultando NVR: {nvr_name} ({nvr['ip']}) en {proto_display}:{puerto}{etiqueta}...")
-
-                url_cameras = f"{proto_real}://{nvr['ip']}:{puerto}/ISAPI/ContentMgmt/InputProxy/channels"
-                response = session.get(
-                    url_cameras, auth=HTTPDigestAuth(user, password),
-                    timeout=10, verify=False
-                )
-                response.raise_for_status()
-                xml_data = re.sub(' xmlns="[^"]+"', '', response.text)
-                root = ET.fromstring(xml_data)
-
-                camaras_nvr = 0
-                for channel in root.findall('InputProxyChannel'):
-                    chan_id_elem = channel.find('id')
-                    chan_id = chan_id_elem.text if chan_id_elem is not None else "N/A"
-
-                    ip_address = "N/A"
-                    descriptor = channel.find('sourceInputPortDescriptor')
-                    if descriptor is not None:
-                        ip_elem = descriptor.find('ipAddress')
-                        if ip_elem is not None and ip_elem.text:
-                            ip_address = ip_elem.text
-
-                    if ip_address and ip_address != "0.0.0.0" and ip_address != "N/A":
-                        camaras_base.append({
-                            "ip_address": ip_address,
-                            "channel_id": int(chan_id) if chan_id.isdigit() else chan_id,
-                            "nvr_ip":     nvr['ip'],
-                            "nvr_name":   nvr_name
-                        })
-                        camaras_nvr += 1
-
-                nvrs_info.append({
-                    "ip":                nvr['ip'],
-                    "nvr_name":          nvr_name,
-                    "modelo":            nvr_modelo,
-                    "nro_serie":         nvr_serial,
-                    "mac_address":       nvr_mac,
-                    "firmware":          nvr_firmware,
-                    "protocolo_conexion": f"{describir_protocolo(protocolo_key)}:{puerto}",
-                    "total_camaras":     camaras_nvr,
-                })
-                nvr_conectado = True
-                print(f"  -> OK: {camaras_nvr} cámaras extraídas de {nvr['ip']}.")
-                break
-
-            except Exception as e:
-                if (protocolo_key, puerto) != puertos[-1]:
-                    print(f"  -> [WARN] NVR {nvr['ip']} no respondió en {describir_protocolo(protocolo_key)}:{puerto}. Probando siguiente...")
-                else:
-                    print(f"  -> [ERROR] Fallo total al consultar canales en NVR {nvr['ip']}: {e}")
-
-        if not nvr_conectado:
-            nvrs_info.append({
-                "ip":                nvr['ip'],
-                "nvr_name":          "Fallo/Offline",
-                "modelo":            "N/A",
-                "nro_serie":         "N/A",
-                "mac_address":       "N/A",
-                "firmware":          "N/A",
-                "protocolo_conexion": "Fallo/Offline",
-                "total_camaras":     0,
-            })
+    for camaras_nvr, nvr_info in resultados:
+        camaras_base.extend(camaras_nvr)
+        nvrs_info.append(nvr_info)
 
     print(f"-> Total de cámaras encontradas en los NVRs: {len(camaras_base)}")
     return camaras_base, nvrs_info
@@ -489,7 +521,7 @@ def ejecutar_escaneo_unificado():
     usar_interactivo = (config_data is None)
 
     print("\n=========================================")
-    print("      DAEMON DE ESCANEO CCTV ISAPI       ")
+    print("             ESCANEO CCTV ISAPI           ")
     print("=========================================")
 
     # --- OFRECER DOCUMENTACIÓN EN MODO MANUAL ---
@@ -603,7 +635,7 @@ def ejecutar_escaneo_unificado():
         max_workers = pedir_workers()
 
     # 5. Ejecución de Fase 1
-    camaras_base, nvrs_info = obtener_camaras_desde_nvrs(nvr_list, puertos, user, password)
+    camaras_base, nvrs_info = obtener_camaras_desde_nvrs(nvr_list, puertos, user, password, max_workers)
     if not camaras_base:
         print("\n[ERROR] No se pudieron extraer canales de los NVRs provistos. Saliendo.")
         return
