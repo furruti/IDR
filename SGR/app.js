@@ -360,14 +360,16 @@ function _cerrarFiltro() {
     if (b) b.classList.remove('activo');
 }
 function _cerrarVistaSafe() {
-    ['inv-vista-menu', 'serv-vista-menu'].forEach(id => {
-        const m = document.getElementById(id);
-        if (m) m.classList.remove('open');
-    });
-    ['btn-vista-inv', 'btn-vista-serv'].forEach(id => {
-        const b = document.getElementById(id);
-        if (b) b.classList.remove('activo');
-    });
+    const menuInv = document.getElementById('inv-vista-menu');
+    if (menuInv && menuInv.classList.contains('open')) {
+        menuInv.classList.remove('open');
+        document.getElementById('btn-vista-inv')?.classList.remove('activo');
+    }
+    const menuServ = document.getElementById('serv-vista-menu');
+    if (menuServ && menuServ.classList.contains('open')) {
+        menuServ.classList.remove('open');
+        document.getElementById('btn-vista-serv')?.classList.remove('activo');
+    }
 }
 function _cerrarTodosDropdowns() {
     cerrarFab();
@@ -1454,7 +1456,7 @@ function _getGrupos(racks, agrupacion = _agrupInv) {
         ].filter(g => g.racks.length > 0).sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'));
     }
 
-    if (_agrupInv === 'estado') {
+    if (agrupacion === 'estado') {
         const map = { servicio: 'En servicio', inventario: 'Disponible', baja: 'Baja' };
         return ['servicio', 'inventario', 'baja'].map(e => ({
             titulo: map[e],
@@ -1462,7 +1464,7 @@ function _getGrupos(racks, agrupacion = _agrupInv) {
         })).filter(g => g.racks.length > 0).sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'));
     }
 
-    if (_agrupInv === 'edificio') {
+    if (agrupacion === 'edificio') {
         const porEdificio = {};
         racks.forEach(r => {
             const ed = r.edificio?.trim() || 'Depósito';
