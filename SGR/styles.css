@@ -189,8 +189,8 @@ body.modal-open {
 }
 
 .header-logo {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -613,6 +613,7 @@ body.modal-open {
 .dash-layout {
     display: grid;
     grid-template-columns: 70% 1fr;
+    grid-template-rows: auto;
     gap: 0.75rem;
     align-items: start;
     margin-bottom: 0.75rem;
@@ -622,9 +623,16 @@ body.modal-open {
     margin-bottom: 0;
 }
 
+/* Las dos tarjetas de resumen se apilan en la primera columna */
+#card-resumen-edificios {
+    grid-column: 1;
+}
+
 .dash-chips-col {
     display: flex;
     flex-direction: column;
+    grid-column: 2;
+    grid-row: 1 / span 2;
 }
 
 .dash-stats-grid {
@@ -1146,8 +1154,8 @@ input[type="file"].hidden {
 }
 
 .icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     background: var(--c-gray-btn);
     border-radius: var(--radius);
@@ -1416,8 +1424,14 @@ input[type="file"].hidden {
 
 .svg-th-umbral,
 
+.stat-chip-clickable {
+    cursor: pointer;
+    transition: transform 0.18s var(--t-spring-soft), filter var(--t-fast);
+}
+
 .stat-chip-clickable:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
+    filter: brightness(0.9);
 }
 
 /* Stat chip value con color de estado */
@@ -1505,7 +1519,12 @@ input[type="file"].hidden {
     cursor: pointer;
     text-align: left;
     margin-bottom: 0.4rem;
-    transition: filter var(--t-ui);
+    transition: filter var(--t-ui), transform 0.18s var(--t-spring-soft);
+}
+
+.ajustes-row:active {
+    transform: scale(0.98);
+    filter: brightness(0.9);
 }
 
 .ajustes-row span:not(.ajustes-arrow) {
@@ -1699,6 +1718,18 @@ input[type="file"].hidden {
         grid-template-columns: 1fr;
     }
 
+    #card-resumen-edificios {
+        grid-column: 1;
+        grid-row: auto;
+        order: 2;
+    }
+
+    .dash-chips-col {
+        grid-column: 1;
+        grid-row: auto;
+        order: 1;
+    }
+
     .dash-stats-grid {
         flex-direction: row;
         flex-wrap: wrap;
@@ -1889,9 +1920,9 @@ kbd {
     }
 }
 
-/* Animación al cambiar agrupamiento */
-.inv-agrup-entrando {
-    animation: invFadeIn 0.22s ease forwards;
+@keyframes resumenFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes spin {
@@ -1902,6 +1933,11 @@ kbd {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Animación al cambiar agrupamiento */
+.inv-agrup-entrando {
+    animation: invFadeIn 0.22s ease forwards;
 }
 
 /* Botones rápidos de Gist ocultos por defecto */
@@ -1928,8 +1964,8 @@ kbd {
     padding: 0.55rem;
     border-radius: 50%;
     flex-shrink: 0;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
 }
 
 .edificios-lista {
@@ -1976,8 +2012,8 @@ kbd {
 }
 
 .card-action-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     color: var(--text-muted);
     transition: color var(--t-fast), background var(--t-fast);
@@ -2251,6 +2287,34 @@ kbd {
     border-radius: var(--radius-sm);
     min-width: 160px;
     cursor: pointer;
+}
+
+.stat-chip-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.stat-chip-pct {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.75;
+}
+
+.resumen-th-toggle-animating,
+.resumen-td-toggle-animating {
+    animation: resumenFadeIn 0.35s ease forwards;
+}
+
+/* Fila baja */
+.resumen-fila-baja .resumen-td-label {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.resumen-fila-baja .resumen-td-total {
+    color: var(--text-muted);
 }
 
 .resumen-table {

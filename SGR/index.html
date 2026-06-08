@@ -325,20 +325,15 @@
         <!-- ═══ PANEL DASHBOARD ═══ -->
         <div class="tab-panel activa" id="panel-dashboard">
             <div class="dash-layout">
-                <!-- Tarjeta resumen de racks (70%) -->
-                <div class="card card-no-mb dash-resumen-col" id="card-resumen-racks">
+                <!-- Tarjeta resumen por edificio -->
+                <div class="card card-no-mb dash-resumen-col" id="card-resumen-edificios">
                     <div class="card-header">
                         <svg class="svg-icon"><use href="#icon-rack" /></svg>
-                        <h2>Resumen de Racks</h2>
-                        <div class="resumen-edificio-selector">
-                            <select id="resumen-edificio-select">
-                                <option value="">Todos los edificios</option>
-                            </select>
-                        </div>
+                        <h2>Total por Edificio</h2>
                     </div>
-                    <div id="resumen-racks-tabla"></div>
+                    <div id="resumen-edificios-tabla"></div>
                 </div>
-                <!-- Chips de stats (30%) -->
+                <!-- Chips de stats -->
                 <div class="dash-chips-col">
                     <div class="dash-stats-grid" id="stats-grid"></div>
                 </div>
@@ -736,7 +731,7 @@
                 <h3><svg class="svg-icon">
                         <use href="#icon-settings" />
                     </svg> Ajustes</h3>
-                <span class="modal-header-version">v260529</span>
+                <span class="modal-header-version">v260608</span>
             </div>
             <div class="modal-body modal-body-pb">
                 <p class="ajustes-section-label">Sincronización</p>

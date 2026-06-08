@@ -425,6 +425,8 @@ let _busqTimer = null;
 function onBusqGlobal() {
     const val = DOM.busqGlobal.value;
     if (DOM.busqClearBtn) DOM.busqClearBtn.classList.toggle('visible', !!val);
+    // Si hay búsqueda activa y estamos en dashboard, ir a inventario
+    if (val && _tabActual === 'dashboard') switchTab('inventario');
     if (_busqTimer) clearTimeout(_busqTimer);
     _busqTimer = setTimeout(renderTodo, 300);
 }
@@ -952,9 +954,23 @@ function _coincideBusqueda(r, busqRaw, campos) {
     const tokens = tokensRaw.map(t => normalizarTexto(t.replace(/"/g, '')));
 
     if (esTodo) {
-        const h = normalizarTexto([r.numero, r.patrimonio, r.marca, r.modelo, r.identificador, r.notas, r.edificio, r.piso, r.dependencia, uniVis, estadoVis].join(' '));
-        // Todas las palabras (o frases enteras) deben estar en algún lugar del item
-        return tokens.every(t => h.includes(t));
+        const hayfields = [
+            normalizarTexto([r.numero].join(' ')),
+            normalizarTexto([r.patrimonio].join(' ')),
+            normalizarTexto([r.marca, r.modelo].join(' ')),
+            normalizarTexto([r.identificador].join(' ')),
+            normalizarTexto([r.notas].join(' ')),
+            normalizarTexto([r.edificio, r.piso].join(' ')),
+            normalizarTexto([r.dependencia].join(' ')),
+            normalizarTexto([uniVis].join(' ')),
+            normalizarTexto([estadoVis].join(' ')),
+        ];
+        // Primero intentar que todos los tokens estén en UN MISMO campo
+        const matchSameField = hayfields.some(h => tokens.every(t => h.includes(t)));
+        if (matchSameField) return true;
+        // Fallback: todos los tokens en algún campo (cross-field), solo para tokens únicos
+        if (tokens.length === 1) return hayfields.some(h => h.includes(tokens[0]));
+        return false;
     }
 
     // Multi-campo: basta con que TODAS las palabras (o frases) coincidan en al menos UN campo en común
@@ -1051,127 +1067,198 @@ function renderDashboard() {
         </div>`;
     }).join('') : '<p class="td-muted td-sm">Sin datos</p>';
 
+    const pct = n => total > 0 ? `<span class="stat-chip-pct">${Math.round((n / total) * 100)}%</span>` : '';
+
     DOM.statsGrid.innerHTML = `
         <div class="stat-chip">
             <span class="stat-chip-label">Racks</span>
             <span class="stat-chip-value">${total}</span>
             <span class="stat-chip-sub">registrados</span>
         </div>
-        <div class="stat-chip">
+        <div class="stat-chip stat-chip-clickable" data-busq="disponible">
             <span class="stat-chip-label">Disponibles</span>
-            <span class="stat-chip-value dist-inventario">${enInv}</span>
+            <div class="stat-chip-value-row">
+                <span class="stat-chip-value dist-inventario">${enInv}</span>${pct(enInv)}
+            </div>
             <span class="stat-chip-sub">en inventario</span>
         </div>
-        <div class="stat-chip">
+        <div class="stat-chip stat-chip-clickable" data-busq="servicio">
             <span class="stat-chip-label">En Servicio</span>
-            <span class="stat-chip-value dist-servicio">${enServ}</span>
+            <div class="stat-chip-value-row">
+                <span class="stat-chip-value dist-servicio">${enServ}</span>${pct(enServ)}
+            </div>
             <span class="stat-chip-sub">activos</span>
+        </div>
+        <div class="stat-chip stat-chip-clickable" data-busq="baja">
+            <span class="stat-chip-label">Baja</span>
+            <div class="stat-chip-value-row">
+                <span class="stat-chip-value dist-baja">${enBaja}</span>${pct(enBaja)}
+            </div>
+            <span class="stat-chip-sub">dados de baja</span>
         </div>
         `;
 
-    _poblarSelectResumen();
-    renderResumenRacks();
+    renderResumenEdificios();
 
 }
 
 // ═══════════════════════════════════════════════════════
-//  RESUMEN DE RACKS (card dashboard)
+//  RESUMEN DE RACKS (card dashboard) — toggle column
 // ═══════════════════════════════════════════════════════
 
-function _poblarSelectResumen() {
-    const sel = document.getElementById('resumen-edificio-select');
-    if (!sel) return;
-    const valorActual = sel.value;
-    sel.innerHTML = '<option value="">Todos</option>';
-    const ESTADOS_EXTRA = [
-        { value: '__inventario__', label: 'Disponible' },
-        { value: '__baja__',       label: 'Baja' },
-    ];
-    ESTADOS_EXTRA.forEach(({ value, label }) => {
-        const opt = document.createElement('option');
-        opt.value = value;
-        opt.textContent = label;
-        sel.appendChild(opt);
-    });
-    if (state.edificios.length) {
-        const sep = document.createElement('option');
-        sep.disabled = true;
-        sep.textContent = '──────────';
-        sel.appendChild(sep);
+// Columnas que rotan en la 3ra columna. Agregar más aquí en el futuro.
+const RESUMEN_TOGGLE_COLS = [
+    { key: 'conP',  label: 'CON PAT.',  cls: 'resumen-td-con' },
+    { key: 'sinP',  label: 'SIN PAT.',  cls: 'resumen-td-sin' },
+    { key: 'sinR',  label: 'SIN REL.',  cls: 'resumen-td-rel' },
+];
+
+let _resumenToggleIdx = 0;
+let _resumenToggleTimer = null;
+
+function _iniciarToggleResumen() {
+    if (_resumenToggleTimer) clearInterval(_resumenToggleTimer);
+    _resumenToggleTimer = setInterval(() => {
+        _resumenToggleIdx = (_resumenToggleIdx + 1) % RESUMEN_TOGGLE_COLS.length;
+        _actualizarColumnaToggle();
+    }, 3000);
+}
+
+function _actualizarColumnaToggle() {
+    const col = RESUMEN_TOGGLE_COLS[_resumenToggleIdx];
+    const thToggle = document.getElementById('resumen-th-toggle');
+    if (thToggle) {
+        thToggle.textContent = col.label;
+        thToggle.classList.add('resumen-th-toggle-animating');
+        setTimeout(() => thToggle.classList.remove('resumen-th-toggle-animating'), 350);
     }
-    state.edificios.forEach(ed => {
-        const opt = document.createElement('option');
-        opt.value = ed;
-        opt.textContent = ed;
-        sel.appendChild(opt);
+    document.querySelectorAll('.resumen-td-toggle').forEach(td => {
+        const val = parseInt(td.dataset[col.key] || '0', 10);
+        const tot = parseInt(td.dataset.total || '0', 10);
+        const pct = tot > 0 ? ` <span class="resumen-pct">(${Math.round((val / tot) * 100)}%)</span>` : '';
+        td.innerHTML = val + pct;
+        td.className = 'resumen-td-num resumen-td-toggle ' + col.cls;
+        td.classList.add('resumen-td-toggle-animating');
+        setTimeout(() => td.classList.remove('resumen-td-toggle-animating'), 350);
     });
-    // Restaurar selección si sigue siendo válida
-    const valoresValidos = ['', '__inventario__', '__baja__', ...state.edificios];
-    if (valoresValidos.includes(valorActual)) sel.value = valorActual;
 }
 
 function renderResumenRacks() {
     const contenedor = document.getElementById('resumen-racks-tabla');
     if (!contenedor) return;
 
-    const filtroVal = document.getElementById('resumen-edificio-select')?.value || '';
-    const edificioFiltro = (filtroVal && filtroVal !== '__inventario__' && filtroVal !== '__baja__') ? filtroVal : '';
-
     const _patNorm = r => (r.patrimonio || '').trim().toLowerCase();
     const conPat  = r => { const p = _patNorm(r); return p && p !== 'relevar' && p !== 'no'; };
     const sinPat  = r => _patNorm(r) === 'no';
     const sinRel  = r => { const p = _patNorm(r); return !p || p === 'relevar'; };
 
-    let totalRacks;
-    if (filtroVal === '__inventario__') {
-        totalRacks = state.racks.filter(r => r.estado === 'inventario');
-    } else if (filtroVal === '__baja__') {
-        totalRacks = state.racks.filter(r => r.estado === 'baja');
-    } else if (edificioFiltro) {
-        totalRacks = state.racks.filter(r => r.estado === 'servicio' && r.edificio === edificioFiltro);
-    } else {
-        totalRacks = state.racks;
-    }
+    const allRacks     = state.racks;
+    const enServicio   = allRacks.filter(r => r.estado === 'servicio');
+    const enInventario = allRacks.filter(r => r.estado === 'inventario');
+    const enBaja       = allRacks.filter(r => r.estado === 'baja');
+    const totalGeneral = allRacks.length;
 
-    const totalGeneral = state.racks.length;
+    const _fila = (label, grupo, cls) => ({
+        label,
+        total: grupo.length,
+        conP:  grupo.filter(conPat).length,
+        sinP:  grupo.filter(sinPat).length,
+        sinR:  grupo.filter(sinRel).length,
+        cls,
+    });
 
     const filas = [
-        {
-            label: 'Racks',
-            total: totalRacks.length,
-            conP:  totalRacks.filter(conPat).length,
-            sinP:  totalRacks.filter(sinPat).length,
-            sinR:  totalRacks.filter(sinRel).length,
-            cls:   '',
-        },
+        _fila('Racks',      allRacks,     ''),
+        _fila('En servicio',enServicio,   'resumen-fila-sub'),
+        _fila('Disponible', enInventario, 'resumen-fila-sub resumen-fila-inv'),
+        _fila('Baja',       enBaja,       'resumen-fila-sub resumen-fila-baja'),
     ];
+
+    const col = RESUMEN_TOGGLE_COLS[_resumenToggleIdx];
+
+    const filaHTML = f => {
+        const pctTotal = totalGeneral > 0
+            ? ` <span class="resumen-pct">(${Math.round((f.total / totalGeneral) * 100)}%)</span>`
+            : '';
+        const toggleVal = f[col.key];
+        const pct = f.total > 0
+            ? ` <span class="resumen-pct">(${Math.round((toggleVal / f.total) * 100)}%)</span>`
+            : '';
+        return `
+        <tr class="resumen-fila ${f.cls}">
+            <td class="resumen-td-label">${esc(f.label)}</td>
+            <td class="resumen-td-num resumen-td-total">${f.total}${pctTotal}</td>
+            <td class="resumen-td-num resumen-td-toggle ${col.cls}"
+                data-total="${f.total}"
+                data-conP="${f.conP}"
+                data-sinP="${f.sinP}"
+                data-sinR="${f.sinR}">${toggleVal}${pct}</td>
+        </tr>`;
+    };
 
     contenedor.innerHTML = `
         <div class="table-wrap">
             <table class="resumen-table">
                 <thead>
                     <tr>
-                        <th class="resumen-th-activo">ACTIVO</th>
+                        <th class="resumen-th-activo">ÍTEM</th>
                         <th class="resumen-th-num resumen-th-total">TOTAL</th>
-                        <th class="resumen-th-num">CON PAT.</th>
-                        <th class="resumen-th-num">SIN PAT.</th>
-                        <th class="resumen-th-num">SIN REL.</th>
+                        <th class="resumen-th-num resumen-th-toggle" id="resumen-th-toggle">${col.label}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${filas.map(f => {
-                        const pct = n => f.total > 0 ? ` <span class="resumen-pct">(${Math.round((n / f.total) * 100)}%)</span>` : '';
-                        const pctTotal = totalGeneral > 0 ? ` <span class="resumen-pct">(${Math.round((f.total / totalGeneral) * 100)}%)</span>` : '';
-                        return `
-                    <tr class="resumen-fila ${f.cls}">
-                        <td class="resumen-td-label">${esc(f.label)}</td>
-                        <td class="resumen-td-num resumen-td-total">${f.total}${pctTotal}</td>
-                        <td class="resumen-td-num resumen-td-con">${f.conP}${pct(f.conP)}</td>
-                        <td class="resumen-td-num resumen-td-sin">${f.sinP}${pct(f.sinP)}</td>
-                        <td class="resumen-td-num resumen-td-rel">${f.sinR}${pct(f.sinR)}</td>
-                    </tr>`;
-                    }).join('')}
+                    ${filas.map(filaHTML).join('')}
                 </tbody>
+            </table>
+        </div>`;
+
+    _iniciarToggleResumen();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESUMEN POR EDIFICIO (segunda card dashboard)
+// ═══════════════════════════════════════════════════════
+
+function renderResumenEdificios() {
+    const contenedor = document.getElementById('resumen-edificios-tabla');
+    if (!contenedor) return;
+
+    const enServicio = state.racks.filter(r => r.estado === 'servicio');
+
+    // Agrupar por edificio
+    const mapa = {};
+    enServicio.forEach(r => {
+        const ed = r.edificio || '(Sin edificio)';
+        mapa[ed] = (mapa[ed] || 0) + 1;
+    });
+
+    const edificios = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
+
+    if (!edificios.length) {
+        contenedor.innerHTML = '<p class="td-muted td-sm" style="padding:1rem 0.85rem">Sin racks en servicio</p>';
+        return;
+    }
+
+    const totalServicio = enServicio.length;
+    const filas = edificios.map(([ed, total]) => {
+        const pct = totalServicio > 0 ? ` <span class="resumen-pct">(${Math.round((total / totalServicio) * 100)}%)</span>` : '';
+        return `
+        <tr class="resumen-fila">
+            <td class="resumen-td-label">${esc(ed)}</td>
+            <td class="resumen-td-num resumen-td-total">${total}${pct}</td>
+        </tr>`;
+    }).join('');
+
+    contenedor.innerHTML = `
+        <div class="table-wrap">
+            <table class="resumen-table">
+                <thead>
+                    <tr>
+                        <th class="resumen-th-activo">EDIFICIO</th>
+                        <th class="resumen-th-num resumen-th-total">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
             </table>
         </div>`;
 }
@@ -1972,10 +2059,6 @@ document.addEventListener('keydown', e => {
     if (e.ctrlKey && !e.altKey) {
         // 2. NUEVO: Ctrl + Flechas para ciclar entre pestañas
         if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-            const tag = document.activeElement?.tagName;
-            // Si está en un input, dejamos que funcione el atajo nativo para saltar de a palabras
-            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-
             e.preventDefault();
             const tabs = ['dashboard', 'servicio', 'inventario'];
             let idx = tabs.indexOf(_tabActual);
@@ -2207,6 +2290,16 @@ function _initBindings() {
     document.getElementById('busq-global')?.addEventListener('input', onBusqGlobal);
     document.getElementById('busq-clear-btn')?.addEventListener('click', limpiarBusqueda);
 
+    // Chips clickeables del dashboard → activan búsqueda por estado
+    document.getElementById('stats-grid')?.addEventListener('click', e => {
+        const chip = e.target.closest('[data-busq]');
+        if (!chip) return;
+        const term = chip.dataset.busq;
+        DOM.busqGlobal.value = term;
+        onBusqGlobal();
+        DOM.busqGlobal.focus();
+    });
+
     // FAB dropdown
     document.getElementById('btn-fab-main')?.addEventListener('click', toggleFab);
     document.getElementById('fab-nuevo-rack')?.addEventListener('click', () => UI.abrirNuevoRack());
@@ -2258,7 +2351,7 @@ function _initBindings() {
 
     document.getElementById('ajustes-edificios-btn')?.addEventListener('click', () => GestorEdificios.abrir());
 
-    document.getElementById('resumen-edificio-select')?.addEventListener('change', renderResumenRacks);
+    // (selector de edificio eliminado)
     // Ajustes
     document.getElementById('ajustes-cerrar-btn')?.addEventListener('click', () => UI.cerrarAjustes());
     document.getElementById('ajustes-exportar-btn')?.addEventListener('click', exportarDatos);
