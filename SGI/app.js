@@ -974,7 +974,7 @@ function renderHerramientas() {
                 <span class="herr-item-fecha">${formatFecha(h.fecha)}</span>
                 <span class="herr-item-nombre">${esc(h.nombre)}</span>
             </div>
-            ${h.cantidad && h.cantidad > 1 ? `<span class="herr-item-cantidad">${esc(String(h.cantidad))}</span>` : ''}
+            <span class="herr-item-cantidad">${esc(String(h.cantidad))}</span>
             <button class="icon-btn btn-cat-delete btn-herr-delete" data-id="${esc(h.id)}" title="Eliminar">
                 <svg class="svg-icon"><use href="#icon-x"/></svg>
             </button>
@@ -3365,7 +3365,22 @@ function _ejecutarReporte() {
     const sel = document.getElementById('rpt-anio-select');
     _reporteAnio = sel ? (sel.value || null) : null;
     const anioSeleccionado = _reporteAnio;
-    const labelPeriodo = anioSeleccionado ? `Año ${anioSeleccionado}` : 'Historial completo';
+    
+    let labelPeriodo = 'Historial completo';
+    if (anioSeleccionado) {
+        labelPeriodo = `Año ${anioSeleccionado}`;
+    } else if (state.movimientos && state.movimientos.length > 0) {
+        // Buscamos la fecha más antigua y la más reciente
+        const minFecha = state.movimientos.reduce((min, m) => m.fecha < min ? m.fecha : min, state.movimientos[0].fecha);
+        const maxFecha = state.movimientos.reduce((max, m) => m.fecha > max ? m.fecha : max, state.movimientos[0].fecha);
+        
+        // Si todo pasó el mismo día mostramos solo una fecha, sino el rango
+        if (minFecha === maxFecha) {
+            labelPeriodo = `Historial completo (${formatFecha(minFecha)})`;
+        } else {
+            labelPeriodo = `Historial completo (${formatFecha(minFecha)} - ${formatFecha(maxFecha)})`;
+        }
+    }
 
     // Filtrar movimientos por período
     const movsFiltrados = anioSeleccionado
