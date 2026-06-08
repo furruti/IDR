@@ -57,7 +57,7 @@
     --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.22);
     --radius: 20px;
     --radius-sm: 12px;
-    --border-w: 1.5px;
+    --border-w: 1px;
     --hover: brightness(0.93);
 
     /* Tokens de animación */
@@ -505,7 +505,7 @@ body.modal-open {
     z-index: 9999;
     width: 280px;
     background: var(--bg-card);
-    border: var(--border-w) solid var(--border);
+    border: var(--border-w) solid var(--text-muted);
     border-radius: var(--radius);
     box-shadow: var(--shadow-dropdown);
     overflow: hidden;
@@ -1046,7 +1046,7 @@ input[type="file"].hidden {
     font-size: var(--fs-md);
     font-weight: 700;
     cursor: pointer;
-    border: 1px solid var(--border);
+    border: var(--border-w) solid var(--border);
     background: var(--input-bg);
     color: var(--text-main);
     transition: filter var(--t-fast), opacity var(--t-fast), transform var(--t-fast);
@@ -1063,7 +1063,7 @@ input[type="file"].hidden {
     justify-content: space-between;
     gap: 0.75rem;
     background: var(--input-bg);
-    border: 1px solid var(--border);
+    border: var(--border-w) solid var(--border);
     border-radius: var(--radius);
     padding: 0.65rem 0.85rem;
     margin-bottom: 0.6rem;
@@ -1090,29 +1090,6 @@ input[type="file"].hidden {
     padding: 0.6rem 0.75rem;
     margin-top: 0.75rem;
     line-height: 1.55;
-}
-
-/* Label de distribución coloreado */
-.rack-dist-label {
-    font-size: var(--fs-sm);
-    font-weight: 700;
-    min-width: 85px;
-}
-
-.rack-dist-label.dist-inventario {
-    color: var(--c-blue);
-}
-
-.rack-dist-label.dist-servicio {
-    color: var(--c-green);
-}
-
-.rack-dist-label.dist-mantenimiento {
-    color: var(--c-orange);
-}
-
-.rack-dist-label.dist-baja {
-    color: var(--c-red);
 }
 
 /* Enlace de Gist con ícono pequeño */
@@ -1306,7 +1283,7 @@ input[type="file"].hidden {
     padding: 1.25rem;
     display: flex;
     gap: 0.5rem;
-    border-top: 1px solid var(--border);
+    border-top: var(--border-w) solid var(--border);
 }
 
 .modal-footer button:not(.btn-dark-mode-modal):not(.btn-icon-only) {
@@ -1358,7 +1335,7 @@ input[type="file"].hidden {
     bottom: 4rem;
     right: 0;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: var(--border-w) solid var(--border);
     border-radius: var(--radius);
     padding: 0.5rem;
     box-shadow: var(--shadow);
@@ -1447,53 +1424,6 @@ input[type="file"].hidden {
     color: var(--c-red);
 }
 
-/* Barras de distribución */
-.rack-dist-bar {
-    display: grid;
-    grid-template-columns: 80px 1fr 28px;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.4rem;
-}
-
-.rack-dist-bar-track {
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.rack-dist-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    width: 0%;
-    transition: width 0.5s ease;
-}
-
-.rack-dist-bar-fill.dist-inventario {
-    background: var(--c-blue);
-}
-
-.rack-dist-bar-fill.dist-servicio {
-    background: var(--c-green);
-}
-
-.rack-dist-bar-fill.dist-baja,
-.btn-input-side--baja {
-    background: var(--c-red);
-}
-
-.btn-input-side--baja.btn-baja--reactivar {
-    background: var(--c-green);
-}
-
-.rack-dist-count {
-    font-size: var(--fs-sm);
-    font-weight: 600;
-    color: var(--text-muted);
-    text-align: right;
-}
-
 /* ════════════════════════════════════════════════════════
    AJUSTES & GIST
    ════════════════════════════════════════════════════════ */
@@ -1502,7 +1432,7 @@ input[type="file"].hidden {
 .badge-gray {
     background: var(--input-bg);
     color: var(--text-muted);
-    border: 1px solid var(--border);
+    border: var(--border-w) solid var(--border);
 }
 
 .ajustes-row {
@@ -1741,25 +1671,13 @@ input[type="file"].hidden {
         flex: 1 1 140px;
     }
 
-    .form-row,
-
-    /* ── NUEVO: Ocultar columnas secundarias en móviles ── */
-    #th-indicador,
-    .td-indicador,
-    #th-relevado,
-    #tabla-materiales td:nth-child(4) {
-        display: none;
-    }
-
-    /* Le damos un poco más de aire al stock ahora que hay espacio */
-    #th-stock {
-        width: 25%;
+    .form-row {
+        display: block;
     }
 
     /* ── Dar más espacio lateral a las tarjetas en móviles ── */
     .card {
         padding: 1rem 0.25rem;
-        /* Achica el margen de la tarjeta principal */
     }
 
 }
@@ -1846,25 +1764,6 @@ button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
-}
-
-#th-indicador {
-    width: 38px;
-    padding-left: 0.85rem;
-    padding-right: 0;
-    text-align: center;
-}
-
-#th-nombre {
-    width: auto;
-}
-
-#th-stock {
-    width: 20%;
-}
-
-#th-relevado {
-    width: 25%;
 }
 
 kbd {
@@ -2028,7 +1927,7 @@ kbd {
     z-index: 9999;
     min-width: 180px;
     background: var(--bg-card);
-    border: var(--border-w) solid var(--border);
+    border: var(--border-w) solid var(--text-muted);
     border-radius: var(--radius);
     box-shadow: var(--shadow-dropdown);
     overflow: hidden;
@@ -2105,7 +2004,7 @@ kbd {
     user-select: none;
     background: var(--bg-card);
     transition: background var(--t-fast);
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--border-w) solid var(--border);
 }
 
 .inv-grupo-chevron {
@@ -2275,20 +2174,6 @@ kbd {
    CARD RESUMEN DE RACKS (dashboard)
    ════════════════════════════════════════════════════════ */
 
-.resumen-edificio-selector {
-    margin-left: auto;
-}
-
-.resumen-edificio-selector select {
-    width: auto;
-    height: 34px;
-    font-size: var(--fs-sm);
-    padding: 0 0.65rem;
-    border-radius: var(--radius-sm);
-    min-width: 160px;
-    cursor: pointer;
-}
-
 .stat-chip-value-row {
     display: flex;
     align-items: baseline;
@@ -2355,7 +2240,7 @@ kbd {
 
 .resumen-fila td {
     padding: 0.65rem 0.85rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--border-w) solid var(--border);
 }
 
 .resumen-fila:last-child td {

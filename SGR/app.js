@@ -1054,19 +1054,6 @@ function renderDashboard() {
     const enInv = all.filter(r => r.estado === 'inventario').length;
     const enBaja = all.filter(r => r.estado === 'baja').length;
 
-    const distRows = total ? [
-        { label: 'Disponible', n: enInv, cls: 'dist-inventario' },
-        { label: 'En servicio', n: enServ, cls: 'dist-servicio' },
-        { label: 'Baja', n: enBaja, cls: 'dist-baja' },
-    ].filter(e => e.n > 0).map(e => {
-        const pct = Math.round((e.n / total) * 100);
-        return `<div class="rack-dist-bar">
-            <span class="rack-dist-label ${e.cls}">${e.label}</span>
-            <div class="rack-dist-bar-track"><div class="rack-dist-bar-fill ${e.cls}" data-pct="${pct}"></div></div>
-            <span class="rack-dist-count">${e.n}</span>
-        </div>`;
-    }).join('') : '<p class="td-muted td-sm">Sin datos</p>';
-
     const pct = n => total > 0 ? `<span class="stat-chip-pct">${Math.round((n / total) * 100)}%</span>` : '';
 
     DOM.statsGrid.innerHTML = `
@@ -2657,8 +2644,8 @@ function _initBindings() {
             </label>`;
         }).join('');
 
-        const labels = { patrimonio: 'GRUPOS DE LA VISTA A INCLUIR', estado: 'GRUPOS DE LA VISTA A INCLUIR', edificio: 'GRUPOS DE LA VISTA A INCLUIR' };
-        desc.textContent = labels[_agrupInv] || 'GRUPOS DE LA VISTA A INCLUIR';
+        const labels = { patrimonio: 'GRUPOS A INCLUIR', estado: 'GRUPOS A INCLUIR', edificio: 'GRUPOS A INCLUIR' };
+        desc.textContent = labels[_agrupInv] || 'GRUPOS A INCLUIR';
 
         // Estado inicial del botón toggle
         let _todosSeleccionados = true;
