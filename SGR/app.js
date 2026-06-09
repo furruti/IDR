@@ -1243,11 +1243,20 @@ function renderResumenEdificios() {
     }
 }
 
+let _sortEdificios = { col: 'total', dir: -1 };
+
 function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
     const sub = document.getElementById('resumen-edificios-subtitulo');
     if (sub) { sub.textContent = ''; sub.hidden = true; }
 
-    const filas = edificios.map(([ed, total]) => {
+    const sorted = [...edificios].sort((a, b) => {
+        if (_sortEdificios.col === 'nombre') {
+            return a[0].localeCompare(b[0], 'es') * _sortEdificios.dir;
+        }
+        return (a[1] - b[1]) * _sortEdificios.dir;
+    });
+
+    const filas = sorted.map(([ed, total]) => {
         const pct = totalServicio > 0 ? ` <span class="resumen-pct">(${Math.round((total / totalServicio) * 100)}%)</span>` : '';
         return `
         <tr class="resumen-fila resumen-fila-clickable" data-edificio="${esc(ed)}">
@@ -1259,19 +1268,40 @@ function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
         </tr>`;
     }).join('');
 
+    const clsNombre = 'th-sortable' + (_sortEdificios.col === 'nombre' ? (_sortEdificios.dir === 1 ? ' sort-asc' : ' sort-desc') : '');
+    const clsTotal  = 'th-sortable' + (_sortEdificios.col === 'total'  ? (_sortEdificios.dir === 1 ? ' sort-asc' : ' sort-desc') : '');
+
     contenedor.innerHTML = `
         <div class="table-wrap">
             <table class="resumen-table">
                 <thead>
                     <tr>
-                        <th class="resumen-th-activo">EDIFICIO</th>
-                        <th class="resumen-th-num resumen-th-total">TOTAL</th>
+                        <th class="resumen-th-activo ${clsNombre}" data-sort-ed="nombre">EDIFICIO</th>
+                        <th class="resumen-th-num resumen-th-total ${clsTotal}" data-sort-ed="total">TOTAL</th>
                         <th class="resumen-th-num resumen-th-chevron-col"></th>
                     </tr>
                 </thead>
                 <tbody>${filas}</tbody>
             </table>
         </div>`;
+
+    contenedor.querySelectorAll('th[data-sort-ed]').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.dataset.sortEd;
+            if (_sortEdificios.col === col) {
+                _sortEdificios.dir *= -1;
+            } else {
+                _sortEdificios.col = col;
+                _sortEdificios.dir = col === 'nombre' ? 1 : -1;
+            }
+            const c = document.getElementById('resumen-edificios-tabla');
+            const enServicio = state.racks.filter(r => r.estado === 'servicio');
+            const mapa = {};
+            enServicio.forEach(r => { const ed = r.edificio || '(Sin edificio)'; mapa[ed] = (mapa[ed] || 0) + 1; });
+            const eds = Object.entries(mapa);
+            if (c) _renderResumenListaEdificios(c, eds, enServicio.length);
+        });
+    });
 
     contenedor.querySelectorAll('.resumen-fila-clickable').forEach(tr => {
         tr.addEventListener('click', e => {

@@ -659,14 +659,11 @@ body.modal-open {
     cursor: pointer;
     user-select: none;
     position: relative;
-    padding-right: 1.5rem !important;
     transition: background var(--t-fast), color var(--t-fast);
 }
 
 .th-sortable::after {
-    position: absolute;
-    right: 0.4rem;
-    /* Los junta un poquito para que se vean como un solo bloque */
+    margin-left: 0.3em;
 }
 
 /* Triángulo activo — props compartidas */

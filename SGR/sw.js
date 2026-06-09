@@ -1,4 +1,4 @@
-const CACHE_NAME = 'SGR-260608.2058';
+const CACHE_NAME = 'SGR-260609.0128';
 const urlsToCache = [
   './',
   './index.html',
