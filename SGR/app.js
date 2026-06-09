@@ -1243,7 +1243,7 @@ function renderResumenEdificios() {
     }
 }
 
-let _sortEdificios = { col: 'total', dir: -1 };
+let _sortEdificios = (() => { try { const s = JSON.parse(localStorage.getItem(APP_KEY + 'sort_edificios')); if (s?.col) return s; } catch (_) { } return { col: 'total', dir: -1 }; })();
 
 function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
     const sub = document.getElementById('resumen-edificios-subtitulo');
@@ -1294,6 +1294,7 @@ function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
                 _sortEdificios.col = col;
                 _sortEdificios.dir = col === 'nombre' ? 1 : -1;
             }
+            try { localStorage.setItem(APP_KEY + 'sort_edificios', JSON.stringify(_sortEdificios)); } catch (_) { }
             const c = document.getElementById('resumen-edificios-tabla');
             const enServicio = state.racks.filter(r => r.estado === 'servicio');
             const mapa = {};
