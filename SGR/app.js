@@ -1244,6 +1244,9 @@ function renderResumenEdificios() {
 }
 
 function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
+    const sub = document.getElementById('resumen-edificios-subtitulo');
+    if (sub) { sub.textContent = ''; sub.hidden = true; }
+
     const filas = edificios.map(([ed, total]) => {
         const pct = totalServicio > 0 ? ` <span class="resumen-pct">(${Math.round((total / totalServicio) * 100)}%)</span>` : '';
         return `
@@ -1251,7 +1254,7 @@ function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
             <td class="resumen-td-label">${esc(ed)}</td>
             <td class="resumen-td-num resumen-td-total">${total}${pct}</td>
             <td class="resumen-td-num resumen-td-chevron">
-                <svg class="svg-icon resumen-chevron-icon" style="opacity:.4;width:.85em;height:.85em"><use href="#icon-chevron-right"/></svg>
+                <svg class="svg-icon resumen-chevron-icon"><use href="#icon-chevron-right"/></svg>
             </td>
         </tr>`;
     }).join('');
@@ -1263,7 +1266,7 @@ function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
                     <tr>
                         <th class="resumen-th-activo">EDIFICIO</th>
                         <th class="resumen-th-num resumen-th-total">TOTAL</th>
-                        <th class="resumen-th-num" style="width:28px"></th>
+                        <th class="resumen-th-num resumen-th-chevron-col"></th>
                     </tr>
                 </thead>
                 <tbody>${filas}</tbody>
@@ -1271,7 +1274,8 @@ function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
         </div>`;
 
     contenedor.querySelectorAll('.resumen-fila-clickable').forEach(tr => {
-        tr.addEventListener('click', () => {
+        tr.addEventListener('click', e => {
+            e.stopPropagation();
             _resumenEdificioActual = tr.dataset.edificio;
             const c = document.getElementById('resumen-edificios-tabla');
             if (c) _renderResumenPisos(c, state.racks.filter(r => r.estado === 'servicio'), _resumenEdificioActual);
@@ -1280,6 +1284,19 @@ function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
 }
 
 function _renderResumenPisos(contenedor, enServicio, edificio) {
+    const sub = document.getElementById('resumen-edificios-subtitulo');
+    if (sub) {
+        sub.textContent = '';
+        const ico = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        ico.classList.add('svg-icon', 'resumen-back-icon');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '#icon-back');
+        ico.appendChild(use);
+        sub.appendChild(ico);
+        sub.appendChild(document.createTextNode(' ' + edificio));
+        sub.hidden = false;
+    }
+
     const racksEdificio = enServicio.filter(r => (r.edificio || '(Sin edificio)') === edificio);
     const totalEdificio = racksEdificio.length;
 
@@ -1306,14 +1323,6 @@ function _renderResumenPisos(contenedor, enServicio, edificio) {
             <table class="resumen-table">
                 <thead>
                     <tr>
-                        <th class="resumen-th-activo" colspan="2">
-                            <button class="resumen-back-btn" id="resumen-edificios-back">
-                                <svg class="svg-icon" style="width:.9em;height:.9em"><use href="#icon-back"/></svg>
-                                ${esc(edificio)}
-                            </button>
-                        </th>
-                    </tr>
-                    <tr>
                         <th class="resumen-th-activo">PISO</th>
                         <th class="resumen-th-num resumen-th-total">RACKS</th>
                     </tr>
@@ -1322,10 +1331,11 @@ function _renderResumenPisos(contenedor, enServicio, edificio) {
             </table>
         </div>`;
 
-    contenedor.querySelector('#resumen-edificios-back')?.addEventListener('click', () => {
+    // volver al tocar el subtítulo del header
+    sub?.addEventListener('click', () => {
         _resumenEdificioActual = null;
         renderResumenEdificios();
-    });
+    }, { once: true });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2893,6 +2903,14 @@ function _initBindings() {
             guardarGruposAbiertos(); 
         });
     });
+    // ── Card edificios: tocar fuera de la tabla vuelve al listado ──
+    document.getElementById('card-resumen-edificios')?.addEventListener('click', e => {
+        if (!_resumenEdificioActual) return;
+        if (e.target.closest('#resumen-edificios-tabla')) return;
+        _resumenEdificioActual = null;
+        renderResumenEdificios();
+    });
+
 } // <-- Este es el cierre correcto de _initBindings()
 
 if (document.readyState === 'loading') {
