@@ -382,11 +382,11 @@ body.modal-open {
     width: calc(33.333% - 0.2rem);
 }
 
-.tabs-3:has(#tab-servicio.activa)::before {
+.tabs-3:has(#tab-inventario.activa)::before {
     transform: translateX(100%);
 }
 
-.tabs-3:has(#tab-inventario.activa)::before {
+.tabs-3:has(#tab-servicio.activa)::before {
     transform: translateX(200%);
 }
 

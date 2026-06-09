@@ -397,9 +397,11 @@ const TAB_LABELS = { dashboard: 'Dashboard', servicio: 'Servicio', inventario: '
 function switchTab(tab) {
     cerrarFab();
     if (_tabActual === tab) {
-        if (document.getElementById('busq-global').value) { limpiarBusqueda(); }
+        if (document.getElementById('busq-global').value) { limpiarBusqueda(); return; }
+        if (tab === 'dashboard' && _resumenEdificioActual) { _resumenEdificioActual = null; renderResumenEdificios(); return; }
         return;
     }
+    if (_tabActual === 'dashboard') _resumenEdificioActual = null;
     ['dashboard', 'servicio', 'inventario'].forEach(t =>
         document.getElementById(`tab-${t}`).classList.toggle('activa', t === tab)
     );
@@ -2087,6 +2089,8 @@ document.addEventListener('keydown', e => {
         if (modalOpen) { MM.cerrarTop(); return; }
         if (_fabOpen) { cerrarFab(); return; }
 
+        if (_tabActual === 'dashboard' && _resumenEdificioActual) { _resumenEdificioActual = null; renderResumenEdificios(); return; }
+
         const b = document.getElementById('busq-global');
         if (b) {
             if (b.value) {
@@ -2123,7 +2127,7 @@ document.addEventListener('keydown', e => {
         // 2. NUEVO: Ctrl + Flechas para ciclar entre pestañas
         if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
             e.preventDefault();
-            const tabs = ['dashboard', 'servicio', 'inventario'];
+            const tabs = ['dashboard', 'inventario', 'servicio'];
             let idx = tabs.indexOf(_tabActual);
 
             if (e.key === 'ArrowRight') idx = (idx + 1) % tabs.length;
