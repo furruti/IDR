@@ -2075,6 +2075,50 @@ kbd {
 }
 
 /* ════════════════════════════════════════════════════════
+   RESUMEN EDIFICIOS — DRILL-DOWN PISOS
+   ════════════════════════════════════════════════════════ */
+
+.resumen-fila-clickable {
+    cursor: pointer;
+    transition: background var(--t-fast);
+}
+
+.resumen-fila-clickable:hover {
+    background: var(--input-bg);
+}
+
+.resumen-fila-clickable:active {
+    background: var(--c-accent-bg);
+}
+
+.resumen-td-chevron {
+    width: 28px;
+    padding-left: 0 !important;
+}
+
+.resumen-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    padding: 0.2rem 0;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--text-main);
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    transition: opacity var(--t-fast);
+    width: 100%;
+}
+
+.resumen-back-btn:hover {
+    opacity: 0.75;
+    filter: none;
+}
+
+/* ════════════════════════════════════════════════════════
    MODAL REPORTE — Selector de grupos
    ════════════════════════════════════════════════════════ */
 

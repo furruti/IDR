@@ -449,8 +449,8 @@ const UI = {
         if (!disponibles.length) { toast('No hay racks disponibles para poner en servicio', 'error'); return; }
         const sel = document.getElementById('servicio-rack-select');
         sel.innerHTML = '<option value="">— Seleccioná un rack disponible —</option>' +
-            disponibles.map(r => {
-                const partes = [r.patrimonio, r.unidades ? r.unidades + 'U' : null, r.marca].filter(Boolean);
+            [...disponibles].sort((a, b) => (b.unidades || 0) - (a.unidades || 0)).map(r => {
+                const partes = [r.unidades ? r.unidades + 'U' : null, r.marca, r.patrimonio].filter(Boolean);
                 return `<option value="${esc(r.id)}">${esc(partes.join(' · '))}</option>`;
             }).join('');
         sel.value = '';
@@ -1208,13 +1208,14 @@ function renderResumenRacks() {
 //  RESUMEN POR EDIFICIO (segunda card dashboard)
 // ═══════════════════════════════════════════════════════
 
+let _resumenEdificioActual = null;
+
 function renderResumenEdificios() {
     const contenedor = document.getElementById('resumen-edificios-tabla');
     if (!contenedor) return;
 
     const enServicio = state.racks.filter(r => r.estado === 'servicio');
 
-    // Agrupar por edificio
     const mapa = {};
     enServicio.forEach(r => {
         const ed = r.edificio || '(Sin edificio)';
@@ -1224,17 +1225,32 @@ function renderResumenEdificios() {
     const edificios = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
 
     if (!edificios.length) {
+        _resumenEdificioActual = null;
         contenedor.innerHTML = '<p class="td-muted td-sm" style="padding:1rem 0.85rem">Sin racks en servicio</p>';
         return;
     }
 
-    const totalServicio = enServicio.length;
+    if (_resumenEdificioActual && !mapa[_resumenEdificioActual]) {
+        _resumenEdificioActual = null;
+    }
+
+    if (_resumenEdificioActual) {
+        _renderResumenPisos(contenedor, enServicio, _resumenEdificioActual);
+    } else {
+        _renderResumenListaEdificios(contenedor, edificios, enServicio.length);
+    }
+}
+
+function _renderResumenListaEdificios(contenedor, edificios, totalServicio) {
     const filas = edificios.map(([ed, total]) => {
         const pct = totalServicio > 0 ? ` <span class="resumen-pct">(${Math.round((total / totalServicio) * 100)}%)</span>` : '';
         return `
-        <tr class="resumen-fila">
+        <tr class="resumen-fila resumen-fila-clickable" data-edificio="${esc(ed)}">
             <td class="resumen-td-label">${esc(ed)}</td>
             <td class="resumen-td-num resumen-td-total">${total}${pct}</td>
+            <td class="resumen-td-num resumen-td-chevron">
+                <svg class="svg-icon resumen-chevron-icon" style="opacity:.4;width:.85em;height:.85em"><use href="#icon-chevron-right"/></svg>
+            </td>
         </tr>`;
     }).join('');
 
@@ -1245,11 +1261,69 @@ function renderResumenEdificios() {
                     <tr>
                         <th class="resumen-th-activo">EDIFICIO</th>
                         <th class="resumen-th-num resumen-th-total">TOTAL</th>
+                        <th class="resumen-th-num" style="width:28px"></th>
                     </tr>
                 </thead>
                 <tbody>${filas}</tbody>
             </table>
         </div>`;
+
+    contenedor.querySelectorAll('.resumen-fila-clickable').forEach(tr => {
+        tr.addEventListener('click', () => {
+            _resumenEdificioActual = tr.dataset.edificio;
+            const c = document.getElementById('resumen-edificios-tabla');
+            if (c) _renderResumenPisos(c, state.racks.filter(r => r.estado === 'servicio'), _resumenEdificioActual);
+        });
+    });
+}
+
+function _renderResumenPisos(contenedor, enServicio, edificio) {
+    const racksEdificio = enServicio.filter(r => (r.edificio || '(Sin edificio)') === edificio);
+    const totalEdificio = racksEdificio.length;
+
+    const mapaPisos = {};
+    racksEdificio.forEach(r => {
+        const piso = r.piso?.trim() || '(Sin piso)';
+        mapaPisos[piso] = (mapaPisos[piso] || 0) + 1;
+    });
+
+    const pisos = Object.keys(mapaPisos).sort(_ordenarPisos);
+
+    const filas = pisos.map(piso => {
+        const total = mapaPisos[piso];
+        const pct = totalEdificio > 0 ? Math.round((total / totalEdificio) * 100) : 0;
+        return `
+        <tr class="resumen-fila">
+            <td class="resumen-td-label">${esc(piso)}</td>
+            <td class="resumen-td-num resumen-td-total">${total} <span class="resumen-pct">(${pct}%)</span></td>
+        </tr>`;
+    }).join('');
+
+    contenedor.innerHTML = `
+        <div class="table-wrap">
+            <table class="resumen-table">
+                <thead>
+                    <tr>
+                        <th class="resumen-th-activo" colspan="2">
+                            <button class="resumen-back-btn" id="resumen-edificios-back">
+                                <svg class="svg-icon" style="width:.9em;height:.9em"><use href="#icon-back"/></svg>
+                                ${esc(edificio)}
+                            </button>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th class="resumen-th-activo">PISO</th>
+                        <th class="resumen-th-num resumen-th-total">RACKS</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>`;
+
+    contenedor.querySelector('#resumen-edificios-back')?.addEventListener('click', () => {
+        _resumenEdificioActual = null;
+        renderResumenEdificios();
+    });
 }
 
 // ═══════════════════════════════════════════════════════
