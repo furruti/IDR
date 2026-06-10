@@ -4485,17 +4485,17 @@
                     const idsAEliminar = new Set(otrosProdAsignados.map(o => o.id));
                     _data.otros_prod = _data.otros_prod.filter(o => !idsAEliminar.has(o.id));
                 } else {
-                    historial.empujar('Editar dispositivo');
+                    historial.empujar('Editar activo');
                 }
             } else {
-                historial.empujar('Editar dispositivo');
+                historial.empujar('Editar activo');
             }
 
             obj.updatedAt = new Date().toISOString();
             const idx = _data.dispositivos.findIndex(x => x.id === _edicion.dispId);
             if (idx !== -1) _data.dispositivos[idx] = obj;
             _sincronizarGrabadores(_edicion.dispId);
-            toast('Dispositivo actualizado', 'success');
+            toast('Activo actualizado', 'success');
 
             guardar(); render(); MM.cerrar('modal-editar-disp'); _edicion.dispId = null; _edicion.snapshotDisp = null;
         },
