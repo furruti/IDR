@@ -1103,10 +1103,18 @@
 
     <div class="modal" id="modal-editar-disp">
         <div class="modal-content modal-content--flex">
-            <h3 class="modal-sticky-header">
-                <svg class="icon icon-line">
-                    <use href="#icon-edit" />
-                </svg> Activo
+            <h3 class="modal-sticky-header modal-sticky-header--with-select">
+                <span class="modal-header-title">
+                    <svg class="icon icon-line">
+                        <use href="#icon-edit" />
+                    </svg> Activo
+                </span>
+                <select id="select-estado-disp" class="select-estado-disp">
+                    <option value="">● Normal</option>
+                    <option value="averiado">⚠ Averiado</option>
+                    <option value="revisar">🔍 A revisar</option>
+                    <option value="desafectado">✕ Desafectado</option>
+                </select>
             </h3>
 
             <div class="modal-scroll-body">
@@ -1179,29 +1187,6 @@
             </div>
 
             <div class="modal-sticky-footer modal-sticky-footer--col">
-                <div class="btn-group btn-group--no-mt">
-                    <button id="btn-estado-averiado" class="icon-btn btn-estado-disp btn-estado-averiado"
-                        title="Averiado">
-                        <svg class="icon icon-line">
-                            <use href="#icon-alert" />
-                        </svg>
-                        Averiado
-                    </button>
-                    <button id="btn-estado-revisar" class="icon-btn btn-estado-disp btn-estado-revisar"
-                        title="A revisar">
-                        <svg class="icon icon-line">
-                            <use href="#icon-trash" />
-                        </svg>
-                        A revisar
-                    </button>
-                    <button id="btn-estado-desafectado" class="icon-btn btn-estado-disp btn-estado-desafectado"
-                        title="Desafectado">
-                        <svg class="icon icon-line">
-                            <use href="#icon-cancelar" />
-                        </svg>
-                        Desafectado
-                    </button>
-                </div>
                 <div class="btn-group btn-group--no-mt">
                     <button class="btn-edit">
                         <svg class="icon icon-line">

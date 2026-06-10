@@ -2975,7 +2975,6 @@
         edificiosOrigen: 'ajustes',
         edificiosSnapForm: null,
         estado: '',
-        tiposOrigenModal: null,
     };
     let _tabActual = (() => {
         try {
@@ -2991,10 +2990,13 @@
 
     function _actualizarBotonesEstado(estadoActual) {
         _edicion.estado = estadoActual;
-        ESTADOS_INACTIVOS.forEach(e => {
-            const btn = document.getElementById(`btn-estado-${e}`);
-            if (btn) btn.classList.toggle('activo', estadoActual === e);
-        });
+        const sel = document.getElementById('select-estado-disp');
+        if (!sel) return;
+        sel.value = estadoActual || '';
+        sel.className = 'select-estado-disp';
+        if (estadoActual === 'averiado') sel.classList.add('estado--averiado');
+        else if (estadoActual === 'revisar') sel.classList.add('estado--revisar');
+        else if (estadoActual === 'desafectado') sel.classList.add('estado--desafectado');
     }
     const KEY_EXPANDED = `${APP_KEY}:cctv_grab_expanded`;
     const _grabExpanded = (() => {
@@ -3732,29 +3734,6 @@
             setTimeout(() => UI.abrirAjustes(), 150);
         },
 
-        abrirTiposDesdeModal(prefijo) {
-            _edicion.tiposOrigenModal = prefijo;
-            const modalId = prefijo === 'nuevo-disp' ? 'modal-nuevo-disp' : 'modal-editar-disp';
-            MM.cerrar(modalId);
-            setTimeout(() => {
-                UI._renderTiposCustom();
-                MM.abrir('modal-tipos-dispositivo', { onEscape: () => UI.cerrarTiposDesdeModal() });
-            }, 150);
-        },
-
-        cerrarTiposDesdeModal() {
-            const prefijo = _edicion.tiposOrigenModal;
-            _edicion.tiposOrigenModal = null;
-            MM.cerrar('modal-tipos-dispositivo');
-            if (!prefijo) { setTimeout(() => UI.abrirAjustes(), 150); return; }
-            const modalId = prefijo === 'nuevo-disp' ? 'modal-nuevo-disp' : 'modal-editar-disp';
-            setTimeout(() => {
-                const tipoActual = document.getElementById(`${prefijo}-tipo`)?.value || '';
-                _poblarSelectTipo(prefijo, tipoActual || null);
-                MM.abrir(modalId);
-            }, 150);
-        },
-
         abrirImportarDesdeAjustes() {
             MM.cerrar('modal-ajustes');
             setTimeout(() => {
@@ -4244,13 +4223,7 @@
         },
 
         onDispTipoChange(prefijo) {
-            const sel = document.getElementById(`${prefijo}-tipo`);
-            const tipo = sel.value;
-            if (tipo === '__agregar_tipo__') {
-                sel.value = '';
-                UI.abrirTiposDesdeModal(prefijo);
-                return;
-            }
+            const tipo = document.getElementById(`${prefijo}-tipo`).value;
             document.getElementById(`${prefijo}-forma-group`).classList.toggle('hidden', tipo !== 'camara');
             document.getElementById(`${prefijo}-canales-group`).classList.toggle('hidden', !['nvr', 'dvr'].includes(tipo));
             if (tipo !== 'camara') document.getElementById(`${prefijo}-forma`).value = '';
@@ -4393,14 +4366,11 @@
             _actualizarBotonesEstado(d.estado || '');
 
             const bloquearEstado = enProduccionComoGrab;
-            ESTADOS_INACTIVOS.forEach(e => {
-                const btn = document.getElementById(`btn-estado-${e}`);
-                if (btn) {
-                    btn.disabled = bloquearEstado;
-                    btn.title = bloquearEstado ? 'No se puede cambiar el estado: el dispositivo está en producción' : '';
-                    if (bloquearEstado) { btn.dataset.prodDisabled = '1'; } else { delete btn.dataset.prodDisabled; }
-                }
-            });
+            const selEstado = document.getElementById('select-estado-disp');
+            if (selEstado) {
+                selEstado.disabled = bloquearEstado;
+                selEstado.title = bloquearEstado ? 'No se puede cambiar el estado: el dispositivo está en producción' : '';
+            }
 
             ModalLock.reset('modal-editar-disp');
             MM.abrir('modal-editar-disp', { onEscape: () => UI.cerrarModalEditarDispositivo() });
@@ -4430,9 +4400,10 @@
             }
         },
 
-        toggleEstadoDisp(estado) {
-            const nuevo = _edicion.estado === estado ? '' : estado;
-            _actualizarBotonesEstado(nuevo);
+        onSelectEstadoDisp() {
+            const sel = document.getElementById('select-estado-disp');
+            if (!sel) return;
+            _actualizarBotonesEstado(sel.value);
         },
 
         async guardarEdicionDispositivo() {
@@ -5732,10 +5703,6 @@
             if (k === seleccionado) opt.selected = true;
             sel.appendChild(opt);
         });
-        const optAgregar = document.createElement('option');
-        optAgregar.value = '__agregar_tipo__';
-        optAgregar.textContent = '＋ Agregar tipo';
-        sel.appendChild(optAgregar);
     }
 
     function _poblarSelectEdificio(selectId, seleccionado) {
@@ -6291,7 +6258,7 @@
         document.querySelector('#modal-tipos-dispositivo .icon-btn.btn-edit')
             ?.addEventListener('click', () => UI.agregarTipoCustom());
         document.querySelector('#modal-tipos-dispositivo .btn-cancel')
-            ?.addEventListener('click', () => _edicion.tiposOrigenModal ? UI.cerrarTiposDesdeModal() : UI.cerrarTiposDispositivo());
+            ?.addEventListener('click', () => UI.cerrarTiposDispositivo());
 
         // Modal edificios
         on('nuevo-edificio-nombre', 'keydown', (e) => { if (e.key === 'Enter') UI.agregarEdificio(); });
@@ -6355,9 +6322,7 @@
 
         // Modal editar dispositivo
         on('editar-disp-tipo', 'change', () => UI.onDispTipoChange('editar-disp'));
-        on('btn-estado-averiado', 'click', () => UI.toggleEstadoDisp('averiado'));
-        on('btn-estado-revisar', 'click', () => UI.toggleEstadoDisp('revisar'));
-        on('btn-estado-desafectado', 'click', () => UI.toggleEstadoDisp('desafectado'));
+        on('select-estado-disp', 'change', () => UI.onSelectEstadoDisp());
         document.querySelector('#modal-editar-disp .btn-edit')
             ?.addEventListener('click', () => UI.guardarEdicionDispositivo());
         document.querySelector('#modal-editar-disp .btn-delete')
@@ -6485,9 +6450,7 @@
                 btns: [
                     () => document.querySelector('#modal-editar-disp .btn-edit'),
                     () => document.querySelector('#modal-editar-disp .btn-delete'),
-                    () => document.getElementById('btn-estado-averiado'),
-                    () => document.getElementById('btn-estado-revisar'),
-                    () => document.getElementById('btn-estado-desafectado'),
+                    () => document.getElementById('select-estado-disp'),
                 ],
                 lockBtn: 'btn-lock-editar-disp',
             },

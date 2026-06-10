@@ -1051,6 +1051,57 @@ button:disabled {
     flex-shrink: 0;
 }
 
+.modal-sticky-header--with-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+}
+
+.modal-header-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    white-space: nowrap;
+}
+
+.select-estado-disp {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-input, var(--bg-card));
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.select-estado-disp:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.select-estado-disp.estado--averiado {
+    background: var(--c-red);
+    color: var(--c-white);
+    border-color: var(--c-red);
+}
+
+.select-estado-disp.estado--revisar {
+    background: var(--c-purple);
+    color: var(--c-white);
+    border-color: var(--c-purple);
+}
+
+.select-estado-disp.estado--desafectado {
+    background: var(--c-gray-btn);
+    color: var(--text-muted);
+    border-color: var(--text-muted);
+}
+
 .modal-scroll-body {
     flex: 1;
     overflow-y: auto;
