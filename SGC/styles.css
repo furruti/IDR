@@ -2222,8 +2222,6 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     background: var(--bg-body);
-    border-top-left-radius: var(--radius-sm);
-    border-top-right-radius: var(--radius-sm);
 }
 
 .filtro-dropdown-title {
