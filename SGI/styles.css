@@ -1405,6 +1405,10 @@
             flex: 1;
         }
 
+        .modal-footer .btn-icon-only {
+            flex: 0 0 44px;
+        }
+
         .modal-footer .btn-footer-icon {
             flex: 0 0 48px;
             /* Evita que se estire y le fija el ancho */
@@ -2030,6 +2034,11 @@
             flex: 1;
         }
 
+        .flex-row-full>.btn-icon-only,
+        .flex-row-gap>.btn-icon-only {
+            flex: 0 0 44px;
+        }
+
         /* ── Estilos migrados desde atributos inline ── */
         .svg-sprites {
             display: none;
@@ -2439,3 +2448,46 @@
                 /* Alinea el título del año */
             }
         }
+/* ═══════════════════════════════════════════
+   MODAL LOCKER
+   ═══════════════════════════════════════════ */
+.modal--bloqueado input,
+.modal--bloqueado select,
+.modal--bloqueado textarea {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.modal--bloqueado button {
+    transition: filter var(--t-fast), transform var(--t-fast), opacity var(--t-ui);
+}
+
+.btn-input-side {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--c-green);
+    color: var(--c-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--t-fast), filter var(--t-fast);
+}
+
+.btn-input-side.btn-input-side--baja {
+    background: var(--c-red);
+}
+
+.btn-icon-only {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+}

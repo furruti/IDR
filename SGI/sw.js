@@ -1,4 +1,4 @@
-const CACHE_NAME = 'SGI-V260608.1509-cache';
+const CACHE_NAME = 'SGI-V260610.0150-cache';
 const urlsToCache = [
   './',
   './index.html',

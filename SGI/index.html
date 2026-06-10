@@ -272,6 +272,16 @@
                 <polyline points="9 10 12 13 15 10"></polyline>
                 <line x1="12" y1="6" x2="12" y2="13"></line>
             </symbol>
+            <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </symbol>
+            <symbol id="icon-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+            </symbol>
         </defs>
     </svg>
 
@@ -542,9 +552,14 @@
                         Eliminar
                     </button>
                 </div>
-                <button class="btn-full" id="mat-editar-cancelar-btn"><svg class="svg-icon">
-                        <use href="#icon-cancelar" />
-                    </svg>Cancelar</button>
+                <div class="flex-row-gap">
+                    <button class="btn-full btn-flex" id="mat-editar-cancelar-btn"><svg class="svg-icon">
+                            <use href="#icon-cancelar" />
+                        </svg>Cancelar</button>
+                    <button class="btn-input-side btn-input-side--baja btn-icon-only" id="mat-editar-lock-btn" title="Desbloquear edición">
+                        <svg class="svg-icon"><use href="#icon-lock" /></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -652,9 +667,14 @@
                         Eliminar
                     </button>
                 </div>
-                <button class="btn-full" id="editar-mov-cancelar-btn"><svg class="svg-icon">
-                        <use href="#icon-cancelar" />
-                    </svg>Cancelar</button>
+                <div class="flex-row-gap">
+                    <button class="btn-full btn-flex" id="editar-mov-cancelar-btn"><svg class="svg-icon">
+                            <use href="#icon-cancelar" />
+                        </svg>Cancelar</button>
+                    <button class="btn-input-side btn-input-side--baja btn-icon-only" id="editar-mov-lock-btn" title="Desbloquear edición">
+                        <svg class="svg-icon"><use href="#icon-lock" /></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -723,7 +743,7 @@
                     </svg>
                     Ajustes
                 </h3>
-                <span class="modal-header-version">v260608</span>
+                <span class="modal-header-version">v260610</span>
             </div>
             <div class="modal-body modal-body-pb">
                 <!-- Sección inventario -->

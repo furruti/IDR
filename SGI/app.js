@@ -438,6 +438,52 @@ const MM = (() => {
 })();
 
 // ═══════════════════════════════════════════════════════
+//  MODAL LOCKER
+// ═══════════════════════════════════════════════════════
+const ModalLocker = (() => {
+    const CONFIGS = {
+        'modal-material-editar': {
+            lockBtnId: 'mat-editar-lock-btn',
+            exemptIds: new Set(['mat-editar-cancelar-btn', 'mat-editar-lock-btn']),
+        },
+        'modal-editar-mov': {
+            lockBtnId: 'editar-mov-lock-btn',
+            exemptIds: new Set(['editar-mov-cancelar-btn', 'editar-mov-lock-btn']),
+        },
+    };
+
+    const _bloqueado = {};
+
+    function _aplicar(modalId, bloqueado) {
+        const cfg = CONFIGS[modalId];
+        if (!cfg) return;
+        _bloqueado[modalId] = bloqueado;
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.toggle('modal--bloqueado', bloqueado);
+
+        const lockBtn = document.getElementById(cfg.lockBtnId);
+        if (lockBtn) {
+            lockBtn.classList.toggle('btn-input-side--baja', bloqueado);
+            lockBtn.title = bloqueado ? 'Desbloquear edición' : 'Bloquear edición';
+            const useEl = lockBtn.querySelector('use');
+            if (useEl) useEl.setAttribute('href', bloqueado ? '#icon-lock' : '#icon-unlock');
+        }
+
+        modal.querySelectorAll('input, select, textarea, button').forEach(el => {
+            if (cfg.exemptIds.has(el.id)) return;
+            el.disabled = bloqueado;
+        });
+    }
+
+    function resetear(modalId) { _aplicar(modalId, true); }
+    function toggle(modalId) { _aplicar(modalId, !_bloqueado[modalId]); }
+    function esBloqueado(modalId) { return !!_bloqueado[modalId]; }
+
+    return { resetear, toggle, esBloqueado };
+})();
+
+// ═══════════════════════════════════════════════════════
 //  TOAST
 // ═══════════════════════════════════════════════════════
 const _toastQ = [];
@@ -1349,6 +1395,7 @@ function abrirModalMaterial(id = null, padreId = null) {
     MM.abrir(modalId, {
         onEscape: () => cerrarModalMaterial(sufijo),
         cb: () => {
+            if (sufijo === 'editar') ModalLocker.resetear('modal-material-editar');
             poblarSelectCategorias(sufijo);
             document.getElementById(`mat-nombre-${sufijo}`).value = m ? m.nombre : '';
             document.getElementById(`mat-categoria-${sufijo}`).value = m ? (m.categoria || '') : '';
@@ -2522,6 +2569,7 @@ function abrirModalEditarMov(id) {
     document.getElementById('edit-mov-lines').innerHTML = linesHTML || '<em>Sin materiales</em>';
 
     MM.abrir('modal-editar-mov');
+    ModalLocker.resetear('modal-editar-mov');
 }
 
 function guardarEdicionMov() {
@@ -3766,6 +3814,7 @@ function _ejecutarReporte() {
     _on('mat-editar-guardar-btn', 'click', () => guardarMaterial());
     _on('mat-editar-eliminar-btn', 'click', () => eliminarMaterialDesdeModal());
     _on('mat-editar-cancelar-btn', 'click', () => cerrarModalMaterial('editar'));
+    _on('mat-editar-lock-btn', 'click', () => ModalLocker.toggle('modal-material-editar'));
 
     // Modal entrada
     _on('btn-add-linea-entrada', 'click', () => agregarLinea('entrada'));
@@ -3776,6 +3825,7 @@ function _ejecutarReporte() {
     _on('editar-mov-guardar-btn', 'click', () => guardarEdicionMov());
     _on('editar-mov-eliminar-btn', 'click', () => eliminarDesdeEdicion());
     _on('editar-mov-cancelar-btn', 'click', () => MM.cerrar('modal-editar-mov'));
+    _on('editar-mov-lock-btn', 'click', () => ModalLocker.toggle('modal-editar-mov'));
 
     // Modal salida
     _on('btn-add-linea-salida', 'click', () => agregarLinea('salida'));
