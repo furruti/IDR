@@ -25,8 +25,9 @@ de la biblioteca estándar de Python y no requiere instalación adicional.
 El flujo lógico del programa se ejecuta en los siguientes pasos:
 
 1. Lectura de Credenciales y Parámetros:
-   - Intenta leer configuración desde "Config/config_scanner.json" y S.O.
-   - Si no los encuentra, activa el Modo Interactivo pidiendo los datos por consola.
+   - Intenta leer configuración desde el archivo "CCTV-Scanner-config.json" colocado
+     en la misma carpeta del script.
+   - Si no lo encuentra, activa el Modo Interactivo pidiendo los datos por consola.
 
 2. Fase 1 - Extracción desde NVRs (asíncrona): 
    Se conecta a los NVRs en paralelo mediante ISAPI para extraer los canales IP, 
@@ -35,22 +36,22 @@ El flujo lógico del programa se ejecuta en los siguientes pasos:
 3. Fase 2 - Escaneo Directo Asíncrono (Solo si se elige "Modo Completo"): 
    Consulta de forma unicast a cada IP descubierta en la Fase 1.
    Detección Ciega (Multimarca): El script primero intenta comunicarse con el 
-   protocolo de Hikvision (ISAPI). Si falla, hace un micro-descanso y automáticamente 
-   cae al protocolo de Dahua (CGI). 
-   *Nota Dahua*: Extrae Modelo, Serie, Firmware y MAC Address. Para obtener la MAC, 
-   el usuario configurado debe tener tildado el permiso de "Red" en la cámara Dahua.
+   protocolo de Hikvision (ISAPI). Si falla, intenta con Dahua (CGI) y como 
+   último recurso intenta con el protocolo Legacy de Hikvision (PSIA).
+   Soporta automáticamente autenticación moderna (Digest) y antigua (Basic).
 
 4. Almacenamiento de Reportes: 
-   Genera "Datos/cctv_online.json" con la información técnica y "Datos/cctv_offline.log"
-   con el detalle de equipos caídos o inaccesibles.
+   Genera la carpeta "Datos" y guarda dentro:
+   - "Datos/cctv_online.json" con la información técnica completa.
+   - "Datos/cctv_offline.log" con el detalle de equipos caídos o inaccesibles.
 
 --------------------------------------------------------------------------------
-3. ESTRUCTURA DE config_scanner.json
+3. ESTRUCTURA DE CCTV-Scanner-config.json (Debe estar junto al script)
 --------------------------------------------------------------------------------
 {
-    "nvr_user": "USUARIO PEDORRO DE EJEMPLO",
+    "nvr_user": "apinfo",
     "opcion_puerto": "3",
-    "max_workers": 20,
+    "max_workers": 50,
     "tipo_escaneo": "2",
     "nvrs": [
         {"ip": "192.168.1.100"},
@@ -59,14 +60,14 @@ El flujo lógico del programa se ejecuta en los siguientes pasos:
 }
 
 Explicación de los Campos Clave:
-- opcion_puerto (String): 
-  "1" (Solo HTTPS), "2" (Solo HTTP), "3" (HTTPS con fallback a HTTP).
-- max_workers (Integer): 
-  Cantidad de hilos concurrentes (Recomendado 5-20).
-- tipo_escaneo (String): 
-  * "1": Básico. Solo consulta NVRs (Canal, IP y Nombre). Rápido, no satura la red.
-  * "2": Completo. Además del NVR, hace consultas individuales (Hikvision/Dahua) a 
-         cada cámara para sacar Firmwares, Series y MACs.
+- opcion_puerto (String) -> Control de TLS para optimizar velocidad:
+  "1": Fallback Total (TLS 1.3 -> 1.2 -> 1.0 -> HTTP).
+  "2": Estándar Legacy (TLS 1.2 -> 1.0 -> HTTP).
+  "3": Rápido / Directo (TLS 1.2 -> HTTP) [RECOMENDADO].
+  "4": Solo HTTPS Estricto (TLS 1.3 -> 1.2 -> 1.0).
+  "5": Solo HTTP (80) + Compatibilidad Cámaras Antiguas.
+- max_workers (Integer): Cantidad de hilos (Recomendado 10-20 en redes normales).
+- tipo_escaneo (String): "1" (Solo NVRs, muy rápido) o "2" (Completo Unicast).
 ================================================================================
 """
 
@@ -85,7 +86,7 @@ try:
     import requests
     import urllib3
     from requests.adapters import HTTPAdapter
-    from requests.auth import HTTPDigestAuth
+    from requests.auth import HTTPDigestAuth, HTTPBasicAuth
     import keyring
 except ImportError as e:
     print("\n" + "="*70)
@@ -103,8 +104,12 @@ try:
 except NameError:
     pass
 
-CARPETA_CONFIG = "Config"
+# Variables de rutas actualizadas
+ARCHIVO_CONFIG = "CCTV-Scanner-config.json"
 CARPETA_DATOS  = "Datos"
+
+# Configuración de Timeouts Optimizados: (Conexión TCP, Tiempo de Lectura/Procesamiento)
+T_OUT = (3.0, 10.0)
 
 class TLS13Adapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
@@ -152,7 +157,7 @@ if _TLS13_SUPPORTED:
 
 _PROTO_LABEL = {
     "https_tls13":  "HTTPS/TLS1.3",
-    "https_modern": "HTTPS/TLS1.2+",
+    "https_modern": "HTTPS/TLS1.2",
     "https_legacy": "HTTPS/TLS1.0",
     "http":         "HTTP",
 }
@@ -169,13 +174,12 @@ _HTTPS_CHAIN = (
 # ---------------------------------------------------------------------------
 
 def cargar_config_json():
-    ruta = os.path.join(CARPETA_CONFIG, "config_scanner.json")
-    if os.path.exists(ruta):
+    if os.path.exists(ARCHIVO_CONFIG):
         try:
-            with open(ruta, "r", encoding="utf-8") as f:
+            with open(ARCHIVO_CONFIG, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"[WARN] Error leyendo '{ruta}': {e}")
+            print(f"[WARN] Error leyendo '{ARCHIVO_CONFIG}': {e}")
     return None
 
 def pedir_tipo_escaneo():
@@ -193,39 +197,40 @@ def pedir_tipo_escaneo():
 
 def pedir_puertos():
     OPCIONES = {
-        "1": _HTTPS_CHAIN,
-        "2": [("http", "80")],
-        "3": _HTTPS_CHAIN + [("http", "80")],
+        "1": _HTTPS_CHAIN + [("http", "80")],
+        "2": [("https_modern", "443"), ("https_legacy", "443"), ("http", "80")],
+        "3": [("https_modern", "443"), ("http", "80")],
+        "4": _HTTPS_CHAIN,
+        "5": [("http", "80")]
     }
-    print("\n  ┌── Puerto de conexión (NVRs y Cámaras) ──────────┐")
-    if _TLS13_SUPPORTED:
-        print("  │  1 · Solo HTTPS:443  (TLS 1.3 → 1.2 → 1.0)    │")
-    else:
-        print("  │  1 · Solo HTTPS:443  (TLS 1.2 → TLS 1.0)       │")
-    print("  │  2 · Solo HTTP:80                               │")
-    print("  │  3 · HTTPS:443 primero, luego HTTP:80 (default) │")
-    print("  └─────────────────────────────────────────────────┘")
+    print("\n  ┌── Nivel de Seguridad y Fallback (NVRs y Cámaras) ───────┐")
+    print("  │  1 · Fallback Total (TLS 1.3 -> 1.2 -> 1.0 -> HTTP)     │")
+    print("  │  2 · Estándar Legacy (TLS 1.2 -> 1.0 -> HTTP)           │")
+    print("  │  3 · Rápido / Directo (TLS 1.2 -> HTTP) [Recomendado]   │")
+    print("  │  4 · Solo HTTPS Estricto (TLS 1.3 -> 1.2 -> 1.0)        │")
+    print("  │  5 · Solo HTTP (80) + Compatibilidad Cámaras Antiguas   │")
+    print("  └─────────────────────────────────────────────────────────┘")
 
     while True:
-        opcion = input("  Elegí una opción [1/2/3, Enter=3]: ").strip()
+        opcion = input("  Elegí una opción [1-5, Enter=3]: ").strip()
         if opcion == "":
             return OPCIONES["3"]
         if opcion in OPCIONES:
             return OPCIONES[opcion]
-        print("  [!] Ingresá 1, 2 o 3.")
+        print("  [!] Ingresá un número del 1 al 5.")
 
 def pedir_workers():
     MAX_PERMITIDO = 50
     print("\n  ┌── Hilos de Ejecución (Workers) ─────────────────┐")
     print(f"  │ Rango permitido : 1 – {MAX_PERMITIDO:<25} │")
-    print("  │ Recomendado     : 5–15 en redes normales        │")
+    print("  │ Recomendado     : 10–20 en redes normales       │")
     print("  └─────────────────────────────────────────────────┘")
 
     while True:
         try:
-            valor = input("  ¿Cuántos hilos abrir al mismo tiempo? [Enter = 15]: ").strip()
+            valor = input("  ¿Cuántos hilos abrir al mismo tiempo? [Enter = 50]: ").strip()
             if valor == "":
-                return 15
+                return 50
             workers = int(valor)
             if 1 <= workers <= MAX_PERMITIDO:
                 return workers
@@ -256,8 +261,12 @@ def procesar_nvr(args):
             url_info = f"{proto_real}://{nvr['ip']}:{puerto}/ISAPI/System/deviceInfo"
             resp_info = session.get(
                 url_info, auth=HTTPDigestAuth(user, password),
-                timeout=5, verify=False
+                timeout=T_OUT, verify=False
             )
+            # Si el NVR es legacy y requiere BasicAuth en lugar de Digest
+            if resp_info.status_code == 401:
+                resp_info = session.get(url_info, auth=HTTPBasicAuth(user, password), timeout=T_OUT, verify=False)
+
             if resp_info.status_code == 200:
                 xml_info  = re.sub(' xmlns="[^"]+"', '', resp_info.text)
                 root_info = ET.fromstring(xml_info)
@@ -280,8 +289,11 @@ def procesar_nvr(args):
             url_cameras = f"{proto_real}://{nvr['ip']}:{puerto}/ISAPI/ContentMgmt/InputProxy/channels"
             response = session.get(
                 url_cameras, auth=HTTPDigestAuth(user, password),
-                timeout=10, verify=False
+                timeout=T_OUT, verify=False
             )
+            if response.status_code == 401:
+                response = session.get(url_cameras, auth=HTTPBasicAuth(user, password), timeout=T_OUT, verify=False)
+
             response.raise_for_status()
             xml_data = re.sub(' xmlns="[^"]+"', '', response.text)
             root = ET.fromstring(xml_data)
@@ -365,40 +377,51 @@ def obtener_camaras_desde_nvrs(nvr_list, puertos, user, password, max_workers=5)
     return camaras_base, nvrs_info
 
 # ---------------------------------------------------------------------------
-# FASE 2: Extracción directa a cada cámara (Con Fallback Hikvision -> Dahua)
+# FASE 2: Extracción directa a cada cámara (Fallback ISAPI -> CGI -> PSIA)
 # ---------------------------------------------------------------------------
 
 def intentar_conexion(ip, protocolo_key, puerto, user, password):
     proto_real = "https" if protocolo_key.startswith("https") else "http"
     session = requests.Session()
     session.mount(f"{proto_real}://", ADAPTERS[protocolo_key])
-    
+
+    # Función auxiliar para probar Digest Auth y, si rechaza, intentar Basic Auth
+    def get_auth_robusto(url_test):
+        r = session.get(url_test, auth=HTTPDigestAuth(user, password), timeout=T_OUT, verify=False)
+        if r.status_code == 401:
+            r = session.get(url_test, auth=HTTPBasicAuth(user, password), timeout=T_OUT, verify=False)
+        return r
+
     # 1er Intento: Hikvision (ISAPI)
-    url_hik = f"{proto_real}://{ip}:{puerto}/ISAPI/System/deviceInfo"
     try:
-        # Aumentamos el timeout a 10 segundos
-        response = session.get(url_hik, auth=HTTPDigestAuth(user, password), timeout=10, verify=False)
+        response = get_auth_robusto(f"{proto_real}://{ip}:{puerto}/ISAPI/System/deviceInfo")
         if response.status_code == 200:
             return response, "Hikvision"
     except requests.exceptions.RequestException:
         pass 
 
-    # --- MICRO-DESCANSO ---
-    # Le damos a la cámara 1.5 segundos para liberar su CPU antes de volver a golpearle la puerta
-    time.sleep(1.5)
+    time.sleep(1.0) # Micro-descanso 
 
     # 2do Intento: Dahua (CGI API)
-    url_dahua = f"{proto_real}://{ip}:{puerto}/cgi-bin/magicBox.cgi?action=getSystemInfo"
     try:
-        # Aumentamos el timeout a 10 segundos
-        response = session.get(url_dahua, auth=HTTPDigestAuth(user, password), timeout=10, verify=False)
+        response = get_auth_robusto(f"{proto_real}://{ip}:{puerto}/cgi-bin/magicBox.cgi?action=getSystemInfo")
         if response.status_code == 200:
             return response, "Dahua"
     except requests.exceptions.RequestException:
         pass
 
-    # Si llegamos acá, no funcionó en ninguna marca
-    raise requests.exceptions.ConnectionError(f"[{ip}] No responde a ISAPI (Hikvision) ni CGI (Dahua).")
+    time.sleep(1.0)
+
+    # 3er Intento: Hikvision Reliquia (PSIA)
+    try:
+        response = get_auth_robusto(f"{proto_real}://{ip}:{puerto}/PSIA/System/deviceInfo")
+        if response.status_code == 200:
+            # Si responde, lo tratamos como Hikvision porque la estructura XML es idéntica
+            return response, "Hikvision" 
+    except requests.exceptions.RequestException:
+        pass
+
+    raise requests.exceptions.ConnectionError(f"[{ip}] No responde a ISAPI, CGI ni PSIA.")
 
 def procesar_camara(args):
     cam_data, puertos, user, password = args
@@ -432,9 +455,10 @@ def procesar_camara(args):
     if response is not None:
         protocolo_conexion = f"{describir_protocolo(protocolo_ok)}:{puerto_ok}"
         
-        # --- PARSEO HIKVISION (XML) ---
+        # --- PARSEO HIKVISION / PSIA (XML) ---
         if marca_detect == "Hikvision":
             try:
+                # Limpiamos el namespace sea cual sea (ISAPI o PSIA)
                 xml_info  = re.sub(' xmlns="[^"]+"', '', response.text)
                 root_info = ET.fromstring(xml_info)
 
@@ -471,18 +495,22 @@ def procesar_camara(args):
                 modelo    = extraer_dahua("deviceType", texto_resp)
                 nro_serie = extraer_dahua("serialNumber", texto_resp)
                 
-                # Intentamos sacar la MAC de la info general (algunos modelos la traen acá)
                 mac_raw = extraer_dahua("macAddress", texto_resp) 
                 if mac_raw != "N/A":
                     mac_address = mac_raw
 
                 proto_real = "https" if protocolo_ok.startswith("https") else "http"
 
-                # --- SEGUNDA CONSULTA (Exclusiva para Firmware) ---
+                def dahua_extra_request(url):
+                    r = requests.get(url, auth=HTTPDigestAuth(user, password), timeout=T_OUT, verify=False)
+                    if r.status_code == 401:
+                        r = requests.get(url, auth=HTTPBasicAuth(user, password), timeout=T_OUT, verify=False)
+                    return r
+
+                # Consulta exclusiva para Firmware
                 try:
                     url_fw = f"{proto_real}://{ip}:{puerto_ok}/cgi-bin/magicBox.cgi?action=getSoftwareVersion"
-                    resp_fw = requests.get(url_fw, auth=HTTPDigestAuth(user, password), timeout=5, verify=False)
-                    
+                    resp_fw = dahua_extra_request(url_fw)
                     if resp_fw.status_code == 200:
                         fw_raw = extraer_dahua("version", resp_fw.text)
                         if fw_raw != "N/A":
@@ -490,14 +518,12 @@ def procesar_camara(args):
                 except Exception:
                     pass
 
-                # --- TERCERA CONSULTA (Exclusiva para MAC Address) ---
+                # Consulta exclusiva para MAC Address
                 if mac_address == "N/A":
                     try:
                         url_mac = f"{proto_real}://{ip}:{puerto_ok}/cgi-bin/configManager.cgi?action=getConfig&name=Network"
-                        resp_mac = requests.get(url_mac, auth=HTTPDigestAuth(user, password), timeout=5, verify=False)
-                        
+                        resp_mac = dahua_extra_request(url_mac)
                         if resp_mac.status_code == 200:
-                            # En la tabla de red, Dahua la bautiza como "PhysicalAddress"
                             mac_net = extraer_dahua("PhysicalAddress", resp_mac.text)
                             if mac_net != "N/A":
                                 mac_address = mac_net
@@ -539,7 +565,7 @@ def ejecutar_escaneo_unificado():
     print("=========================================")
 
     if usar_interactivo:
-        print("\n[INFO] No se detectó el archivo de configuración 'config_scanner.json'.")
+        print(f"\n[INFO] No se detectó el archivo de configuración '{ARCHIVO_CONFIG}'.")
         ver_ayuda = input("  ¿Querés ver la documentación de uso antes de continuar? [s/n, Enter=n]: ").strip().lower()
         if ver_ayuda == 's':
             print(__doc__)
@@ -616,9 +642,11 @@ def ejecutar_escaneo_unificado():
     max_workers  = None
 
     OPCIONES_PUERTOS = {
-        "1": _HTTPS_CHAIN,
-        "2": [("http", "80")],
-        "3": _HTTPS_CHAIN + [("http", "80")],
+        "1": _HTTPS_CHAIN + [("http", "80")],
+        "2": [("https_modern", "443"), ("https_legacy", "443"), ("http", "80")],
+        "3": [("https_modern", "443"), ("http", "80")],
+        "4": _HTTPS_CHAIN,
+        "5": [("http", "80")]
     }
 
     if not usar_interactivo:
@@ -630,7 +658,7 @@ def ejecutar_escaneo_unificado():
             tipo_escaneo = te
             puertos      = OPCIONES_PUERTOS[op]
             max_workers  = mw
-            print(f"\n[INFO] Configuración cargada automáticamente desde el JSON.")
+            print(f"\n[INFO] Configuración cargada automáticamente desde '{ARCHIVO_CONFIG}'.")
         else:
             print(f"\n[WARN] Parámetros incompletos o inválidos en JSON. Pasando a modo manual...")
             usar_interactivo = True
