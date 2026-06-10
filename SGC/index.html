@@ -1109,12 +1109,29 @@
                         <use href="#icon-edit" />
                     </svg> Activo
                 </span>
-                <select id="select-estado-disp" class="select-estado-disp">
-                    <option value="">● Normal</option>
-                    <option value="averiado">⚠ Averiado</option>
-                    <option value="revisar">🔍 A revisar</option>
-                    <option value="desafectado">✕ Desafectado</option>
-                </select>
+                <div class="estado-disp-wrap">
+                    <button id="btn-estado-disp" class="btn-estado-disp" type="button">
+                        <span class="estado-disp-dot" id="estado-disp-dot"></span>
+                        <span id="estado-disp-label">Normal</span>
+                        <svg class="icon icon-line estado-disp-chevron">
+                            <use href="#icon-chevron-down" />
+                        </svg>
+                    </button>
+                    <div id="dropdown-estado-disp" class="combobox-dropdown hidden">
+                        <div class="canal-disp-item" data-estado="">
+                            <span class="estado-disp-dot estado-disp-dot--normal"></span> Normal
+                        </div>
+                        <div class="canal-disp-item" data-estado="averiado">
+                            <span class="estado-disp-dot estado-disp-dot--averiado"></span> Averiado
+                        </div>
+                        <div class="canal-disp-item" data-estado="revisar">
+                            <span class="estado-disp-dot estado-disp-dot--revisar"></span> En revisión
+                        </div>
+                        <div class="canal-disp-item" data-estado="desafectado">
+                            <span class="estado-disp-dot estado-disp-dot--desafectado"></span> Desafectado
+                        </div>
+                    </div>
+                </div>
             </h3>
 
             <div class="modal-scroll-body">

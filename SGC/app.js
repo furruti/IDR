@@ -2990,13 +2990,22 @@
 
     function _actualizarBotonesEstado(estadoActual) {
         _edicion.estado = estadoActual;
-        const sel = document.getElementById('select-estado-disp');
-        if (!sel) return;
-        sel.value = estadoActual || '';
-        sel.className = 'select-estado-disp';
-        if (estadoActual === 'averiado') sel.classList.add('estado--averiado');
-        else if (estadoActual === 'revisar') sel.classList.add('estado--revisar');
-        else if (estadoActual === 'desafectado') sel.classList.add('estado--desafectado');
+        const btn  = document.getElementById('btn-estado-disp');
+        const dot  = document.getElementById('estado-disp-dot');
+        const lbl  = document.getElementById('estado-disp-label');
+        if (!btn) return;
+        const LABELS = { '': 'Normal', averiado: 'Averiado', revisar: 'En revisión', desafectado: 'Desafectado' };
+        const DOT_CLASS = { '': 'estado-disp-dot--normal', averiado: 'estado-disp-dot--averiado', revisar: 'estado-disp-dot--revisar', desafectado: 'estado-disp-dot--desafectado' };
+        btn.className = 'btn-estado-disp';
+        if (estadoActual === 'averiado')   btn.classList.add('estado--averiado');
+        else if (estadoActual === 'revisar')    btn.classList.add('estado--revisar');
+        else if (estadoActual === 'desafectado') btn.classList.add('estado--desafectado');
+        if (dot) dot.className = `estado-disp-dot ${DOT_CLASS[estadoActual] || DOT_CLASS['']}`;
+        if (lbl) lbl.textContent = LABELS[estadoActual] ?? 'Normal';
+        // Marcar opción activa en el dropdown
+        document.querySelectorAll('#dropdown-estado-disp .canal-disp-item').forEach(el => {
+            el.classList.toggle('activo-vista', el.dataset.estado === (estadoActual || ''));
+        });
     }
     const KEY_EXPANDED = `${APP_KEY}:cctv_grab_expanded`;
     const _grabExpanded = (() => {
@@ -4366,10 +4375,10 @@
             _actualizarBotonesEstado(d.estado || '');
 
             const bloquearEstado = enProduccionComoGrab;
-            const selEstado = document.getElementById('select-estado-disp');
-            if (selEstado) {
-                selEstado.disabled = bloquearEstado;
-                selEstado.title = bloquearEstado ? 'No se puede cambiar el estado: el dispositivo está en producción' : '';
+            const btnEstado = document.getElementById('btn-estado-disp');
+            if (btnEstado) {
+                btnEstado.disabled = bloquearEstado;
+                btnEstado.title = bloquearEstado ? 'No se puede cambiar el estado: el dispositivo está en producción' : '';
             }
 
             ModalLock.reset('modal-editar-disp');
@@ -4401,9 +4410,16 @@
         },
 
         onSelectEstadoDisp() {
-            const sel = document.getElementById('select-estado-disp');
-            if (!sel) return;
-            _actualizarBotonesEstado(sel.value);
+            // obsoleto — mantenido por si hay referencias externas
+        },
+
+        toggleDropdownEstadoDisp(e) {
+            if (e) e.stopPropagation();
+            const btn = document.getElementById('btn-estado-disp');
+            if (btn && btn.disabled) return;
+            const dd = document.getElementById('dropdown-estado-disp');
+            if (!dd) return;
+            dd.classList.toggle('hidden');
         },
 
         async guardarEdicionDispositivo() {
@@ -5867,6 +5883,12 @@
         if (wrapFiltros && ddFiltros && !wrapFiltros.contains(e.target)) {
             ddFiltros.classList.add('hidden');
         }
+
+        const wrapEstado = document.getElementById('btn-estado-disp')?.closest('.estado-disp-wrap');
+        const ddEstado = document.getElementById('dropdown-estado-disp');
+        if (wrapEstado && ddEstado && !wrapEstado.contains(e.target)) {
+            ddEstado.classList.add('hidden');
+        }
     });
 
     document.getElementById('card-resumen-general').addEventListener('mousedown', e => {
@@ -6322,7 +6344,14 @@
 
         // Modal editar dispositivo
         on('editar-disp-tipo', 'change', () => UI.onDispTipoChange('editar-disp'));
-        on('select-estado-disp', 'change', () => UI.onSelectEstadoDisp());
+        on('btn-estado-disp', 'click', (e) => UI.toggleDropdownEstadoDisp(e));
+        document.getElementById('dropdown-estado-disp')?.addEventListener('click', e => {
+            const item = e.target.closest('.canal-disp-item[data-estado]');
+            if (!item) return;
+            e.stopPropagation();
+            _actualizarBotonesEstado(item.dataset.estado);
+            document.getElementById('dropdown-estado-disp')?.classList.add('hidden');
+        });
         document.querySelector('#modal-editar-disp .btn-edit')
             ?.addEventListener('click', () => UI.guardarEdicionDispositivo());
         document.querySelector('#modal-editar-disp .btn-delete')
@@ -6450,7 +6479,7 @@
                 btns: [
                     () => document.querySelector('#modal-editar-disp .btn-edit'),
                     () => document.querySelector('#modal-editar-disp .btn-delete'),
-                    () => document.getElementById('select-estado-disp'),
+                    () => document.getElementById('btn-estado-disp'),
                 ],
                 lockBtn: 'btn-lock-editar-disp',
             },

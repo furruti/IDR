@@ -579,24 +579,6 @@ button:disabled {
     justify-content: center;
 }
 
-.btn-estado-disp {
-    width: auto;
-    height: auto;
-    padding: var(--sp-3);
-    font-size: var(--fs-base);
-    font-weight: 600;
-    gap: var(--sp-2);
-    background: var(--c-gray-btn);
-    color: var(--text-main);
-    opacity: 0.5;
-    transition: opacity 0.15s, filter 0.15s;
-    flex: 1;
-}
-
-.btn-estado-disp.activo {
-    opacity: 1;
-}
-
 .btn-estado-averiado.activo,
 .btn-delete {
     background: var(--c-red);
@@ -1066,40 +1048,95 @@ button:disabled {
 }
 
 .select-estado-disp {
-    font-size: var(--fs-sm);
-    font-weight: 600;
-    padding: var(--sp-2) var(--sp-3);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--bg-input, var(--bg-card));
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-    min-width: 0;
+    /* mantenido por compatibilidad — reemplazado por .btn-estado-disp */
+    display: none;
+}
+
+/* Wrapper relativo para anclar el dropdown */
+.estado-disp-wrap {
+    position: relative;
     flex-shrink: 0;
 }
 
-.select-estado-disp:disabled {
+/* Botón compacto de estado en el header */
+.btn-estado-disp {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-input, var(--input-bg));
+    color: var(--text-main);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.btn-estado-disp:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.select-estado-disp.estado--averiado {
+.btn-estado-disp.estado--averiado {
     background: var(--c-red);
     color: var(--c-white);
-    border-color: var(--c-red);
+    border-color: transparent;
 }
 
-.select-estado-disp.estado--revisar {
+.btn-estado-disp.estado--revisar {
     background: var(--c-purple);
     color: var(--c-white);
-    border-color: var(--c-purple);
+    border-color: transparent;
 }
 
-.select-estado-disp.estado--desafectado {
+.btn-estado-disp.estado--desafectado {
     background: var(--c-gray-btn);
     color: var(--text-muted);
     border-color: var(--text-muted);
+}
+
+.estado-disp-chevron {
+    width: 14px;
+    height: 14px;
+    color: inherit;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+/* Punto de color en botón y opciones */
+.estado-disp-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--c-green);
+}
+
+.estado-disp-dot--normal    { background: var(--c-green); }
+.estado-disp-dot--averiado  { background: var(--c-red); }
+.estado-disp-dot--revisar   { background: var(--c-purple); }
+.estado-disp-dot--desafectado { background: var(--text-muted); }
+
+/* El dropdown se ancla a la derecha del wrapper */
+#dropdown-estado-disp {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: auto;
+    min-width: 150px;
+    z-index: 300;
+    border: 1px solid var(--text-muted)
+}
+
+/* Opciones con dot alineado */
+#dropdown-estado-disp .canal-disp-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
 }
 
 .modal-scroll-body {
