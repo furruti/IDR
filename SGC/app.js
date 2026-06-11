@@ -6646,8 +6646,9 @@
     GistSync.verificarAlAbrir();
 
     // ── ZOOM FLOTANTE DE THUMBNAILS ──
-    // Crea una copia fixed al hacer hover sobre .disp-thumb para escapar de overflow:hidden
     (() => {
+        if (window.matchMedia('(hover: none)').matches) return;
+
         const SCALE = 5;
         const ANIM_MS = 180;
         let ghost = null;
