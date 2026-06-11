@@ -71,7 +71,7 @@ def remove_bg(img_path: Path, tolerancia: int = 30, suavizado: int = 2) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(description="Elimina fondo de PNGs por flood fill")
-    parser.add_argument("--carpeta",    default="./img/devices")
+    parser.add_argument("--carpeta",    default="../img/devices")
     parser.add_argument("--tolerancia", type=int, default=30,
                         help="Diferencia máx de color para considerar 'fondo' (default: 30)")
     parser.add_argument("--suavizado",  type=int, default=2,
