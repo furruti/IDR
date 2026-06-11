@@ -6651,7 +6651,7 @@
         const estactil = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         if (estactil) return;
 
-        const SCALE = 3;
+        const SCALE = 5;
         const ANIM_MS = 180;
         let ghost = null;
         let activeImg = null;
