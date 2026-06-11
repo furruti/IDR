@@ -1,4 +1,4 @@
-const CACHE_NAME = 'CCTVS-260611.1923-cache';
+const CACHE_NAME = 'CCTVS-260611.1925-cache';
 const urlsToCache = [
   './',
   './index.html',
@@ -48,6 +48,9 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== location.origin) return;
 
+  const esImagen = url.pathname.startsWith('/img/') ||
+                   /\.(png|jpg|jpeg|webp|svg|ico)$/i.test(url.pathname);
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -59,16 +62,23 @@ self.addEventListener('fetch', event => {
             if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
               return networkResponse;
             }
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
+            // Cachear archivos estáticos declarados + imágenes dinámicamente
+            const debeCachear = urlsToCache.some(u => url.pathname.endsWith(u.replace('./', '/')))
+                              || esImagen;
+            if (debeCachear) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseClone);
+              });
+            }
             return networkResponse;
           })
           .catch(() => {
             if (event.request.mode === 'navigate') {
               return caches.match('./index.html');
             }
+            // Sin conexión y sin cache — el JS mostrará el emoji de reserva
+            if (esImagen) return new Response('', { status: 404 });
           });
       })
   );
