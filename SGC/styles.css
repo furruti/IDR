@@ -1264,12 +1264,6 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    z-index: 0;
-}
-
-.disp-thumb-wrap:hover {
-    z-index: 10;
 }
 
 /* Imagen real del modelo */
@@ -1281,16 +1275,8 @@ button:disabled {
     background: var(--bg-input);
     padding: 3px;
     display: block;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: zoom-in;
-}
-
-.disp-thumb:hover {
-    transform: scale(3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    border-radius: 6px;
-    z-index: 10;
-    position: relative;
+    transition: opacity 0.18s ease;
 }
 
 /* Emoji de reserva cuando no hay imagen */

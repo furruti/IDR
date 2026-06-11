@@ -6631,6 +6631,78 @@
     GistSync.init();
     GistSync.verificarAlAbrir();
 
+    // ── ZOOM FLOTANTE DE THUMBNAILS ──
+    // Crea una copia fixed al hacer hover sobre .disp-thumb para escapar de overflow:hidden
+    (() => {
+        const SCALE = 6;
+        const ANIM_MS = 180;
+        let ghost = null;
+        let activeImg = null;
+
+        function removeGhost() {
+            if (ghost) {
+                ghost.style.opacity = '0';
+                ghost.style.transform = 'scale(1)';
+                const g = ghost;
+                setTimeout(() => g.remove(), ANIM_MS);
+                ghost = null;
+            }
+            if (activeImg) {
+                activeImg.style.opacity = '';
+                activeImg = null;
+            }
+        }
+
+        document.addEventListener('mouseover', (e) => {
+            const img = e.target.closest('.disp-thumb');
+            if (!img || img === activeImg) return;
+            removeGhost();
+
+            const rect = img.getBoundingClientRect();
+            activeImg = img;
+            img.style.opacity = '0.35';
+
+            ghost = document.createElement('img');
+            ghost.src = img.src;
+            ghost.alt = '';
+            ghost.style.cssText = `
+                position: fixed;
+                left: ${rect.left}px;
+                top: ${rect.top}px;
+                width: ${rect.width}px;
+                height: ${rect.height}px;
+                object-fit: contain;
+                border-radius: 6px;
+                background: var(--bg-input);
+                padding: 3px;
+                pointer-events: none;
+                z-index: 9999;
+                box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+                opacity: 0;
+                transform: scale(1);
+                transform-origin: center center;
+                transition: transform ${ANIM_MS}ms ease, opacity ${ANIM_MS}ms ease;
+            `;
+            document.body.appendChild(ghost);
+
+            // Forzar reflow antes de animar
+            ghost.getBoundingClientRect();
+            ghost.style.opacity = '1';
+            ghost.style.transform = `scale(${SCALE})`;
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const img = e.target.closest('.disp-thumb');
+            if (!img || img !== activeImg) return;
+            if (!e.relatedTarget || !e.relatedTarget.closest('.disp-thumb')) {
+                removeGhost();
+            }
+        });
+
+        // Quitar si se hace scroll para evitar que el ghost quede flotando desalineado
+        document.addEventListener('scroll', removeGhost, { passive: true, capture: true });
+    })();
+
     (() => {
         let deferredPrompt;
         const btnInstallApp = document.getElementById('btn-install-app');
