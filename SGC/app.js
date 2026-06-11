@@ -2631,17 +2631,31 @@
         return null;
     }
 
-    // Al cargar el <img> con onerror se intenta primero .png; si falla se prueba .jpg;
-    // si también falla, se oculta la imagen y se muestra el emoji de reserva.
+    // Al cargar el <img> si falla intenta .jpg; si también falla muestra el emoji de reserva.
+    // El fallback se maneja desde JS (event delegation) para cumplir con la CSP sin unsafe-inline.
     function _buildDeviceImgHtml(modelo, forma, tipo, emoji) {
         const src = _getDeviceImageSrc(modelo, forma, tipo);
         if (!src) return `<span class="disp-thumb-emoji">${emoji}</span>`;
-        // Prueba .png; si falla intenta .jpg; si tambi\xc3\xa9n falla reemplaza con el emoji
         const srcJpg = src.replace(/\.png$/, '.jpg');
         return `<img class="disp-thumb" src="${src}" alt=""
-            onerror="if(this.dataset.tried){const s=document.createElement('span');s.className='disp-thumb-emoji';s.textContent='${emoji}';this.replaceWith(s);}else{this.dataset.tried='1';this.src='${srcJpg}';}" 
+            data-src-jpg="${srcJpg}" data-emoji="${emoji}"
             loading="lazy">`;
     }
+
+    // Delegación de errores de imagen — CSP-safe (sin onerror inline)
+    document.addEventListener('error', (e) => {
+        const img = e.target;
+        if (!img.matches || !img.matches('img.disp-thumb')) return;
+        if (!img.dataset.tried) {
+            img.dataset.tried = '1';
+            img.src = img.dataset.srcJpg || '';
+        } else {
+            const span = document.createElement('span');
+            span.className = 'disp-thumb-emoji';
+            span.textContent = img.dataset.emoji || '📦';
+            img.replaceWith(span);
+        }
+    }, true);
 
     function _renderItemActivo(d, asignaciones, tieneMacDuplicada, dupPatrimonios) {
         const ESTADO_BADGE = { averiado: ['Averiado', 'badge-estado-averiado'], revisar: ['A revisar', 'badge-estado-revisar'], desafectado: ['Desafectado', 'badge-estado-desafectado'], disponible: ['Disponible', 'badge-estado-disponible'] };
@@ -6634,7 +6648,7 @@
     // ── ZOOM FLOTANTE DE THUMBNAILS ──
     // Crea una copia fixed al hacer hover sobre .disp-thumb para escapar de overflow:hidden
     (() => {
-        const SCALE = 6;
+        const SCALE = 5;
         const ANIM_MS = 180;
         let ghost = null;
         let activeImg = null;
@@ -6685,7 +6699,6 @@
             `;
             document.body.appendChild(ghost);
 
-            // Forzar reflow antes de animar
             ghost.getBoundingClientRect();
             ghost.style.opacity = '1';
             ghost.style.transform = `scale(${SCALE})`;
@@ -6699,7 +6712,6 @@
             }
         });
 
-        // Quitar si se hace scroll para evitar que el ghost quede flotando desalineado
         document.addEventListener('scroll', removeGhost, { passive: true, capture: true });
     })();
 
