@@ -6186,6 +6186,7 @@
         const on = (id, evt, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(evt, fn); };
 
         // Header
+        on('btn-inicio', 'click', () => window.location.href = '../index.html');
         on('btn-undo', 'click', () => historial.undo());
         on('btn-redo', 'click', () => historial.redo());
         document.querySelector('.header-buttons .icon-btn[title="Ajustes"]')
