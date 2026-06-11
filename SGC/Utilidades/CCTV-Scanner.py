@@ -1,6 +1,6 @@
 """
 ================================================================================
-DOCUMENTACIÓN GENERAL: Scanner de CCTV Multimarca (Hikvision ISAPI / Dahua CGI)
+DOCUMENTACIÓN GENERAL: Scanner de CCTV (Hikvision ISAPI / Dahua CGI)
 ================================================================================
 --------------------------------------------------------------------------------
 1. REQUISITOS DE INSTALACIÓN
@@ -10,14 +10,12 @@ Python 3.8 o superior  →  https://www.python.org/downloads/
 
 Paquetes externos (instalar una sola vez con pip):
 
-    pip install requests keyring
+    pip install requests keyring (windows)
+    pip3 install requests keyring (macOS / Linux)
 
   - requests : comunicación HTTP/HTTPS con NVRs y cámaras.
   - keyring   : almacenamiento seguro de credenciales en el S.O.
   - urllib3   : se instala automáticamente como dependencia de requests.
-
-Todo lo demás (ssl, xml, json, re, concurrent.futures, getpass) forma parte
-de la biblioteca estándar de Python y no requiere instalación adicional.
 
 --------------------------------------------------------------------------------
 2. FUNCIONAMIENTO DEL SCRIPT
@@ -66,8 +64,8 @@ Explicación de los Campos Clave:
   "3": Rápido / Directo (TLS 1.2 -> HTTP) [RECOMENDADO].
   "4": Solo HTTPS Estricto (TLS 1.3 -> 1.2 -> 1.0).
   "5": Solo HTTP (80) + Compatibilidad Cámaras Antiguas.
-- max_workers (Integer): Cantidad de hilos (Recomendado 10-20 en redes normales).
-- tipo_escaneo (String): "1" (Solo NVRs, muy rápido) o "2" (Completo Unicast).
+- max_workers: Cantidad de hilos (Recomendado 10-20 en redes normales).
+- tipo_escaneo: "1" (Solo NVRs, muy rápido) o "2" (Completo Unicast).
 ================================================================================
 """
 
@@ -93,8 +91,13 @@ except ImportError as e:
     print(" [ERROR FATAL] Faltan dependencias para ejecutar el script.")
     print("="*70)
     print(f" Detalle técnico: {e}")
-    print("\n Para solucionarlo, abrí tu terminal (CMD o PowerShell) y ejecutá:\n")
+    print("\n Para solucionarlo, abrí tu terminal (CMD, PowerShell o Terminal)")
+    print(" y ejecutá según tu sistema operativo:\n")
+    print(" Windows:")
     print("      pip install requests keyring\n")
+    print(" macOS / Linux:")
+    print("      pip3 install requests keyring")
+    print("      (o también: python3 -m pip install requests keyring)\n")
     print("="*70 + "\n")
     input(" Presioná Enter para salir...")
     sys.exit(1)
@@ -104,11 +107,11 @@ try:
 except NameError:
     pass
 
-# Variables de rutas actualizadas
+# Variables de rutas
 ARCHIVO_CONFIG = "CCTV-Scanner-config.json"
 CARPETA_DATOS  = "Datos"
 
-# Configuración de Timeouts Optimizados: (Conexión TCP, Tiempo de Lectura/Procesamiento)
+# Configuración de Timeouts: (Conexión TCP, Tiempo de Lectura/Procesamiento)
 T_OUT = (3.0, 10.0)
 
 class TLS13Adapter(HTTPAdapter):
