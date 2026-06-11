@@ -3082,6 +3082,7 @@ window.addEventListener('DOMContentLoaded', () => {
     function _on(id, evt, fn) { const el = document.getElementById(id); if (el) el.addEventListener(evt, fn); }
 
     // Header
+    _on('btn-inicio', 'click', () => window.location.href = '../index.html');
     _on('year-selector', 'change', function () { Gantt.changeYear(this.value); });
     _on('btn-undo', 'click', () => Historial.undo());
     _on('btn-redo', 'click', () => Historial.redo());

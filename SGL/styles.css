@@ -1196,6 +1196,10 @@
         filter: var(--hover);
     }
 
+    #btn-inicio {
+        cursor: pointer;
+    }
+
     /* Formulario de agregar rango */
     .add-range-form {
         display: flex;

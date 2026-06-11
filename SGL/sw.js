@@ -1,4 +1,4 @@
-const CACHE_NAME = 'licencias-260523.2153-cache';
+const CACHE_NAME = 'licencias-260611.1512-cache';
 const urlsToCache = [
   './',
   './index.html',
