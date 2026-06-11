@@ -2268,6 +2268,10 @@ button:disabled {
     background: var(--bg-body);
 }
 
+.filtro-dropdown-header--mt {
+    margin-top: var(--sp-3);
+}
+
 .filtro-dropdown-title {
     font-size: var(--fs-base);
     font-weight: 700;

@@ -3827,7 +3827,7 @@
                         <div class="tipo-custom-row">
                             <span class="tipo-custom-label">${esc(v.emoji)} ${esc(v.label)}</span>
                         </div>`).join('');
-            const separador = custom.length ? `<div class="filtro-dropdown-header" style="margin-top:var(--sp-3)"><span class="filtro-dropdown-title">Personalizados</span></div>` : '';
+            const separador = custom.length ? `<div class="filtro-dropdown-header filtro-dropdown-header--mt"><span class="filtro-dropdown-title">Personalizados</span></div>` : '';
             const customHtml = custom.map(([k, v]) => `
                         <div class="tipo-custom-row">
                             <span class="tipo-custom-label">${esc(v.emoji)} ${esc(v.label)}</span>
