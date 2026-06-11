@@ -2613,6 +2613,36 @@
             + ipComunHtml;
     }
 
+    // Devuelve la ruta de la imagen del modelo (png tiene prioridad; jpg como alternativa).
+    // Si no hay modelo registrado, intenta un fallback genérico por forma o tipo.
+    function _getDeviceImageSrc(modelo, forma, tipo) {
+        if (modelo) {
+            const nombre = modelo.replace(/[^a-zA-Z0-9\-_.]/g, '');
+            if (nombre) return `./img/devices/${nombre}.png`;
+        }
+        const formaMap = {
+            'domo': 'domo', 'minidomo': 'domo',
+            'bullet': 'bullet', 'minibullet': 'bullet',
+            'turret': 'turret', 'domo-ptz': 'ptz'
+        };
+        const fb = forma ? formaMap[forma] : null;
+        if (fb) return `./img/devices/fallback/${fb}.png`;
+        if (tipo) return `./img/devices/fallback/${tipo}.png`;
+        return null;
+    }
+
+    // Al cargar el <img> con onerror se intenta primero .png; si falla se prueba .jpg;
+    // si también falla, se oculta la imagen y se muestra el emoji de reserva.
+    function _buildDeviceImgHtml(modelo, forma, tipo, emoji) {
+        const src = _getDeviceImageSrc(modelo, forma, tipo);
+        if (!src) return `<span class="disp-thumb-emoji">${emoji}</span>`;
+        // Prueba .png; si falla intenta .jpg; si tambi\xc3\xa9n falla reemplaza con el emoji
+        const srcJpg = src.replace(/\.png$/, '.jpg');
+        return `<img class="disp-thumb" src="${src}" alt=""
+            onerror="if(this.dataset.tried){const s=document.createElement('span');s.className='disp-thumb-emoji';s.textContent='${emoji}';this.replaceWith(s);}else{this.dataset.tried='1';this.src='${srcJpg}';}" 
+            loading="lazy">`;
+    }
+
     function _renderItemActivo(d, asignaciones, tieneMacDuplicada, dupPatrimonios) {
         const ESTADO_BADGE = { averiado: ['Averiado', 'badge-estado-averiado'], revisar: ['A revisar', 'badge-estado-revisar'], desafectado: ['Desafectado', 'badge-estado-desafectado'], disponible: ['Disponible', 'badge-estado-disponible'] };
         const tc = S.TIPOS[d.tipo] || { emoji: '📦', label: d.tipo };
@@ -2630,9 +2660,12 @@
             d.patrimonio ? `<span class="${dupPatrimonios.has(d.patrimonio.trim().toUpperCase()) ? 'pat-dup' : ''}">PAT: ${esc(d.patrimonio)}</span>` : ''
         ].filter(Boolean);
 
+        const thumbHtml = _buildDeviceImgHtml(d.modelo, d.forma, d.tipo, tc.emoji);
+
         return `<div class="dispositivo-item tipo-${esc(d.tipo)} estado-${estadoEfectivo} anim-in" data-disp-id="${esc(d.id)}">
+                    <div class="disp-thumb-wrap">${thumbHtml}</div>
                     <div class="dispositivo-info">
-                        <div class="dispositivo-nombre">${tc.emoji} ${tipoBadgeLabel}<span class="sep-muted">-</span>${esc(titulo)} </div>
+                        <div class="dispositivo-nombre">${tipoBadgeLabel}<span class="sep-muted">-</span>${esc(titulo)} </div>
                         <div class="dispositivo-meta">${d.modelo ? `<span>${esc(d.modelo)}</span>` : ''}</div>
                         ${linea3Parts.length ? `<div class="disp-linea3">${linea3Parts.join(' · ')}</div>` : ''}
                     </div>${derechaHtml}</div>`;

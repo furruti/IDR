@@ -1254,8 +1254,62 @@ button:disabled {
 
 .lista-2col .dispositivo-item {
     align-items: flex-start;
-    height: 80px;
+    height: 88px;
     overflow: hidden;
+}
+
+/* Contenedor del thumbnail (imagen o emoji de reserva) */
+.disp-thumb-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 0;
+}
+
+.disp-thumb-wrap:hover {
+    z-index: 10;
+}
+
+/* Imagen real del modelo */
+.disp-thumb {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: var(--bg-input);
+    padding: 3px;
+    display: block;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: zoom-in;
+}
+
+.disp-thumb:hover {
+    transform: scale(3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    z-index: 10;
+    position: relative;
+}
+
+/* Emoji de reserva cuando no hay imagen */
+.disp-thumb-emoji {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    border-radius: 6px;
+    background: var(--bg-input);
+}
+
+/* En lista de 2 columnas el thumb es un poco más chico para respetar los 88px de altura */
+.lista-2col .disp-thumb,
+.lista-2col .disp-thumb-emoji {
+    width: 44px;
+    height: 44px;
 }
 
 .dispositivo-info {
