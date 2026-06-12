@@ -2888,7 +2888,7 @@
                             : isDupMac ? `[MAC DUPLICADA] ${esc(tituloCanal)}` : esc(tituloCanal);
 
                         return `<div class="canal-slot-lista ocupado" data-canal="${c.canal}">
-                                <div class="canal-numero${badgeClass}">CH ${c.canal}</div>
+                                <div class="canal-numero${badgeClass}" data-modelo="${esc(disp.modelo || '')}">CH ${c.canal}</div>
                                 <div class="canal-dispositivo-nombre" title="${tituloHover}">${esc(tituloCanal)}</div>
                                 <div class="canal-dispositivo-ip ${c.ip ? 'ip-copiable' : ''}" ${c.ip ? `data-copy="${esc(c.ip)}" title="Copiar IP"` : ''}>${c.ip ? esc(c.ip) : ''}</div>
                             </div>`;
@@ -6682,53 +6682,113 @@
 
         document.addEventListener('mouseover', (e) => {
             const img = e.target.closest('.disp-thumb');
-            if (!img || img === activeImg) return;
+            const canalNumero = e.target.closest('.canal-numero');
+            const trigger = img || (canalNumero && canalNumero.dataset.modelo ? canalNumero : null);
+            if (!trigger || trigger === activeImg) return;
             removeGhost();
 
-            const imgRect = img.getBoundingClientRect();
-            const item = img.closest('.dispositivo-item');
-            const itemRect = item ? item.getBoundingClientRect() : imgRect;
+            // Obtener src de imagen según el origen del trigger
+            let src, refRect, containerRect;
+            if (img) {
+                src = img.src;
+                refRect = img.getBoundingClientRect();
+                const item = img.closest('.dispositivo-item');
+                containerRect = item ? item.getBoundingClientRect() : refRect;
+            } else {
+                // Trigger desde canal-numero
+                const modelo = canalNumero.dataset.modelo;
+                const nombre = modelo.trim().toUpperCase().replace(/[^A-Z0-9\-_.]/g, '');
+                src = `./img/devices/${nombre}.png`;
+                refRect = { width: 36, height: 36 };
+                const slot = canalNumero.closest('.canal-slot-lista');
+                containerRect = slot ? slot.getBoundingClientRect() : canalNumero.getBoundingClientRect();
+            }
 
-            // Centro del mosaico
-            const cx = itemRect.left + itemRect.width / 2;
-            const cy = itemRect.top + itemRect.height / 2;
+            const canalScale = canalNumero ? 2.8 : SCALE;
+            const cx = containerRect.left + containerRect.width / 2;
+            const cy = containerRect.top + containerRect.height / 2;
+            const left = cx - refRect.width / 2;
+            const top  = cy - refRect.height / 2;
 
-            // Posición inicial centrada sobre el item (antes del scale)
-            const left = cx - imgRect.width / 2;
-            const top  = cy - imgRect.height / 2;
+            activeImg = trigger;
+            if (img) img.style.opacity = '0.35';
 
-            activeImg = img;
-            img.style.opacity = '0.35';
+            if (canalNumero) {
+                // Ghost con imagen + modelo como label debajo
+                const modelo = canalNumero.dataset.modelo || '';
+                ghost = document.createElement('div');
+                ghost.style.cssText = `
+                    position: fixed;
+                    left: ${left}px;
+                    top: ${top}px;
+                    width: ${refRect.width}px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    opacity: 0;
+                    transform: scale(1);
+                    transform-origin: center top;
+                    transition: transform ${ANIM_MS}ms ease, opacity ${ANIM_MS}ms ease;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 4px;
+                `;
+                const imgEl = document.createElement('img');
+                imgEl.src = src;
+                imgEl.alt = '';
+                imgEl.style.cssText = `width:${refRect.width}px;height:${refRect.height}px;object-fit:contain;border-radius:6px;display:block;`;
+                imgEl.onerror = () => { if (ghost) { ghost.remove(); ghost = null; activeImg = null; } };
+                ghost.appendChild(imgEl);
+                if (modelo) {
+                    const label = document.createElement('span');
+                    label.textContent = modelo;
+                    label.style.cssText = `
+                        font-size: 9px;
+                        color: var(--text-muted);
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        background: var(--bg-card);
+                        padding: 1px 5px;
+                        border-radius: 3px;
+                        max-width: 120px;
+                    `;
+                    ghost.appendChild(label);
+                }
+            } else {
+                ghost = document.createElement('img');
+                ghost.src = src;
+                ghost.alt = '';
+                ghost.style.cssText = `
+                    position: fixed;
+                    left: ${left}px;
+                    top: ${top}px;
+                    width: ${refRect.width}px;
+                    height: ${refRect.height}px;
+                    object-fit: contain;
+                    border-radius: 6px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    opacity: 0;
+                    transform: scale(1);
+                    transform-origin: center center;
+                    transition: transform ${ANIM_MS}ms ease, opacity ${ANIM_MS}ms ease;
+                `;
+            }
 
-            ghost = document.createElement('img');
-            ghost.src = img.src;
-            ghost.alt = '';
-            ghost.style.cssText = `
-                position: fixed;
-                left: ${left}px;
-                top: ${top}px;
-                width: ${imgRect.width}px;
-                height: ${imgRect.height}px;
-                object-fit: contain;
-                border-radius: 6px;
-                pointer-events: none;
-                z-index: 9999;
-                opacity: 0;
-                transform: scale(1);
-                transform-origin: center center;
-                transition: transform ${ANIM_MS}ms ease, opacity ${ANIM_MS}ms ease;
-            `;
             document.body.appendChild(ghost);
 
             ghost.getBoundingClientRect();
             ghost.style.opacity = '1';
-            ghost.style.transform = `scale(${SCALE})`;
+            ghost.style.transform = `scale(${canalScale})`;
         });
 
         document.addEventListener('mouseout', (e) => {
             const img = e.target.closest('.disp-thumb');
-            if (!img || img !== activeImg) return;
-            if (!e.relatedTarget || !e.relatedTarget.closest('.disp-thumb')) {
+            const canalNumero = e.target.closest('.canal-numero');
+            const trigger = img || canalNumero;
+            if (!trigger || trigger !== activeImg) return;
+            if (!e.relatedTarget || (!e.relatedTarget.closest('.disp-thumb') && !e.relatedTarget.closest('.canal-numero'))) {
                 removeGhost();
             }
         });
