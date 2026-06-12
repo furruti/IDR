@@ -3554,6 +3554,7 @@
     function _generarSeccionTabla(titulo, items, asignaciones) {
         const rowsHtml = items.map(d => {
             const mac = d.mac || '—';
+            const modelo = d.modelo || '—';
             const serial = d.serial || '—';
             const tipoForma = d.tipo === 'camara' && d.forma ? d.forma.replace(/-/g, ' ') : (S.TIPOS[d.tipo]?.label || d.tipo);
 
@@ -3580,6 +3581,7 @@
 
             return `<tr>
                 <td><strong>${esc(mac)}</strong></td>
+                <td>${esc(modelo)}</td>
                 <td>${esc(serial)}</td>
                 <td>${esc(tipoForma).toUpperCase()}</td>
                 <td>${esc(patrimonio).toUpperCase()}</td>
@@ -3594,6 +3596,7 @@
                 <thead>
                     <tr>
                         <th>MAC</th>
+                        <th>Modelo</th>
                         <th>Serial</th>
                         <th>Tipo / Forma</th>
                         <th>Patrimonio</th>
@@ -5667,17 +5670,24 @@
 <style>
   :root { --blue: #4c72ac; --border: #e2e6ef; --muted: #5a6070; --bg: #f5f6fa; --card: #fff; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1a1d23; padding: 2rem 1rem 4rem; }
-  .reporte-wrap { max-width: 960px; margin: 0 auto; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: #1a1d23; padding: 2rem 1.5rem 4rem; }
+  .reporte-wrap { max-width: 1280px; margin: 0 auto; }
   header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--blue); display: flex; justify-content: space-between; align-items: flex-end; }
   header h1 { font-size: 1.3rem; color: var(--blue); font-weight: 700; }
   header .meta { font-size: 0.8rem; color: var(--muted); text-align: right; line-height: 1.5; }
   section { background: var(--card); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); border: 1px solid var(--border); }
   h2 { font-size: 0.95rem; font-weight: 700; color: var(--blue); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  th { text-align: left; font-weight: 600; color: var(--muted); padding: 0.5rem; border-bottom: 1px solid var(--border); background: #f0f2f8; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .03em; }
-  td { padding: 0.5rem; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.6rem; table-layout: fixed; }
+  th { text-align: left; font-weight: 600; color: var(--muted); padding: 0.25rem; border-bottom: 1px solid var(--border); background: #f0f2f8; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .03em; }
+  td { padding: 0.25rem; border-bottom: 1px solid var(--border); word-break: break-word; }
   tbody tr:last-child td { border-bottom: none; }
+  /* Anchos proporcionales por columna */
+  th:nth-child(1), td:nth-child(1) { width: 15%; } /* MAC */
+  th:nth-child(2), td:nth-child(2) { width: 18%; } /* Modelo */
+  th:nth-child(3), td:nth-child(3) { width: 18%; } /* Serial */
+  th:nth-child(4), td:nth-child(4) { width: 12%; } /* Tipo/Forma */
+  th:nth-child(5), td:nth-child(5) { width: 12%; } /* Patrimonio */
+  th:nth-child(6), td:nth-child(6) { width: 25%; } /* Estado */
   .btn-print { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--blue); color: #fff; border: none; border-radius: 999px; padding: .6rem 1.2rem; font-size: .8rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media print { .btn-print { display: none; } body { background: #fff; padding: 0; } section { box-shadow: none; page-break-inside: avoid; } }
 </style>
@@ -6652,7 +6662,7 @@
         if (estactil) return;
 
         const SCALE = 5;
-        const ANIM_MS = 180;
+        const ANIM_MS = 200;
         let ghost = null;
         let activeImg = null;
 
