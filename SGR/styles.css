@@ -1373,6 +1373,42 @@ input[type="file"].hidden {
     color: var(--c-red);
 }
 
+/* ── Tooltip global para celdas de estado ── */
+#td-tooltip-global {
+    position: fixed;
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.7rem;
+    font-size: var(--fs-sm);
+    font-weight: 400;
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    z-index: 9999;
+    letter-spacing: 0;
+}
+
+#td-tooltip-global.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Badge de estado con soporte de truncado + tooltip */
+.rack-badge.td-tooltip {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: default;
+}
+
 /* ════════════════════════════════════════════════════════
    STATS & DASHBOARD
    ════════════════════════════════════════════════════════ */

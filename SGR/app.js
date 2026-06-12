@@ -899,8 +899,9 @@ const ESTADO_BADGE = {
 function _badgeEstado(r) {
     if (r.estado === 'servicio') {
         const num = r.numero ? esc(r.numero) : 'En servicio';
-        const dep = r.dependencia ? ` <span class="rack-badge-dep">— ${esc(r.dependencia)}</span>` : '';
-        return `<span class="rack-badge rack-badge-servicio rack-badge-servicio--con-dep">${num}${dep}</span>`;
+        const dep = r.dependencia ? ` — ${esc(r.dependencia)}` : '';
+        const textoCompleto = num + dep;
+        return `<span class="rack-badge rack-badge-servicio rack-badge-servicio--con-dep td-tooltip" data-tooltip="${esc(textoCompleto)}"><span class="rack-badge-num">${num}</span>${r.dependencia ? `<span class="rack-badge-dep"> — ${esc(r.dependencia)}</span>` : ''}</span>`;
     }
     return ESTADO_BADGE[r.estado] || '';
 }
@@ -2943,6 +2944,62 @@ function _initBindings() {
         _resumenEdificioActual = null;
         renderResumenEdificios();
     });
+
+    // ── Tooltip para columna estado (muestra texto completo al hacer hover) ──
+    (function () {
+        const tip = document.getElementById('td-tooltip-global');
+        if (!tip) return;
+
+        let _hideTimer = null;
+
+        function _mostrar(el, x, y) {
+            if (_hideTimer) { clearTimeout(_hideTimer); _hideTimer = null; }
+            tip.textContent = el.dataset.tooltip || '';
+            tip.classList.add('visible');
+            _posicionar(x, y);
+        }
+
+        function _posicionar(x, y) {
+            const GAP = 10;
+            const tw = tip.offsetWidth;
+            const th = tip.offsetHeight;
+            let left = x + GAP;
+            let top = y - th - GAP;
+            // Si se sale por la derecha, flipear a la izquierda del cursor
+            if (left + tw > window.innerWidth - 8) left = x - tw - GAP;
+            // Si se sale por arriba, mostrar debajo
+            if (top < 4) top = y + GAP;
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        }
+
+        function _ocultar() {
+            _hideTimer = setTimeout(() => {
+                tip.classList.remove('visible');
+                _hideTimer = null;
+            }, 80);
+        }
+
+        document.addEventListener('mouseover', e => {
+            const el = e.target.closest('[data-tooltip]');
+            if (!el) return;
+            // Solo mostrar si el contenido está truncado
+            if (el.scrollWidth <= el.clientWidth) return;
+            _mostrar(el, e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!tip.classList.contains('visible')) return;
+            const el = e.target.closest('[data-tooltip]');
+            if (!el) { _ocultar(); return; }
+            _posicionar(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseout', e => {
+            if (!e.target.closest('[data-tooltip]')) return;
+            _ocultar();
+        });
+    }());
 
 } // <-- Este es el cierre correcto de _initBindings()
 
