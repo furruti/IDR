@@ -6662,7 +6662,7 @@
         if (estactil) return;
 
         const SCALE = 5;
-        const ANIM_MS = 200;
+        const ANIM_MS = 250;
         let ghost = null;
         let activeImg = null;
 
@@ -6685,7 +6685,18 @@
             if (!img || img === activeImg) return;
             removeGhost();
 
-            const rect = img.getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
+            const item = img.closest('.dispositivo-item');
+            const itemRect = item ? item.getBoundingClientRect() : imgRect;
+
+            // Centro del mosaico
+            const cx = itemRect.left + itemRect.width / 2;
+            const cy = itemRect.top + itemRect.height / 2;
+
+            // Posición inicial centrada sobre el item (antes del scale)
+            const left = cx - imgRect.width / 2;
+            const top  = cy - imgRect.height / 2;
+
             activeImg = img;
             img.style.opacity = '0.35';
 
@@ -6694,10 +6705,10 @@
             ghost.alt = '';
             ghost.style.cssText = `
                 position: fixed;
-                left: ${rect.left}px;
-                top: ${rect.top}px;
-                width: ${rect.width}px;
-                height: ${rect.height}px;
+                left: ${left}px;
+                top: ${top}px;
+                width: ${imgRect.width}px;
+                height: ${imgRect.height}px;
                 object-fit: contain;
                 border-radius: 6px;
                 pointer-events: none;

@@ -1275,7 +1275,6 @@ button:disabled {
     background: var(--bg-input);
     padding: 3px;
     display: block;
-    cursor: zoom-in;
     transition: opacity 0.18s ease;
 }
 
