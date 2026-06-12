@@ -32,7 +32,7 @@ def detectar_color_fondo(arr):
     return colores[np.argmax(conteos)].astype(float)
 
 
-def remove_bg(img_path: Path, tolerancia: int = 30, suavizado: int = 2) -> bool:
+def remove_bg(img_path: Path, tolerancia: int = 10, suavizado: int = 2) -> bool:
     try:
         img = Image.open(img_path).convert("RGBA")
         data = np.array(img, dtype=np.uint8)
@@ -72,7 +72,7 @@ def remove_bg(img_path: Path, tolerancia: int = 30, suavizado: int = 2) -> bool:
 def main():
     parser = argparse.ArgumentParser(description="Elimina fondo de PNGs por flood fill")
     parser.add_argument("--carpeta",    default="../img/devices")
-    parser.add_argument("--tolerancia", type=int, default=30,
+    parser.add_argument("--tolerancia", type=int, default=10,
                         help="Diferencia máx de color para considerar 'fondo' (default: 30)")
     parser.add_argument("--suavizado",  type=int, default=2,
                         help="Píxeles de transición en el borde (default: 2)")
