@@ -2739,6 +2739,55 @@ button:disabled {
     .dashboard-grid {
         grid-template-columns: 1fr 1fr;
     }
+
+    /* ── Layout móvil de dispositivo-item: 4 filas ── */
+    .dispositivo-item {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    /* Quitar altura fija y overflow oculto que cortan la fila 4 */
+    .lista-2col .dispositivo-item {
+        height: auto;
+        overflow: visible;
+    }
+
+    /* El bloque de info ocupa todo el ancho restante (junto al thumb) */
+    .dispositivo-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* La columna derecha (badge + ip) baja a una 4ta fila, ancho completo */
+    .activo-info-derecha {
+        width: 100%;
+        max-width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        text-align: left;
+        padding-left: calc(52px + var(--sp-3));
+        gap: var(--sp-2);
+        margin-top: var(--sp-1);
+    }
+
+    /* Ocultar línea de canal en móvil */
+    .disp-linea-canal,
+    .activo-info-derecha .asig-multi {
+        display: none;
+    }
+
+    /* IP a la derecha en la misma fila que el badge */
+    .activo-info-derecha .ip-copiable {
+        margin-left: auto;
+        text-align: right;
+    }
+
+    /* IP ocupa su lugar limpiamente */
+    .activo-info-derecha .ip-copiable {
+        text-align: left;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════

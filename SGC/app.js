@@ -2591,7 +2591,7 @@
         if (bloques.length === 1) {
             const b = bloques[0];
             return (b.desc ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(b.desc)}</span></div>` : '')
-                + (b.linea ? `<div class="text-truncate">${b.linea}</div>` : '')
+                + (b.linea ? `<div class="text-truncate disp-linea-canal">${b.linea}</div>` : '')
                 + (b.ip ? ipCopiable(b.ip) : '');
         }
 
@@ -2603,7 +2603,7 @@
         const descComunHtml = (descUnica) ? `<div class="text-truncate"><span class="badge ${badgeProdClass}" ${hoverTitle}>${esc(descUnica)}</span></div>` : '';
         const ipComunHtml = (ipUnica) ? ipCopiable(ipUnica) : '';
         const bloquesHtml = bloques.map(b => {
-            const lineaH = b.linea ? `<div class="text-truncate">${b.linea}</div>` : '';
+            const lineaH = b.linea ? `<div class="text-truncate disp-linea-canal">${b.linea}</div>` : '';
             const ipH = (!ipUnica && b.ip) ? ipCopiable(b.ip) : '';
             return (lineaH || ipH) ? `<div class="asig-bloque">${lineaH}${ipH}</div>` : '';
         }).filter(Boolean);
