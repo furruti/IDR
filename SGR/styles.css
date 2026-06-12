@@ -807,7 +807,7 @@ tbody td {
 
 .table-equal-cols th,
 .table-equal-cols td {
-    width: calc(100% / 6);
+    width: calc(100% / 5);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1378,7 +1378,7 @@ input[type="file"].hidden {
     position: fixed;
     background: var(--bg-card);
     color: var(--text-main);
-    border: var(--border-w) solid var(--border);
+    border: var(--border-w) solid var(--text-muted);
     border-radius: var(--radius);
     padding: 0.3rem 0.7rem;
     font-size: var(--fs-sm);

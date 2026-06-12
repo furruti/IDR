@@ -1005,7 +1005,6 @@ function _filaRackInv(r) {
         <td class="td-muted">${esc(r.patrimonio || '—')}</td>
         <td class="td-muted td-center">${r.unidades != null ? esc(String(r.unidades)) + 'U' : '—'}</td>
         <td>${esc(r.marca || '—')}</td>
-        <td class="td-muted">${esc(r.modelo || '—')}</td>
         <td class="td-muted">${esc(r.identificador || '—')}</td>
     </tr>`;
 }
@@ -1692,7 +1691,6 @@ function renderInventario() {
                     <th data-sort="patrimonio" class="th-sortable">Patrimonio</th>
                     <th data-sort="unidades" class="th-sortable">Unidades</th>
                     <th data-sort="marca" class="th-sortable">Marca</th>
-                    <th data-sort="modelo" class="th-sortable">Modelo</th>
                     <th data-sort="identificador" class="th-sortable">Identificador</th>
                 </tr>
             </thead>`;
@@ -1703,7 +1701,6 @@ function renderInventario() {
                     <td class="td-muted">${esc(r.patrimonio || '—')}</td>
                     <td class="td-muted td-center">${r.unidades != null ? esc(String(r.unidades)) + 'U' : '—'}</td>
                     <td>${esc(r.marca || '—')}</td>
-                    <td class="td-muted">${esc(r.modelo || '—')}</td>
                     <td class="td-muted">${esc(r.identificador || '—')}</td>
                 </tr>`;
 
@@ -1720,7 +1717,7 @@ function renderInventario() {
                         const subOpen = busq ? true : (abiertos !== null ? abiertos.has(subKey) : isOpen);
                         const filasSub = sg.racks.map(r => _filaRack(r, isOpen && subOpen)).join('');
                         return `<tr class="inv-grupo-tr-header inv-grupo-tr-sub${subOpen ? ' open' : ''}" data-grupo-key="${esc(subKey)}"${isOpen ? '' : ' hidden'}>
-                            <td colspan="6">
+                            <td colspan="5">
                                 <div class="inv-grupo-header inv-grupo-header-sub">
                                     <span class="inv-grupo-titulo">PISO: ${esc(sg.titulo)}</span>
                                     <span class="inv-grupo-badge">${sg.racks.length}</span>
@@ -1730,7 +1727,7 @@ function renderInventario() {
                         </tr>${filasSub}`;
                     }).join('');
                     return `<tr class="inv-grupo-tr-header${isOpen ? ' open' : ''}" data-grupo-key="${esc(key)}">
-                        <td colspan="6">
+                        <td colspan="5">
                             <div class="inv-grupo-header">
                                 <span class="inv-grupo-titulo">${esc(g.titulo)}</span>
                                 <span class="inv-grupo-badge">${g.totalCount}</span>
@@ -1742,7 +1739,7 @@ function renderInventario() {
                     // Grupo simple (sin subgrupos de pisos)
                     const filas = g.racks.map(r => _filaRack(r, isOpen)).join('');
                     return `<tr class="inv-grupo-tr-header${isOpen ? ' open' : ''}" data-grupo-key="${esc(key)}">
-                        <td colspan="6">
+                        <td colspan="5">
                             <div class="inv-grupo-header">
                                 <span class="inv-grupo-titulo">${esc(g.titulo)}</span>
                                 <span class="inv-grupo-badge">${g.racks.length}</span>
@@ -2950,14 +2947,7 @@ function _initBindings() {
         const tip = document.getElementById('td-tooltip-global');
         if (!tip) return;
 
-        let _hideTimer = null;
-
-        function _mostrar(el, x, y) {
-            if (_hideTimer) { clearTimeout(_hideTimer); _hideTimer = null; }
-            tip.textContent = el.dataset.tooltip || '';
-            tip.classList.add('visible');
-            _posicionar(x, y);
-        }
+        let _current = null;
 
         function _posicionar(x, y) {
             const GAP = 10;
@@ -2965,39 +2955,29 @@ function _initBindings() {
             const th = tip.offsetHeight;
             let left = x + GAP;
             let top = y - th - GAP;
-            // Si se sale por la derecha, flipear a la izquierda del cursor
             if (left + tw > window.innerWidth - 8) left = x - tw - GAP;
-            // Si se sale por arriba, mostrar debajo
             if (top < 4) top = y + GAP;
             tip.style.left = left + 'px';
             tip.style.top = top + 'px';
         }
 
-        function _ocultar() {
-            _hideTimer = setTimeout(() => {
-                tip.classList.remove('visible');
-                _hideTimer = null;
-            }, 80);
-        }
-
-        document.addEventListener('mouseover', e => {
-            const el = e.target.closest('[data-tooltip]');
-            if (!el) return;
-            // Solo mostrar si el contenido está truncado
-            if (el.scrollWidth <= el.clientWidth) return;
-            _mostrar(el, e.clientX, e.clientY);
-        });
-
         document.addEventListener('mousemove', e => {
-            if (!tip.classList.contains('visible')) return;
             const el = e.target.closest('[data-tooltip]');
-            if (!el) { _ocultar(); return; }
+            if (!el) {
+                if (_current) { tip.classList.remove('visible'); _current = null; }
+                return;
+            }
+            if (el !== _current) {
+                _current = el;
+                tip.textContent = el.dataset.tooltip || '';
+                tip.classList.add('visible');
+            }
             _posicionar(e.clientX, e.clientY);
         });
 
-        document.addEventListener('mouseout', e => {
-            if (!e.target.closest('[data-tooltip]')) return;
-            _ocultar();
+        document.addEventListener('mouseleave', () => {
+            tip.classList.remove('visible');
+            _current = null;
         });
     }());
 
