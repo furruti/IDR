@@ -2617,7 +2617,7 @@
     // Si no hay modelo registrado, intenta un fallback genérico por forma o tipo.
     function _getDeviceImageSrc(modelo, forma, tipo) {
         if (modelo) {
-            const nombre = modelo.replace(/[^a-zA-Z0-9\-_.]/g, '');
+            const nombre = modelo.trim().toUpperCase().replace(/[^A-Z0-9\-_.]/g, '');
             if (nombre) return `./img/devices/${nombre}.png`;
         }
         const formaMap = {
