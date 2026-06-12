@@ -6690,11 +6690,8 @@
                 height: ${rect.height}px;
                 object-fit: contain;
                 border-radius: 6px;
-                background: var(--bg-input);
-                padding: 3px;
                 pointer-events: none;
                 z-index: 9999;
-                box-shadow: 0 6px 24px rgba(0,0,0,0.45);
                 opacity: 0;
                 transform: scale(1);
                 transform-origin: center center;
