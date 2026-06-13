@@ -518,12 +518,20 @@
     // ════════════════════════════════════════════════════════════════════════════
     // § NOTIFICACIONES — toast queue y modal de confirmación
     // ════════════════════════════════════════════════════════════════════════════
-    function confirmarModal(texto, labelOk = 'Eliminar') {
+    function confirmarModal(texto, labelOk = 'Eliminar', opciones = {}) {
         return new Promise(resolve => {
             document.getElementById('modal-confirmar-texto').textContent = texto;
             document.getElementById('modal-confirmar-label').textContent = labelOk;
             const ok = document.getElementById('modal-confirmar-ok');
             const can = document.getElementById('modal-confirmar-cancel');
+            // Clase del botón ok: por defecto btn-delete (rojo), puede ser btn-edit (azul)
+            const claseOk = opciones.claseOk || 'btn-delete';
+            ok.className = ok.className.replace(/btn-delete|btn-edit/g, '').trim() + ' ' + claseOk;
+            // Label del botón cancelar
+            can.textContent = opciones.labelCancelar || 'Cancelar';
+            // Icono del botón ok
+            const iconoOk = document.getElementById('modal-confirmar-icono');
+            if (iconoOk) iconoOk.style.display = opciones.ocultarIcono ? 'none' : '';
             let resuelto = false;
             function si() { if (!resuelto) { resuelto = true; cleanup(); resolve(true); } }
             function no() { if (!resuelto) { resuelto = true; cleanup(); resolve(false); } }
@@ -3045,6 +3053,7 @@
     }
 
     // ── Estado de edición activa ──────────────────────────────────────────────
+    let _grabAAbrirTrasGuardar = null;
     const _edicion = {
         dispId: null,
         grabId: null,
@@ -4597,6 +4606,12 @@
                     slotsAsignados.forEach(({ slot }) => { slot.dispositivoId = ''; });
                     const idsAEliminar = new Set(otrosProdAsignados.map(o => o.id));
                     _data.otros_prod = _data.otros_prod.filter(o => !idsAEliminar.has(o.id));
+
+                    if (slotsAsignados.length > 0) {
+                        const { grab, slot } = slotsAsignados[0];
+                        const abrirOk = await confirmarModal(`¿Querés abrir el canal ${slot.canal} de "${grab.descripcion}" para asignar otro dispositivo?`, 'Sí', { claseOk: 'btn-edit', labelCancelar: 'No', ocultarIcono: true });
+                        if (abrirOk) _grabAAbrirTrasGuardar = grab.id;
+                    }
                 } else {
                     historial.empujar('Editar dispositivo');
                 }
@@ -4611,6 +4626,12 @@
             toast('Activo actualizado', 'success');
 
             guardar(); render(); MM.cerrar('modal-editar-disp'); _edicion.dispId = null; _edicion.snapshotDisp = null;
+
+            if (_grabAAbrirTrasGuardar) {
+                const grabId = _grabAAbrirTrasGuardar;
+                _grabAAbrirTrasGuardar = null;
+                setTimeout(() => UI.abrirEditarGrabador(grabId), 180);
+            }
         },
 
         editarAsignacionDispositivo() {
