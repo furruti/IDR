@@ -734,6 +734,16 @@ button:disabled {
     border: 1px solid var(--text-muted);
 }
 
+.badge-estado-perdido {
+    background: var(--c-gold);
+    color: var(--c-white);
+}
+
+.badge-estado-descontinuado {
+    background: var(--c-teal);
+    color: var(--c-white);
+}
+
 .badge--grupo-count {
     color: var(--c-orange);
     border-color: var(--c-orange);
@@ -1102,6 +1112,18 @@ button:disabled {
     border-color: var(--text-muted);
 }
 
+.btn-estado-disp.estado--perdido {
+    background: var(--c-gold);
+    color: var(--c-white);
+    border-color: transparent;
+}
+
+.btn-estado-disp.estado--descontinuado {
+    background: var(--c-teal);
+    color: var(--c-white);
+    border-color: transparent;
+}
+
 .estado-disp-chevron {
     width: 14px;
     height: 14px;
@@ -1124,6 +1146,8 @@ button:disabled {
 .estado-disp-dot--averiado  { background: var(--c-red); }
 .estado-disp-dot--revisar   { background: var(--c-purple); }
 .estado-disp-dot--desafectado { background: var(--text-muted); }
+.estado-disp-dot--perdido { background: var(--c-gold); }
+.estado-disp-dot--descontinuado { background: var(--c-teal); }
 
 /* El dropdown se ancla a la derecha del wrapper */
 #dropdown-estado-disp {
@@ -1879,6 +1903,16 @@ button:disabled {
     border-color: var(--text-muted);
 }
 
+.dash-chip-main--perdido {
+    box-shadow: 0 0 12px -2px var(--c-gold);
+    border-color: var(--c-gold);
+}
+
+.dash-chip-main--descontinuado {
+    box-shadow: 0 0 12px -2px var(--c-teal);
+    border-color: var(--c-teal);
+}
+
 .dash-chip-main .stat-chip-valor {
     font-size: 2.2rem;
     font-weight: 700;
@@ -1905,6 +1939,14 @@ button:disabled {
 
 .stat-chip-val--desafectado {
     color: var(--text-muted);
+}
+
+.stat-chip-val--perdido {
+    color: var(--c-gold);
+}
+
+.stat-chip-val--descontinuado {
+    color: var(--c-teal);
 }
 
 .dash-chip-main .stat-chip-label {
@@ -2909,6 +2951,14 @@ button:disabled {
     color: var(--text-muted);
 }
 
+.dash-cam-label-small--perd {
+    color: var(--c-gold);
+}
+
+.dash-cam-label-small--discont {
+    color: var(--c-teal);
+}
+
 .dash-cam-val--main {
     color: var(--text-main);
 }
@@ -2923,6 +2973,14 @@ button:disabled {
 
 .dash-cam-val--muted {
     color: var(--text-muted);
+}
+
+.dash-cam-val--gold {
+    color: var(--c-gold);
+}
+
+.dash-cam-val--teal {
+    color: var(--c-teal);
 }
 
 .dash-cam-val--orange {

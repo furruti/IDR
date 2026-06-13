@@ -86,7 +86,7 @@
     ];
 
     // Estados que implican que el dispositivo no está operativo/disponible
-    const ESTADOS_INACTIVOS = ['averiado', 'revisar', 'desafectado'];
+    const ESTADOS_INACTIVOS = ['averiado', 'revisar', 'desafectado', 'perdido', 'descontinuado'];
 
     // Estados de dispositivo con etiqueta para UI
     const ESTADOS_DEF = [
@@ -95,6 +95,8 @@
         { key: 'averiado', label: 'Averiado', labelPlural: 'Averiados' },
         { key: 'revisar', label: 'En revisión', labelPlural: 'A revisar' },
         { key: 'desafectado', label: 'Desafectado', labelPlural: 'Desafectados' },
+        { key: 'perdido', label: 'Perdido', labelPlural: 'Perdidos' },
+        { key: 'descontinuado', label: 'Descontinuado', labelPlural: 'Descontinuados' },
     ];
 
     // Lookup rápido estado → etiqueta singular/plural
@@ -308,7 +310,7 @@
             if (!id || !RE_ID.test(id)) return null;
 
             const tipo = (TIPOS[d.tipo] || extraTipos[d.tipo]) ? d.tipo : 'otro';
-            const ESTADOS = ['', 'averiado', 'revisar', 'desafectado'];
+            const ESTADOS = ['', 'averiado', 'revisar', 'desafectado', 'perdido', 'descontinuado'];
 
             const obj = {
                 id,
@@ -1839,11 +1841,13 @@
     };
 
     function _estadosDeDisps(dispsDelTipo, idsEnProd) {
-        const res = { produccion: 0, disponible: 0, averiado: 0, revisar: 0, desafectado: 0 };
+        const res = { produccion: 0, disponible: 0, averiado: 0, revisar: 0, desafectado: 0, perdido: 0, descontinuado: 0 };
         dispsDelTipo.forEach(d => {
             if (d.estado === 'averiado') res.averiado++;
             else if (d.estado === 'revisar') res.revisar++;
             else if (d.estado === 'desafectado') res.desafectado++;
+            else if (d.estado === 'perdido') res.perdido++;
+            else if (d.estado === 'descontinuado') res.descontinuado++;
             else if (idsEnProd.has(d.id)) res.produccion++;
             else res.disponible++;
         });
@@ -2351,17 +2355,19 @@
             camarasDisps.forEach(d => {
                 const valor = d[campoAgrupar] || '';
                 const k = valor.trim() || '__sin_valor__';
-                if (!conteo[k]) conteo[k] = { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0 };
+                if (!conteo[k]) conteo[k] = { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0, perdido: 0, descontinuado: 0 };
                 conteo[k].total++;
                 if (d.estado === 'averiado') conteo[k].averiado++;
                 else if (d.estado === 'revisar') conteo[k].revisar++;
                 else if (d.estado === 'desafectado') conteo[k].desafectado++;
+                else if (d.estado === 'perdido') conteo[k].perdido++;
+                else if (d.estado === 'descontinuado') conteo[k].descontinuado++;
                 else if (idsEnProd.has(d.id)) conteo[k].prod++;
             });
 
             let filasRaw = [];
             if (_dash.camarasVista === 'forma') {
-                filasRaw = FORMAS_DEF.map(f => ({ label: f.label, ...(conteo[f.key] || { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0 }) }))
+                filasRaw = FORMAS_DEF.map(f => ({ label: f.label, ...(conteo[f.key] || { total: 0, prod: 0, averiado: 0, revisar: 0, desafectado: 0, perdido: 0, descontinuado: 0 }) }))
                     .filter(f => f.total > 0)
                     .sort((a, b) => a.label.localeCompare(b.label));
                 if (conteo['__sin_valor__']?.total > 0) filasRaw.push({ label: 'Sin forma', ...conteo['__sin_valor__'] });
@@ -2386,6 +2392,8 @@
                             ${col('AVER.', 'dash-cam-label-small--aver')}
                             ${col('REVIS.', 'dash-cam-label-small--revis')}
                             ${col('DESAF.', 'dash-cam-label-small--desaf')}
+                            ${col('PERD.', 'dash-cam-label-small--perd')}
+                            ${col('DISCONT.', 'dash-cam-label-small--discont')}
                         </div>`;
                 const esModoModelo = _dash.camarasVista === 'modelo';
                 const rows = filasRaw.map((f, i) => {
@@ -2398,10 +2406,12 @@
                             ${labelSpan}
                             ${val(f.total, 'dash-cam-val--main')}
                             ${val(f.prod, 'dash-cam-val--blue')}
-                            ${val(f.total - f.prod - f.averiado - f.revisar - f.desafectado, 'dash-cam-val--green')}
+                            ${val(f.total - f.prod - f.averiado - f.revisar - f.desafectado - f.perdido - f.descontinuado, 'dash-cam-val--green')}
                             ${val(f.averiado, 'dash-cam-val--red')}
                             ${val(f.revisar, 'dash-cam-val--purple')}
                             ${val(f.desafectado, 'dash-cam-val--muted')}
+                            ${val(f.perdido, 'dash-cam-val--gold')}
+                            ${val(f.descontinuado, 'dash-cam-val--teal')}
                         </div>`;
                 }).join('');
                 vistaHtml = header + rows;
@@ -2556,7 +2566,7 @@
     }
 
     function _getGroupSortKey(d, asignaciones) {
-        const ORDEN_ESTADO = { produccion: 0, disponible: 1, revisar: 2, averiado: 3, desafectado: 4 };
+        const ORDEN_ESTADO = { produccion: 0, disponible: 1, revisar: 2, averiado: 3, desafectado: 4, perdido: 5, descontinuado: 6 };
         if (_activos.orden === 'estado') return ORDEN_ESTADO[getEstadoEfectivo(d, asignaciones)] ?? 9;
         if (_activos.orden === 'marca') return (d.marca || 'zzz').trim().toLowerCase();
         if (_activos.orden === 'modelo' || _activos.orden === 'modelo-firmware') return (d.modelo || 'zzz').trim().toLowerCase();
@@ -2658,7 +2668,7 @@
     }, true);
 
     function _renderItemActivo(d, asignaciones, tieneMacDuplicada, dupPatrimonios) {
-        const ESTADO_BADGE = { averiado: ['Averiado', 'badge-estado-averiado'], revisar: ['A revisar', 'badge-estado-revisar'], desafectado: ['Desafectado', 'badge-estado-desafectado'], disponible: ['Disponible', 'badge-estado-disponible'] };
+        const ESTADO_BADGE = { averiado: ['Averiado', 'badge-estado-averiado'], revisar: ['A revisar', 'badge-estado-revisar'], desafectado: ['Desafectado', 'badge-estado-desafectado'], perdido: ['Perdido', 'badge-estado-perdido'], descontinuado: ['Descontinuado', 'badge-estado-descontinuado'], disponible: ['Disponible', 'badge-estado-disponible'] };
         const tc = S.TIPOS[d.tipo] || { emoji: '📦', label: d.tipo };
         const titulo = d.mac || d.serial || '—';
         const estadoEfectivo = getEstadoEfectivo(d, asignaciones);
@@ -3073,12 +3083,14 @@
         const dot  = document.getElementById('estado-disp-dot');
         const lbl  = document.getElementById('estado-disp-label');
         if (!btn) return;
-        const LABELS = { '': 'Normal', averiado: 'Averiado', revisar: 'En revisión', desafectado: 'Desafectado' };
-        const DOT_CLASS = { '': 'estado-disp-dot--normal', averiado: 'estado-disp-dot--averiado', revisar: 'estado-disp-dot--revisar', desafectado: 'estado-disp-dot--desafectado' };
+        const LABELS = { '': 'Normal', averiado: 'Averiado', revisar: 'En revisión', desafectado: 'Desafectado', perdido: 'Perdido', descontinuado: 'Descontinuado' };
+        const DOT_CLASS = { '': 'estado-disp-dot--normal', averiado: 'estado-disp-dot--averiado', revisar: 'estado-disp-dot--revisar', desafectado: 'estado-disp-dot--desafectado', perdido: 'estado-disp-dot--perdido', descontinuado: 'estado-disp-dot--descontinuado' };
         btn.className = 'btn-estado-disp';
         if (estadoActual === 'averiado')   btn.classList.add('estado--averiado');
         else if (estadoActual === 'revisar')    btn.classList.add('estado--revisar');
         else if (estadoActual === 'desafectado') btn.classList.add('estado--desafectado');
+        else if (estadoActual === 'perdido') btn.classList.add('estado--perdido');
+        else if (estadoActual === 'descontinuado') btn.classList.add('estado--descontinuado');
         if (dot) dot.className = `estado-disp-dot ${DOT_CLASS[estadoActual] || DOT_CLASS['']}`;
         if (lbl) lbl.textContent = LABELS[estadoActual] ?? 'Normal';
         // Marcar opción activa en el dropdown
@@ -3105,6 +3117,8 @@
         averiado: ['averiado'],
         revisar: ['revisar', 'a revisar'],
         desafectado: ['desafectado'],
+        perdido: ['perdido'],
+        descontinuado: ['descontinuado', 'discontinuado'],
     };
 
     const BUSQ_CAMPOS = [
@@ -4572,7 +4586,7 @@
                 }
                 const otrosProdAsignados = (_data.otros_prod || []).filter(o => o.dispositivoId === _edicion.dispId);
                 if (slotsAsignados.length > 0 || otrosProdAsignados.length > 0) {
-                    const LABELS = { averiado: 'Averiado', revisar: 'A revisar', desafectado: 'Desafectado' };
+                    const LABELS = { averiado: 'Averiado', revisar: 'A revisar', desafectado: 'Desafectado', perdido: 'Perdido', descontinuado: 'Descontinuado' };
                     const partes = [];
                     if (slotsAsignados.length > 0) partes.push(slotsAsignados.map(({ grab, slot }) => `Canal ${slot.canal} de ${grab.descripcion}`).join(', '));
                     if (otrosProdAsignados.length > 0) partes.push(otrosProdAsignados.map(o => o.descripcion || 'Otro dispositivo').join(', '));
@@ -4949,7 +4963,7 @@
             const items = [];
             items.push(`<div class="canal-disp-item canal-disp-item-vaciobtn" data-id="" data-idx="0">— Vacío —</div>`);
 
-            const ESTADO_LABELS_DISP = { averiado: 'averiado', revisar: 'a revisar', desafectado: 'desafectado' };
+            const ESTADO_LABELS_DISP = { averiado: 'averiado', revisar: 'a revisar', desafectado: 'desafectado', perdido: 'perdido', descontinuado: 'descontinuado' };
             filtrados.forEach((d, i) => {
                 const ocupado = _edicion.canalDispOcupados.has(d.id);
                 const estadoInactivo = ESTADO_LABELS_DISP[d.estado] || '';
@@ -5307,7 +5321,7 @@
                 dd.classList.remove('hidden'); return;
             }
 
-            const ESTADO_LABELS_DISP = { averiado: 'averiado', revisar: 'a revisar', desafectado: 'desafectado' };
+            const ESTADO_LABELS_DISP = { averiado: 'averiado', revisar: 'a revisar', desafectado: 'desafectado', perdido: 'perdido', descontinuado: 'descontinuado' };
             const items = filtrados.map(d => {
                 const ocupado = _edicion.canalDispOcupados.has(d.id);
                 const estadoInactivo = ESTADO_LABELS_DISP[d.estado] || '';
