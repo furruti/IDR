@@ -1778,7 +1778,7 @@
             try {
                 let v = localStorage.getItem(LS.ACTIVOS_ORDEN);
                 if (v === 'tipo') v = 'forma';
-                return ['estado', 'forma', 'marca', 'modelo', 'patrimonio', 'edificio-piso'].includes(v) ? v : 'forma';
+                return ['estado', 'forma', 'marca', 'modelo', 'modelo-firmware', 'patrimonio', 'edificio-piso'].includes(v) ? v : 'forma';
             } catch { return 'forma'; }
         })(),
         collapsed: (() => {
@@ -2534,7 +2534,7 @@
             return ESTADO_LABEL_PLURAL[est] || est.toUpperCase();
         }
         if (_activos.orden === 'marca') return (d.marca || 'SIN MARCA').toUpperCase();
-        if (_activos.orden === 'modelo') return (d.modelo || 'SIN MODELO').toUpperCase();
+        if (_activos.orden === 'modelo' || _activos.orden === 'modelo-firmware') return (d.modelo || 'SIN MODELO').toUpperCase();
 
         if (_activos.orden === 'patrimonio') {
             const pat = (d.patrimonio || '').trim().toLowerCase();
@@ -2559,7 +2559,7 @@
         const ORDEN_ESTADO = { produccion: 0, disponible: 1, revisar: 2, averiado: 3, desafectado: 4 };
         if (_activos.orden === 'estado') return ORDEN_ESTADO[getEstadoEfectivo(d, asignaciones)] ?? 9;
         if (_activos.orden === 'marca') return (d.marca || 'zzz').trim().toLowerCase();
-        if (_activos.orden === 'modelo') return (d.modelo || 'zzz').trim().toLowerCase();
+        if (_activos.orden === 'modelo' || _activos.orden === 'modelo-firmware') return (d.modelo || 'zzz').trim().toLowerCase();
 
         if (_activos.orden === 'patrimonio') {
             const pat = (d.patrimonio || '').trim().toLowerCase();
@@ -2717,6 +2717,36 @@
         }).join('');
     }
 
+    function _renderSubgruposFirmware(items, gLabel, asignaciones, colClass, renderItem) {
+        const firmwares = {};
+        items.forEach(d => {
+            const f = (d.firmware || '').trim() || 'SIN FIRMWARE';
+            (firmwares[f] || (firmwares[f] = [])).push(d);
+        });
+
+        const sortedFirmwares = Object.keys(firmwares).sort((a, b) => {
+            if (a === 'SIN FIRMWARE') return 1;
+            if (b === 'SIN FIRMWARE') return -1;
+            return a.localeCompare(b, undefined, { numeric: true });
+        });
+
+        return sortedFirmwares.map(f => {
+            const floorKey = `${gLabel}|${f}`;
+            const isFloorCollapsed = _activos.pisosCollapsed.has(floorKey);
+            return `<div class="sub-grupo-piso" data-floor-key="${esc(floorKey)}">
+                        <div class="grupo-piso-header" data-toggle-piso="${esc(floorKey)}">
+                            <span class="section-label section-label--piso">
+                                FIRMWARE: ${esc(f)} <span class="piso-count">(${firmwares[f].length})</span>
+                            </span>
+                            <svg class="nvr-chevron nvr-chevron--piso${isFloorCollapsed ? ' nvr-chevron--collapsed' : ''}" viewBox="0 0 24 24"><use href="#icon-chevron-down"/></svg>
+                        </div>
+                        <div class="activos-grid-transition ${colClass}${isFloorCollapsed ? ' collapsed' : ''}">
+                            ${firmwares[f].map(renderItem).join('')}
+                        </div>
+                    </div>`;
+        }).join('');
+    }
+
     function _toggleGrupoActivos(groupId) {
         const col = _activos.collapsed;
         const card = document.querySelector(`.grupo-activos-card[data-grupo="${CSS.escape(groupId)}"]`);
@@ -2831,7 +2861,9 @@
             const isCollapsed = _activos.collapsed.has(gLabel);
             const itemsHtml = _activos.orden === 'edificio-piso'
                 ? _renderSubgruposPiso(items, gLabel, asignaciones, colClass, renderItem)
-                : `<div class="${colClass}">${items.map(renderItem).join('')}</div>`;
+                : _activos.orden === 'modelo-firmware'
+                    ? _renderSubgruposFirmware(items, gLabel, asignaciones, colClass, renderItem)
+                    : `<div class="${colClass}">${items.map(renderItem).join('')}</div>`;
 
             html += `<div class="grupo-activos-card" data-grupo="${esc(gLabel)}">
         <div class="grupo-activos-header" data-toggle-grupo="${esc(gLabel)}">
@@ -3387,7 +3419,7 @@
         if (!_activos.collapsed) _activos.collapsed = new Set();
         if (!_activos.pisosCollapsed) _activos.pisosCollapsed = new Set();
 
-        const esEdificioPiso = _activos.orden === 'edificio-piso';
+        const esEdificioPiso = _activos.orden === 'edificio-piso' || _activos.orden === 'modelo-firmware';
 
         if (esEdificioPiso) {
             // Triple toggle: 0=todo expandido → 1=edificios colapsados → 2=pisos colapsados → 0
@@ -3513,7 +3545,7 @@
         const btn = document.getElementById('btn-expandir-todo');
         if (!btn) return;
         const use = btn.querySelector('use');
-        const esEdificioPiso = _activos.orden === 'edificio-piso';
+        const esEdificioPiso = _activos.orden === 'edificio-piso' || _activos.orden === 'modelo-firmware';
         const hayEdificiosColapsados = _activos.collapsed && _activos.collapsed.size > 0;
         const hayPisosColapsados = _activos.pisosCollapsed && _activos.pisosCollapsed.size > 0;
 
@@ -5652,6 +5684,22 @@
                     Object.keys(pisos).sort((a, b) => _getPisoPeso(a) - _getPisoPeso(b)).forEach(piso => {
                         const tituloSeccion = `${gLabel} — Piso: ${piso}`;
                         htmlSecciones += _generarSeccionTabla(tituloSeccion, pisos[piso], asignaciones);
+                    });
+                } else if (_activos.orden === 'modelo-firmware') {
+                    // Agrupamos internamente por Firmware
+                    const firmwares = {};
+                    items.forEach(d => {
+                        const f = (d.firmware || '').trim() || 'SIN FIRMWARE';
+                        (firmwares[f] || (firmwares[f] = [])).push(d);
+                    });
+
+                    Object.keys(firmwares).sort((a, b) => {
+                        if (a === 'SIN FIRMWARE') return 1;
+                        if (b === 'SIN FIRMWARE') return -1;
+                        return a.localeCompare(b, undefined, { numeric: true });
+                    }).forEach(fw => {
+                        const tituloSeccion = `${gLabel} — Firmware: ${fw}`;
+                        htmlSecciones += _generarSeccionTabla(tituloSeccion, firmwares[fw], asignaciones);
                     });
                 } else {
                     // Comportamiento normal para el resto de los agrupamientos (Marca, Modelo, Patrimonio, etc.)
