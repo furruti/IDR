@@ -472,8 +472,10 @@
             } else {
                 delete _onCerrar[id];
             }
-            m.classList.add('show');
             document.body.classList.add('modal-open');
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                m.classList.add('show');
+            }));
             setTimeout(() => {
                 m.addEventListener('mousedown', _onMD);
                 m.addEventListener('click', _onClick);
@@ -655,7 +657,7 @@
         _data.dispositivos.forEach(d => { if (!d.updatedAt) { d.updatedAt = _tsMig; _migrado = true; } });
         _data.grabadores.forEach(g => { if (!g.updatedAt) { g.updatedAt = _tsMig; _migrado = true; } });
         (_data.otros_prod || []).forEach(o => { if (!o.updatedAt) { o.updatedAt = _tsMig; _migrado = true; } });
-        if (_migrado) { try { localStorage.setItem(KEY, JSON.stringify(_data)); } catch (_) {} }
+        if (_migrado) { try { localStorage.setItem(KEY, JSON.stringify(_data)); } catch (_) { } }
 
         _invalidarCaches();
     }
@@ -1168,7 +1170,7 @@
                     if (_remoteMasNuevo(loc, san)) {
                         // Remoto más nuevo: sobreescribir campos editables preservando el id
                         const camposDisp = ['tipo', 'estado', 'marca', 'modelo', 'serial', 'mac',
-                                            'patrimonio', 'firmware', 'forma', 'canales', 'updatedAt'];
+                            'patrimonio', 'firmware', 'forma', 'canales', 'updatedAt'];
                         const antes = {}, despues = {};
                         camposDisp.forEach(k => {
                             if (san[k] !== undefined && san[k] !== loc[k]) {
@@ -1177,10 +1179,12 @@
                             }
                         });
                         if (Object.keys(antes).length) {
-                            cambios.push({ cat: 'disp', op: 'upd', label: _labelDisp(loc),
+                            cambios.push({
+                                cat: 'disp', op: 'upd', label: _labelDisp(loc),
                                 campo: Object.keys(antes).join(', '),
                                 antes: Object.values(antes).join(' / '),
-                                despues: Object.values(despues).join(' / ') });
+                                despues: Object.values(despues).join(' / ')
+                            });
                             cDispsUpd++;
                         }
                     } else {
@@ -1210,7 +1214,7 @@
                     if (_remoteMasNuevo(loc, san)) {
                         // Remoto más nuevo: sobreescribir campos del grabador
                         const camposGrab = ['descripcion', 'marca', 'modelo', 'ip', 'edificio',
-                                            'piso', 'rack', 'puerto', 'mac', 'comentarios', 'dispositivoId', 'updatedAt'];
+                            'piso', 'rack', 'puerto', 'mac', 'comentarios', 'dispositivoId', 'updatedAt'];
                         camposGrab.forEach(k => {
                             if (san[k] !== undefined && san[k] !== loc[k]) {
                                 const valAntes = k === 'dispositivoId' ? _getDispLabelForMerge(loc[k]) : (loc[k] || '');
@@ -1280,7 +1284,7 @@
                     let updated = false;
                     if (_remoteMasNuevo(loc, san)) {
                         const camposOtro = ['dispositivoId', 'descripcion', 'ip', 'edificio',
-                                            'piso', 'rack', 'puerto', 'comentarios', 'updatedAt'];
+                            'piso', 'rack', 'puerto', 'comentarios', 'updatedAt'];
                         camposOtro.forEach(k => {
                             if (san[k] !== undefined && san[k] !== loc[k]) {
                                 if (k === 'dispositivoId' && _esDispInactivo(san[k])) return;
@@ -2738,13 +2742,13 @@
     function _renderSubgruposFirmware(items, gLabel, asignaciones, colClass, renderItem) {
         const firmwares = {};
         items.forEach(d => {
-            const f = (d.firmware || '').trim() || 'SIN FIRMWARE';
+            const f = (d.firmware || '').trim() || 'NO RELEVADO';
             (firmwares[f] || (firmwares[f] = [])).push(d);
         });
 
         const sortedFirmwares = Object.keys(firmwares).sort((a, b) => {
-            if (a === 'SIN FIRMWARE') return 1;
-            if (b === 'SIN FIRMWARE') return -1;
+            if (a === 'NO RELEVADO') return 1;
+            if (b === 'NO RELEVADO') return -1;
             return a.localeCompare(b, undefined, { numeric: true });
         });
 
@@ -3088,15 +3092,15 @@
 
     function _actualizarBotonesEstado(estadoActual) {
         _edicion.estado = estadoActual;
-        const btn  = document.getElementById('btn-estado-disp');
-        const dot  = document.getElementById('estado-disp-dot');
-        const lbl  = document.getElementById('estado-disp-label');
+        const btn = document.getElementById('btn-estado-disp');
+        const dot = document.getElementById('estado-disp-dot');
+        const lbl = document.getElementById('estado-disp-label');
         if (!btn) return;
         const LABELS = { '': 'Normal', averiado: 'Averiado', revisar: 'En revisión', desafectado: 'Desafectado', perdido: 'Perdido', descontinuado: 'Descontinuado' };
         const DOT_CLASS = { '': 'estado-disp-dot--normal', averiado: 'estado-disp-dot--averiado', revisar: 'estado-disp-dot--revisar', desafectado: 'estado-disp-dot--desafectado', perdido: 'estado-disp-dot--perdido', descontinuado: 'estado-disp-dot--descontinuado' };
         btn.className = 'btn-estado-disp';
-        if (estadoActual === 'averiado')   btn.classList.add('estado--averiado');
-        else if (estadoActual === 'revisar')    btn.classList.add('estado--revisar');
+        if (estadoActual === 'averiado') btn.classList.add('estado--averiado');
+        else if (estadoActual === 'revisar') btn.classList.add('estado--revisar');
         else if (estadoActual === 'desafectado') btn.classList.add('estado--desafectado');
         else if (estadoActual === 'perdido') btn.classList.add('estado--perdido');
         else if (estadoActual === 'descontinuado') btn.classList.add('estado--descontinuado');
@@ -4609,8 +4613,9 @@
 
                     if (slotsAsignados.length > 0) {
                         const { grab, slot } = slotsAsignados[0];
+                        await new Promise(r => setTimeout(r, 150));
                         const abrirOk = await confirmarModal(`¿Querés abrir el canal ${slot.canal} de "${grab.descripcion}" para asignar otro dispositivo?`, 'Sí', { claseOk: 'btn-edit', labelCancelar: 'No', ocultarIcono: true });
-                        if (abrirOk) _grabAAbrirTrasGuardar = grab.id;
+                        if (abrirOk) _grabAAbrirTrasGuardar = { grabId: grab.id, canal: slot.canal };
                     }
                 } else {
                     historial.empujar('Editar dispositivo');
@@ -4628,9 +4633,9 @@
             guardar(); render(); MM.cerrar('modal-editar-disp'); _edicion.dispId = null; _edicion.snapshotDisp = null;
 
             if (_grabAAbrirTrasGuardar) {
-                const grabId = _grabAAbrirTrasGuardar;
+                const { grabId, canal } = _grabAAbrirTrasGuardar;
                 _grabAAbrirTrasGuardar = null;
-                setTimeout(() => UI.abrirEditarGrabador(grabId), 180);
+                setTimeout(() => UI.abrirAsignarCanal(grabId, canal), 180);
             }
         },
 
@@ -5724,13 +5729,13 @@
                     // Agrupamos internamente por Firmware
                     const firmwares = {};
                     items.forEach(d => {
-                        const f = (d.firmware || '').trim() || 'SIN FIRMWARE';
+                        const f = (d.firmware || '').trim() || 'NO RELEVADO';
                         (firmwares[f] || (firmwares[f] = [])).push(d);
                     });
 
                     Object.keys(firmwares).sort((a, b) => {
-                        if (a === 'SIN FIRMWARE') return 1;
-                        if (b === 'SIN FIRMWARE') return -1;
+                        if (a === 'NO RELEVADO') return 1;
+                        if (b === 'NO RELEVADO') return -1;
                         return a.localeCompare(b, undefined, { numeric: true });
                     }).forEach(fw => {
                         const tituloSeccion = `${gLabel} — Firmware: ${fw}`;
@@ -6791,7 +6796,7 @@
             const cx = containerRect.left + containerRect.width / 2;
             const cy = containerRect.top + containerRect.height / 2;
             const left = cx - refRect.width / 2;
-            const top  = cy - refRect.height / 2;
+            const top = cy - refRect.height / 2;
 
             activeImg = trigger;
             if (img) img.style.opacity = '0.35';
