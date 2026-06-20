@@ -2843,7 +2843,8 @@ button:disabled {
         min-width: 0;
     }
 
-    /* La columna derecha (badge + ip) baja a una 4ta fila, ancho completo */
+    /* La columna derecha (badge + ip) baja a una 4ta fila, ancho completo,
+       sin indent: a esa altura la imagen ya terminó, así que aprovecha todo el ancho */
     .activo-info-derecha {
         width: 100%;
         max-width: 100%;
@@ -2852,7 +2853,6 @@ button:disabled {
         justify-content: flex-start;
         flex-wrap: wrap;
         text-align: left;
-        padding-left: calc(52px + var(--sp-3));
         gap: var(--sp-2);
         margin-top: var(--sp-1);
     }
