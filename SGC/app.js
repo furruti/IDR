@@ -2993,14 +2993,29 @@
             if (!lista._delegRegistrada) {
                 lista._delegRegistrada = true;
 
-                // Guard anti-scroll: registra dónde empezó el toque/click para distinguir
-                // un tap real de un scroll/drag que termina sobre el mismo elemento.
+                // Guard anti-scroll: si en algún momento del toque hubo movimiento
+                // (touchmove) más allá del umbral, se marca como "fue scroll" y el
+                // click final no dispara el toggle, sin importar swipe rápido o drag lento.
                 const UMBRAL_DRAG_PX = 10;
-                let _pressX = 0, _pressY = 0, _pressBoton = 0;
+                let _pressX = 0, _pressY = 0, _huboScroll = false, _pressBoton = 0;
 
-                lista.addEventListener('pointerdown', function (e) {
-                    _pressX = e.clientX;
-                    _pressY = e.clientY;
+                lista.addEventListener('touchstart', function (e) {
+                    const t = e.touches[0];
+                    if (!t) return;
+                    _pressX = t.clientX;
+                    _pressY = t.clientY;
+                    _huboScroll = false;
+                }, { passive: true });
+
+                lista.addEventListener('touchmove', function (e) {
+                    const t = e.touches[0];
+                    if (!t) return;
+                    if (Math.abs(t.clientX - _pressX) > UMBRAL_DRAG_PX || Math.abs(t.clientY - _pressY) > UMBRAL_DRAG_PX) {
+                        _huboScroll = true;
+                    }
+                }, { passive: true });
+
+                lista.addEventListener('mousedown', function (e) {
                     _pressBoton = e.button;
                 });
 
@@ -3016,9 +3031,7 @@
                     const header = e.target.closest('.nvr-header-toggle');
                     if (header) {
                         if (_pressBoton !== 0) return; // ignora botón secundario/medio
-                        const dx = Math.abs(e.clientX - _pressX);
-                        const dy = Math.abs(e.clientY - _pressY);
-                        if (dx > UMBRAL_DRAG_PX || dy > UMBRAL_DRAG_PX) return; // hubo scroll/drag, no es un tap
+                        if (_huboScroll) { _huboScroll = false; return; } // hubo scroll, no es un tap
                         const card = header.closest('[data-grab-id]');
                         if (card) UI.toggleGrabColapse(card.dataset.grabId);
                         return;
