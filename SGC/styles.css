@@ -258,6 +258,25 @@ body.modal-open {
     min-height: 44px;
 }
 
+/* Variante con título y acciones separados en spans, para poder partirlos
+   en 2 líneas en móvil sin tocar el layout normal de escritorio */
+.card-h2--toolbar {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.card-h2-titulo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.card-h2-acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
 .dash-2col .card {
     margin-bottom: 0;
     flex: 1;
@@ -2747,6 +2766,31 @@ button:disabled {
 ═══════════════════════════════════════════════════════ */
 
 @media (max-width: 700px) {
+    /* Menos padding lateral en las cards para ganar ancho útil en los chips de texto */
+    .card {
+        padding: var(--sp-5) var(--sp-3);
+    }
+
+    /* Header "Dispositivos · contador" + barra de botones, en 2 líneas separadas */
+    .card-h2--toolbar {
+        align-items: flex-start;
+    }
+
+    .card-h2-titulo {
+        flex-basis: 100%;
+    }
+
+    .card-h2-acciones {
+        flex-basis: 100%;
+        justify-content: flex-end;
+    }
+
+    /* Tarjetas de dispositivo más compactas: menos margen entre ellas y menos padding interno */
+    .dispositivo-item {
+        padding: var(--sp-3);
+        margin: var(--sp-1);
+    }
+
     .nvr-canales-grid-inner {
         grid-template-columns: 1fr;
     }

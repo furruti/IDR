@@ -394,50 +394,54 @@
 
         <div id="panel-activos" class="tab-panel">
             <div class="card">
-                <h2>
-                    <svg class="icon icon-line">
-                        <use href="#icon-camera" />
-                    </svg>
-                    Dispositivos
-                    <span id="contador-dispositivos" class="contador-badge"></span>
-
-                    <button id="btn-expandir-todo" class="icon-btn btn-inline" title="Expandir todo">
+                <h2 class="card-h2--toolbar">
+                    <span class="card-h2-titulo">
                         <svg class="icon icon-line">
-                            <use href="#icon-expand-all" />
+                            <use href="#icon-camera" />
                         </svg>
-                    </button>
-                    <div id="btn-vista-activos-wrap">
-                        <button class="icon-btn btn-inline" title="Opciones de vista">
+                        Dispositivos
+                        <span id="contador-dispositivos" class="contador-badge"></span>
+                    </span>
+
+                    <span class="card-h2-acciones">
+                        <button id="btn-expandir-todo" class="icon-btn btn-inline" title="Expandir todo">
                             <svg class="icon icon-line">
-                                <use href="#icon-sliders" />
+                                <use href="#icon-expand-all" />
                             </svg>
                         </button>
-                        <div id="dropdown-vista-activos" class="combobox-dropdown hidden">
-                            <div class="filtro-dropdown-header">
-                                <span class="filtro-dropdown-title">Agrupar por</span>
+                        <div id="btn-vista-activos-wrap">
+                            <button class="icon-btn btn-inline" title="Opciones de vista">
+                                <svg class="icon icon-line">
+                                    <use href="#icon-sliders" />
+                                </svg>
+                            </button>
+                            <div id="dropdown-vista-activos" class="combobox-dropdown hidden">
+                                <div class="filtro-dropdown-header">
+                                    <span class="filtro-dropdown-title">Agrupar por</span>
+                                </div>
+                                <div class="canal-disp-item" data-orden="edificio-piso">Edificio /
+                                    Piso</div>
+                                <div class="canal-disp-item" data-orden="estado">Estado</div>
+                                <div class="canal-disp-item" data-orden="marca">Marca</div>
+                                <div class="canal-disp-item" data-orden="modelo">Modelo</div>
+                                <div class="canal-disp-item" data-orden="modelo-firmware">Firmware / Modelo</div>
+                                <div class="canal-disp-item" data-orden="patrimonio">Patrimonio</div>
+                                <div class="canal-disp-item" data-orden="forma">Tipo / Forma</div>
                             </div>
-                            <div class="canal-disp-item" data-orden="edificio-piso">Edificio /
-                                Piso</div>
-                            <div class="canal-disp-item" data-orden="estado">Estado</div>
-                            <div class="canal-disp-item" data-orden="marca">Marca</div>
-                            <div class="canal-disp-item" data-orden="modelo">Modelo</div>
-                            <div class="canal-disp-item" data-orden="modelo-firmware">Firmware / Modelo</div>
-                            <div class="canal-disp-item" data-orden="patrimonio">Patrimonio</div>
-                            <div class="canal-disp-item" data-orden="forma">Tipo / Forma</div>
                         </div>
-                    </div>
-                    <button id="btn-reporte-agrupamiento" class="icon-btn btn-inline"
-                        title="Generar reporte">
-                        <svg class="icon icon-line">
-                            <use href="#icon-report" />
-                        </svg>
-                    </button>
+                        <button id="btn-reporte-agrupamiento" class="icon-btn btn-inline"
+                            title="Generar reporte">
+                            <svg class="icon icon-line">
+                                <use href="#icon-report" />
+                            </svg>
+                        </button>
 
-                    <button class="icon-btn btn-edit btn-inline" title="Agregar dispositivo">
-                        <svg class="icon icon-line">
-                            <use href="#icon-plus" />
-                        </svg>
-                    </button>
+                        <button class="icon-btn btn-edit btn-inline" title="Agregar dispositivo">
+                            <svg class="icon icon-line">
+                                <use href="#icon-plus" />
+                            </svg>
+                        </button>
+                    </span>
                 </h2>
                 <div id="lista-dispositivos"></div>
             </div>
