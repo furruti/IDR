@@ -2992,6 +2992,18 @@
 
             if (!lista._delegRegistrada) {
                 lista._delegRegistrada = true;
+
+                // Guard anti-scroll: registra dónde empezó el toque/click para distinguir
+                // un tap real de un scroll/drag que termina sobre el mismo elemento.
+                const UMBRAL_DRAG_PX = 10;
+                let _pressX = 0, _pressY = 0, _pressBoton = 0;
+
+                lista.addEventListener('pointerdown', function (e) {
+                    _pressX = e.clientX;
+                    _pressY = e.clientY;
+                    _pressBoton = e.button;
+                });
+
                 lista.addEventListener('click', function (e) {
                     if (e.target.closest('[data-copy]')) return; // deja que el handler de data-copy lo maneje
                     const btnEdit = e.target.closest('.nvr-btn-editar');
@@ -3003,6 +3015,10 @@
                     }
                     const header = e.target.closest('.nvr-header-toggle');
                     if (header) {
+                        if (_pressBoton !== 0) return; // ignora botón secundario/medio
+                        const dx = Math.abs(e.clientX - _pressX);
+                        const dy = Math.abs(e.clientY - _pressY);
+                        if (dx > UMBRAL_DRAG_PX || dy > UMBRAL_DRAG_PX) return; // hubo scroll/drag, no es un tap
                         const card = header.closest('[data-grab-id]');
                         if (card) UI.toggleGrabColapse(card.dataset.grabId);
                         return;
@@ -3013,6 +3029,11 @@
                         if (card) UI.abrirAsignarCanal(card.dataset.grabId, +slot.dataset.canal);
                         return;
                     }
+                });
+
+                // El click derecho dispara 'contextmenu', no debe alternar el colapso del card
+                lista.addEventListener('contextmenu', function (e) {
+                    if (e.target.closest('.nvr-header-toggle')) e.preventDefault();
                 });
             }
         } // end else (grabs.length > 0)
