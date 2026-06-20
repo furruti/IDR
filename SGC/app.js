@@ -3096,6 +3096,7 @@
         } catch (_) { }
         return 'dashboard';
     })();
+    let _ultimoCambioTabAtajo = 0; // guard anti key-repeat para Ctrl+flecha (ver listener de teclado)
     let _busqTimer = null;
     let _importarParsed = null;
 
@@ -6108,14 +6109,16 @@
             const tabs = TABS;
             const idxActual = tabs.indexOf(_tabActual);
 
-            if (e.key === 'ArrowLeft') {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
-                UI.cambiarTab(tabs[(idxActual - 1 + tabs.length) % tabs.length]);
-                return;
-            }
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                UI.cambiarTab(tabs[(idxActual + 1) % tabs.length]);
+                // Guard: ignora auto-repeat del teclado mientras la animación de tab está en curso,
+                // para que mantener Ctrl+flecha apretado no encole transiciones superpuestas.
+                const ahora = Date.now();
+                if (e.repeat && ahora - _ultimoCambioTabAtajo < 180) return;
+                _ultimoCambioTabAtajo = ahora;
+
+                const delta = e.key === 'ArrowLeft' ? -1 : 1;
+                UI.cambiarTab(tabs[(idxActual + delta + tabs.length) % tabs.length]);
                 return;
             }
         }
