@@ -1190,9 +1190,10 @@
                     } else {
                         // Fallback aditivo: solo rellena campos vacíos (sin timestamp o local más nuevo)
                         let updated = false;
+                        const labelDisp = _labelDisp(loc); // fijo antes de mutar, para agrupar bien en el modal de detalle
                         ['marca', 'modelo', 'serial', 'mac', 'patrimonio', 'firmware', 'forma', 'estado'].forEach(k => {
                             if (!loc[k] && san[k]) {
-                                cambios.push({ cat: 'disp', op: 'upd', label: _labelDisp(loc), campo: k, antes: loc[k] || '', despues: san[k] });
+                                cambios.push({ cat: 'disp', op: 'upd', label: labelDisp, campo: k, antes: loc[k] || '', despues: san[k] });
                                 loc[k] = san[k]; updated = true;
                             }
                         });
@@ -1213,13 +1214,14 @@
                     let updated = false;
                     if (_remoteMasNuevo(loc, san)) {
                         // Remoto más nuevo: sobreescribir campos del grabador
+                        const labelGrab = loc.descripcion || loc.id; // fijo antes de mutar, para agrupar bien en el modal de detalle
                         const camposGrab = ['descripcion', 'marca', 'modelo', 'ip', 'edificio',
                             'piso', 'rack', 'puerto', 'mac', 'comentarios', 'dispositivoId', 'updatedAt'];
                         camposGrab.forEach(k => {
                             if (san[k] !== undefined && san[k] !== loc[k]) {
                                 const valAntes = k === 'dispositivoId' ? _getDispLabelForMerge(loc[k]) : (loc[k] || '');
                                 const valDespues = k === 'dispositivoId' ? _getDispLabelForMerge(san[k]) : san[k];
-                                cambios.push({ cat: 'grab', op: 'upd', label: loc.descripcion || loc.id, campo: k, antes: valAntes, despues: valDespues });
+                                cambios.push({ cat: 'grab', op: 'upd', label: labelGrab, campo: k, antes: valAntes, despues: valDespues });
                                 loc[k] = san[k]; updated = true;
                             }
                         });
@@ -1232,18 +1234,19 @@
                                 if (cRem[k] !== cLoc[k]) {
                                     const valAntes = k === 'dispositivoId' ? _getDispLabelForMerge(cLoc[k]) : (cLoc[k] || '');
                                     const valDespues = k === 'dispositivoId' ? _getDispLabelForMerge(cRem[k]) : (cRem[k] || '');
-                                    cambios.push({ cat: 'canal', op: 'upd', label: `${loc.descripcion || loc.id} › Canal ${cRem.canal}`, campo: k, antes: valAntes, despues: valDespues });
+                                    cambios.push({ cat: 'canal', op: 'upd', label: `${labelGrab} › Canal ${cRem.canal}`, campo: k, antes: valAntes, despues: valDespues });
                                     cLoc[k] = cRem[k]; updated = true;
                                 }
                             });
                         });
                     } else {
                         // Fallback aditivo
+                        const labelGrab = loc.descripcion || loc.id; // fijo antes de mutar, para agrupar bien en el modal de detalle
                         ['marca', 'modelo', 'ip', 'edificio', 'piso', 'rack', 'puerto', 'mac', 'comentarios', 'dispositivoId'].forEach(k => {
                             if (!loc[k] && san[k]) {
                                 const valAntes = k === 'dispositivoId' ? _getDispLabelForMerge(loc[k]) : (loc[k] || '');
                                 const valDespues = k === 'dispositivoId' ? _getDispLabelForMerge(san[k]) : san[k];
-                                cambios.push({ cat: 'grab', op: 'upd', label: loc.descripcion || loc.id, campo: k, antes: valAntes, despues: valDespues });
+                                cambios.push({ cat: 'grab', op: 'upd', label: labelGrab, campo: k, antes: valAntes, despues: valDespues });
                                 loc[k] = san[k]; updated = true;
                             }
                         });
@@ -1252,13 +1255,13 @@
                             if (cLoc) {
                                 if (!cLoc.dispositivoId && cRem.dispositivoId) {
                                     if (!_esDispInactivo(cRem.dispositivoId)) {
-                                        cambios.push({ cat: 'canal', op: 'upd', label: `${loc.descripcion || loc.id} › Canal ${cRem.canal}`, campo: 'dispositivoId', antes: '', despues: _getDispLabelForMerge(cRem.dispositivoId) });
+                                        cambios.push({ cat: 'canal', op: 'upd', label: `${labelGrab} › Canal ${cRem.canal}`, campo: 'dispositivoId', antes: '', despues: _getDispLabelForMerge(cRem.dispositivoId) });
                                         cLoc.dispositivoId = cRem.dispositivoId; updated = true;
                                     }
                                 }
                                 ['descripcion', 'ip', 'puerto', 'edificio', 'piso', 'rack', 'comentarios'].forEach(k => {
                                     if (!cLoc[k] && cRem[k]) {
-                                        cambios.push({ cat: 'canal', op: 'upd', label: `${loc.descripcion || loc.id} › Canal ${cRem.canal}`, campo: k, antes: cLoc[k] || '', despues: cRem[k] });
+                                        cambios.push({ cat: 'canal', op: 'upd', label: `${labelGrab} › Canal ${cRem.canal}`, campo: k, antes: cLoc[k] || '', despues: cRem[k] });
                                         cLoc[k] = cRem[k]; updated = true;
                                     }
                                 });
@@ -1282,6 +1285,7 @@
                 } else {
                     const loc = mapO.get(san.id);
                     let updated = false;
+                    const labelOtro = loc.descripcion || loc.id; // fijo antes de mutar, para agrupar bien en el modal de detalle
                     if (_remoteMasNuevo(loc, san)) {
                         const camposOtro = ['dispositivoId', 'descripcion', 'ip', 'edificio',
                             'piso', 'rack', 'puerto', 'comentarios', 'updatedAt'];
@@ -1290,7 +1294,7 @@
                                 if (k === 'dispositivoId' && _esDispInactivo(san[k])) return;
                                 const va = k === 'dispositivoId' ? _getDispLabelForMerge(loc[k]) : (loc[k] || '');
                                 const vd = k === 'dispositivoId' ? _getDispLabelForMerge(san[k]) : (san[k] || '');
-                                if (k !== 'updatedAt') cambios.push({ cat: 'otro', op: 'upd', label: loc.descripcion || loc.id, campo: k, antes: va, despues: vd });
+                                if (k !== 'updatedAt') cambios.push({ cat: 'otro', op: 'upd', label: labelOtro, campo: k, antes: va, despues: vd });
                                 loc[k] = san[k]; updated = true;
                             }
                         });
@@ -1300,7 +1304,7 @@
                                 if (k === 'dispositivoId' && _esDispInactivo(san[k])) return;
                                 const va = k === 'dispositivoId' ? _getDispLabelForMerge(loc[k]) : (loc[k] || '');
                                 const vd = k === 'dispositivoId' ? _getDispLabelForMerge(san[k]) : san[k];
-                                cambios.push({ cat: 'otro', op: 'upd', label: loc.descripcion || loc.id, campo: k, antes: va, despues: vd });
+                                cambios.push({ cat: 'otro', op: 'upd', label: labelOtro, campo: k, antes: va, despues: vd });
                                 loc[k] = san[k]; updated = true;
                             }
                         });
@@ -1704,6 +1708,9 @@
                         campoEl.className = 'gist-detalle-campo';
                         campoEl.textContent = CAMPO_LABEL[c.campo] || c.campo;
 
+                        const valores = document.createElement('span');
+                        valores.className = 'gist-detalle-valores';
+
                         const antesEl = document.createElement('span');
                         antesEl.className = 'gist-detalle-antes';
                         antesEl.textContent = c.antes || '(vacío)';
@@ -1716,10 +1723,12 @@
                         despuesEl.className = 'gist-detalle-despues';
                         despuesEl.textContent = c.despues;
 
+                        valores.appendChild(antesEl);
+                        valores.appendChild(arrow);
+                        valores.appendChild(despuesEl);
+
                         fila.appendChild(campoEl);
-                        fila.appendChild(antesEl);
-                        fila.appendChild(arrow);
-                        fila.appendChild(despuesEl);
+                        fila.appendChild(valores);
                         bloque.appendChild(fila);
                     });
 
@@ -6101,12 +6110,12 @@
 
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                if (idxActual > 0) UI.cambiarTab(tabs[idxActual - 1]);
+                UI.cambiarTab(tabs[(idxActual - 1 + tabs.length) % tabs.length]);
                 return;
             }
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                if (idxActual < tabs.length - 1) UI.cambiarTab(tabs[idxActual + 1]);
+                UI.cambiarTab(tabs[(idxActual + 1) % tabs.length]);
                 return;
             }
         }
