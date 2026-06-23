@@ -587,6 +587,21 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="ajustes-section">
+                    <div class="section-label">Herramientas</div>
+                    <div class="btn-group btn-group--no-mt">
+                        <button class="btn-ajustes" id="btn-ajustes-parseador">
+                            <svg class="icon icon-line">
+                                <use href="#icon-sliders" />
+                            </svg>
+                            Parseador de canales
+                            <svg class="icon icon-line btn-ajustes-chevron">
+                                <use href="#icon-chevron-right" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-sticky-footer">
@@ -1537,6 +1552,124 @@
             <div class="btn-group mt-sp3">
                 <button class="btn-cancel" id="modal-picker-cancel">Cancelar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal: dispositivos sin match detectados por el parseador -->
+    <div class="modal" id="modal-parseador-nuevos-disp">
+        <div class="modal-content modal-content--flex sm2">
+            <div class="modal-header modal-sticky-header">
+                <h3>
+                    <svg class="icon icon-line">
+                        <use href="#icon-alert-triangle" />
+                    </svg>
+                    Dispositivos no encontrados en activos
+                </h3>
+            </div>
+            <div class="modal-scroll-body">
+                <p class="parseador-hint">
+                    Las siguientes c&#225;maras tienen MAC registrada en el archivo pero
+                    <strong>no existen como dispositivos en la aplicaci&#243;n</strong>.
+                    Selecci&#243;n&#225; las que quer&#233;s agregar a activos.
+                </p>
+                <div id="parseador-nuevos-disp-lista"></div>
+            </div>
+            <div class="modal-sticky-footer modal-sticky-footer--col">
+                <div class="btn-group btn-group--no-mt">
+                    <button class="btn-edit btn-flex" id="btn-parseador-nuevos-agregar">
+                        <svg class="icon icon-line">
+                            <use href="#icon-plus" />
+                        </svg>
+                        Agregar seleccionados
+                    </button>
+                </div>
+                <div class="btn-group btn-group--no-mt">
+                    <button class="btn-cancel btn-flex" id="btn-parseador-nuevos-todos">Deseleccionar todos</button>
+                    <button class="btn-cancel btn-flex" onclick="MM.cerrar('modal-parseador-nuevos-disp')">
+                        <svg class="icon icon-line">
+                            <use href="#icon-x" />
+                        </svg>
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-parseador-canales">
+        <div class="modal-content modal-content--flex sm2">
+
+            <div class="modal-header modal-sticky-header">
+                <h3>
+                    <svg class="icon icon-line">
+                        <use href="#icon-sliders" />
+                    </svg>
+                    Parseador de canales
+                </h3>
+                <span class="modal-header-version" id="parseador-step-label">1 / 3</span>
+            </div>
+
+            <div class="modal-scroll-body">
+
+                <!-- Paso 1: Upload -->
+                <div id="parseador-step-upload">
+                    <div id="parseador-dropzone" class="importar-dropzone">
+                        <svg class="icon icon-line dropzone-icon">
+                            <use href="#icon-cloud-up" />
+                        </svg>
+                        <p id="parseador-dropzone-label" class="dropzone-label">
+                            Seleccioná o arrastrá el archivo <strong>cctv_online.json</strong>
+                        </p>
+                    </div>
+                    <input type="file" id="file-parseador" accept=".json,application/json" class="hidden">
+                </div>
+
+                <!-- Paso 2: Mapeo NVR → Grabador -->
+                <div id="parseador-step-mapping" class="hidden">
+                    <p class="parseador-hint">
+                        Asociá cada NVR del archivo con el grabador declarado en la aplicación.
+                        Los NVRs con IP coincidente se pre-seleccionan automáticamente.
+                    </p>
+                    <div id="parseador-nvr-lista"></div>
+                </div>
+
+                <!-- Paso 3: Preview de cambios -->
+                <div id="parseador-step-preview" class="hidden">
+                    <p class="parseador-hint">
+                        Se actualizarán los campos <strong>descripción</strong>,
+                        <strong>IP</strong> y <strong>dispositivo asignado</strong>
+                        de los canales listados. Los canales sin datos en el archivo no se tocan.
+                    </p>
+                    <div id="parseador-preview-contenido"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-sticky-footer modal-sticky-footer--col">
+                <div class="btn-group btn-group--no-mt">
+                    <button class="btn-edit btn-flex hidden" id="btn-parseador-ver-cambios">
+                        <svg class="icon icon-line">
+                            <use href="#icon-eye" />
+                        </svg>
+                        Ver cambios
+                    </button>
+                    <button class="btn-edit btn-flex hidden" id="btn-parseador-aplicar">
+                        <svg class="icon icon-line">
+                            <use href="#icon-save" />
+                        </svg>
+                        Aplicar
+                    </button>
+                </div>
+                <div class="btn-group btn-group--no-mt">
+                    <button class="btn-cancel btn-flex" id="btn-parseador-cancelar">
+                        <svg class="icon icon-line">
+                            <use href="#icon-undo" />
+                        </svg>
+                        Volver
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 

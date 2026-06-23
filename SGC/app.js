@@ -6373,6 +6373,411 @@
     // ════════════════════════════════════════════════════════════════════════════
     // § EVENTOS — binding de eventos estáticos del DOM
     // ════════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════════
+    // § PARSEADOR DE CANALES
+    // ════════════════════════════════════════════════════════════════════════════
+    const ParseadorCanales = (() => {
+
+        let _jsonData   = null;
+        let _mapeo      = {};
+        let _pasoActual = 'upload';
+
+        function _toggle(id, visible) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (visible) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        function _setStep(paso) {
+            _pasoActual = paso;
+            _toggle('parseador-step-upload',   paso === 'upload');
+            _toggle('parseador-step-mapping',  paso === 'mapping');
+            _toggle('parseador-step-preview',  paso === 'preview');
+            _toggle('btn-parseador-ver-cambios', paso === 'mapping');
+            _toggle('btn-parseador-aplicar',     paso === 'preview');
+            const labels = { upload: '1 / 3', mapping: '2 / 3', preview: '3 / 3' };
+            const lbl = document.getElementById('parseador-step-label');
+            if (lbl) lbl.textContent = labels[paso] || '';
+        }
+
+        function _resetUI() {
+            _jsonData = null;
+            _mapeo    = {};
+            const dropzone = document.getElementById('parseador-dropzone');
+            const label    = document.getElementById('parseador-dropzone-label');
+            const fileInp  = document.getElementById('file-parseador');
+            if (dropzone) dropzone.style.borderColor = '';
+            if (label) label.innerHTML = 'Seleccioná o arrastrá el archivo <strong>cctv_online.json</strong>';
+            if (fileInp)  fileInp.value = '';
+            const nvr  = document.getElementById('parseador-nvr-lista');
+            if (nvr)  nvr.innerHTML = '';
+            const prev = document.getElementById('parseador-preview-contenido');
+            if (prev) prev.innerHTML = '';
+            _setStep('upload');
+        }
+
+        function _procesarArchivo(file) {
+            if (!file) return;
+            if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+                toast('El archivo debe ser .json', 'error'); return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data.nvrs) || !Array.isArray(data.camaras))
+                        throw new Error('El archivo no tiene el formato esperado (nvrs / camaras).');
+                    if (data.nvrs.length === 0)
+                        throw new Error('El archivo no contiene NVRs.');
+                    _jsonData = data;
+                    const dropzone = document.getElementById('parseador-dropzone');
+                    const label    = document.getElementById('parseador-dropzone-label');
+                    if (dropzone) dropzone.style.borderColor = 'var(--c-green)';
+                    if (label) label.innerHTML =
+                        `<span class="parseador-label-ok">✓ ${esc(file.name)}</span>` +
+                        `<br><span class="parseador-label-meta">` +
+                        `${data.nvrs.length} NVR${data.nvrs.length !== 1 ? 's' : ''} · ` +
+                        `${data.camaras.length} cámara${data.camaras.length !== 1 ? 's' : ''}</span>`;
+                    _construirMapeoPorDefecto();
+                    _renderMapping();
+                    _setStep('mapping');
+                } catch (err) {
+                    const dropzone = document.getElementById('parseador-dropzone');
+                    const label    = document.getElementById('parseador-dropzone-label');
+                    if (dropzone) dropzone.style.borderColor = 'var(--c-red)';
+                    if (label) label.innerHTML =
+                        `<span class="parseador-label-err">✗ Archivo inválido</span>` +
+                        `<br><span class="parseador-label-meta">${esc(err.message)}</span>`;
+                    _jsonData = null;
+                }
+            };
+            reader.onerror = () => toast('Error al leer el archivo', 'error');
+            reader.readAsText(file);
+        }
+
+        function _construirMapeoPorDefecto() {
+            _mapeo = {};
+            const grabadores = _data.grabadores;
+            const grabPorIP  = {};
+            grabadores.forEach(g => { if (g.ip) grabPorIP[g.ip.trim()] = g.id; });
+
+            _jsonData.nvrs.forEach(nvr => {
+                const nombre = nvr.nvr_name;
+                if (_mapeo[nombre] !== undefined) return;
+                // 1. Match por IP exacta
+                const matchIP = nvr.ip ? grabPorIP[nvr.ip.trim()] : null;
+                // 2. Match parcial por nombre (fallback)
+                let matchNombre = null;
+                if (!matchIP) {
+                    const nn = nombre.trim().toLowerCase();
+                    const found = grabadores.find(g => {
+                        const desc = (g.descripcion || '').toLowerCase();
+                        return desc.includes(nn) || nn.includes(desc);
+                    });
+                    matchNombre = found ? found.id : null;
+                }
+                _mapeo[nombre] = matchIP || matchNombre || 'ignorar';
+            });
+        }
+
+        function _renderMapping() {
+            const container = document.getElementById('parseador-nvr-lista');
+            if (!container) return;
+            const grabadores = _data.grabadores;
+            container.innerHTML = _jsonData.nvrs.map(nvr => {
+                const nombre  = nvr.nvr_name;
+                const camsNVR = _jsonData.camaras.filter(c => c.nvr_name === nombre);
+                const selVal  = _mapeo[nombre] || 'ignorar';
+                return `
+                <div class="parseador-nvr-row">
+                    <div class="parseador-nvr-header">
+                        <span class="parseador-nvr-nombre">${esc(nombre)}</span>
+                        <span class="parseador-nvr-meta">${esc(nvr.modelo || '')} · ${esc(nvr.ip || '')}</span>
+                        <span class="parseador-nvr-cams">${camsNVR.length} ch</span>
+                    </div>
+                    <div class="form-group parseador-form-group-flush">
+                        <label>Grabador en la aplicación</label>
+                        <select class="parseador-grab-select" data-nvr="${esc(nombre)}">
+                            <option value="ignorar"${selVal === 'ignorar' ? ' selected' : ''}>— Ignorar este NVR —</option>
+                            ${grabadores.map(g =>
+                                `<option value="${esc(g.id)}"${selVal === g.id ? ' selected' : ''}>` +
+                                `${esc(g.descripcion || g.id)} (${g.canales_n} ch)</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>`;
+            }).join('');
+            container.querySelectorAll('.parseador-grab-select').forEach(sel => {
+                sel.addEventListener('change', () => { _mapeo[sel.dataset.nvr] = sel.value; });
+            });
+        }
+
+        function mostrarPreview() {
+            const conMapeo = Object.values(_mapeo).some(v => v !== 'ignorar');
+            if (!conMapeo) { toast('Asociá al menos un NVR a un grabador', 'error'); return; }
+
+            const container  = document.getElementById('parseador-preview-contenido');
+            if (!container) return;
+
+            const dispositivos = _data.dispositivos;
+            const grabadores   = _data.grabadores;
+
+            // Índice de dispositivos por MAC
+            const dispPorMAC = {};
+            dispositivos.forEach(d => {
+                if (!d.mac) return;
+                d.mac.split(/[,;\s]+/).forEach(m => {
+                    const mk = m.trim().toLowerCase();
+                    if (mk) dispPorMAC[mk] = d;
+                });
+            });
+
+            let totalCambios = 0, totalFueraRango = 0;
+            let html = '';
+
+            Object.entries(_mapeo).forEach(([nvrName, grabId]) => {
+                if (grabId === 'ignorar') return;
+                const grab = grabadores.find(g => g.id === grabId);
+                if (!grab) return;
+                const camaras     = _jsonData.camaras.filter(c => c.nvr_name === nvrName);
+                const dentroRango = camaras.filter(c => c.channel_id >= 1 && c.channel_id <= grab.canales_n);
+                const fueraRango  = camaras.filter(c => c.channel_id > grab.canales_n || c.channel_id < 1);
+                if (camaras.length === 0) return;
+
+                html += `
+                <div class="parseador-preview-nvr">
+                    <div class="parseador-preview-nvr-titulo">
+                        <span>${esc(nvrName)}</span>
+                        <span class="parseador-arrow">→</span>
+                        <span class="parseador-grab-destino">${esc(grab.descripcion || grab.id)}</span>
+                    </div>
+                    <table class="parseador-preview-table">
+                        <thead><tr>
+                            <th>Ch.</th><th>Descripción (nombre cámara)</th>
+                            <th>IP</th><th>Dispositivo asignado</th>
+                        </tr></thead><tbody>`;
+
+                dentroRango.forEach(cam => {
+                    const macKey = (cam.mac_address || '').trim().toLowerCase();
+                    const disp   = macKey ? dispPorMAC[macKey] : null;
+                    html += `<tr>
+                        <td class="parseador-td-canal">${cam.channel_id}</td>
+                        <td>${esc(cam.camera_name || '')}</td>
+                        <td class="parseador-td-ip">${esc(cam.ip_address || '')}</td>
+                        <td>${disp
+                            ? `<span class="parseador-badge-match">✓ ${esc(disp.modelo || disp.mac || disp.id)}</span>`
+                            : `<span class="parseador-td-nodisp">— Sin coincidencia</span>`
+                        }</td>
+                    </tr>`;
+                    totalCambios++;
+                });
+
+                html += `</tbody></table>`;
+
+                if (fueraRango.length > 0) {
+                    totalFueraRango += fueraRango.length;
+                    html += `<div class="parseador-warn-rango">
+                        ⚠️ ${fueraRango.length} canal${fueraRango.length !== 1 ? 'es' : ''} superan la capacidad
+                        del grabador (${grab.canales_n} ch) y serán omitidos:
+                        ${fueraRango.map(c => `ch.${c.channel_id}`).join(', ')}
+                    </div>`;
+                }
+                html += `</div>`;
+            });
+
+            if (totalCambios === 0) {
+                toast('No hay canales dentro del rango de los grabadores asociados', 'error'); return;
+            }
+
+            const resumen = `<div class="parseador-resumen">
+                <div>
+                    <div class="parseador-resumen-num">${totalCambios}</div>
+                    <div class="parseador-resumen-label">canal${totalCambios !== 1 ? 'es' : ''} a actualizar</div>
+                </div>
+                ${totalFueraRango > 0
+                    ? `<div class="parseador-resumen-fuera">
+                        <div class="parseador-resumen-fuera-num">${totalFueraRango}</div>
+                        <div class="parseador-resumen-label">fuera de rango</div>
+                       </div>`
+                    : ''}
+            </div>`;
+
+            container.innerHTML = resumen + html;
+            _setStep('preview');
+        }
+
+        function aplicar() {
+            if (!_jsonData) { toast('No hay datos para aplicar', 'error'); return; }
+            const dispositivos = _data.dispositivos;
+            const grabadores   = _data.grabadores;
+
+            const dispPorMAC = {};
+            dispositivos.forEach(d => {
+                if (!d.mac) return;
+                d.mac.split(/[,;\s]+/).forEach(m => {
+                    const mk = m.trim().toLowerCase();
+                    if (mk) dispPorMAC[mk] = d;
+                });
+            });
+
+            historial.empujar('Parseador de canales: aplicar datos');
+            let totalCambios = 0;
+            const sinMatch = [];
+
+            Object.entries(_mapeo).forEach(([nvrName, grabId]) => {
+                if (grabId === 'ignorar') return;
+                const grabIdx = grabadores.findIndex(g => g.id === grabId);
+                if (grabIdx === -1) return;
+                const grab    = grabadores[grabIdx];
+                const camaras = _jsonData.camaras.filter(c => c.nvr_name === nvrName);
+
+                camaras.forEach(cam => {
+                    if (cam.channel_id < 1 || cam.channel_id > grab.canales_n) return;
+                    const slotIdx = grab.canales_data.findIndex(c => c.canal === cam.channel_id);
+                    if (slotIdx === -1) return;
+                    const slot = grab.canales_data[slotIdx];
+
+                    if (cam.camera_name)
+                        slot.descripcion = S.sanitize(cam.camera_name.trim(), 80);
+                    if (cam.ip_address && S.validarIP(cam.ip_address.trim()))
+                        slot.ip = S.sanitize(cam.ip_address.trim(), 46);
+
+                    const macKey = (cam.mac_address || '').trim().toLowerCase();
+                    if (macKey && dispPorMAC[macKey]) {
+                        slot.dispositivoId = dispPorMAC[macKey].id;
+                    } else if (macKey) {
+                        if (!sinMatch.some(x => x._macKey === macKey))
+                            sinMatch.push({ ...cam, _macKey: macKey, _nvrName: nvrName });
+                    }
+
+                    totalCambios++;
+                });
+
+                const nvrData = _jsonData.nvrs.find(n => n.nvr_name === nvrName);
+                if (nvrData && !grab.ip && nvrData.ip && S.validarIP(nvrData.ip.trim()))
+                    grab.ip = S.sanitize(nvrData.ip.trim(), 46);
+            });
+
+            if (totalCambios === 0) { toast('No se realizaron cambios', 'info'); return; }
+            guardar(); render();
+            MM.cerrar('modal-parseador-canales');
+            toast(`${totalCambios} canal${totalCambios !== 1 ? 'es' : ''} actualizado${totalCambios !== 1 ? 's' : ''} correctamente`, 'success');
+
+            if (sinMatch.length > 0)
+                setTimeout(() => _mostrarNuevosDisp(sinMatch), 300);
+        }
+
+        function _mostrarNuevosDisp(lista) {
+            const contenedor = document.getElementById('parseador-nuevos-disp-lista');
+            if (!contenedor) return;
+
+            contenedor.innerHTML = lista.map((cam, i) => `
+                <label class="parseador-nuevo-disp-row">
+                    <input type="checkbox" class="parseador-nuevo-chk" data-idx="${i}" checked>
+                    <div class="parseador-nuevo-info">
+                        <div class="parseador-nuevo-nombre">${esc(cam.camera_name || '—')}</div>
+                        <div class="parseador-nuevo-meta">
+                            <span class="parseador-nuevo-chip">${esc(cam._nvrName)}</span>
+                            <span>MAC: <code>${esc(cam.mac_address)}</code></span>
+                            ${cam.modelo    ? `<span>${esc(cam.modelo)}</span>`            : ''}
+                            ${cam.nro_serie ? `<span>S/N: ${esc(cam.nro_serie)}</span>`    : ''}
+                            ${cam.firmware  ? `<span>FW: ${esc(cam.firmware)}</span>`      : ''}
+                        </div>
+                    </div>
+                </label>
+            `).join('');
+
+            const btnAgregar = document.getElementById('btn-parseador-nuevos-agregar');
+            if (btnAgregar) {
+                btnAgregar.onclick = () => {
+                    const sel = [...contenedor.querySelectorAll('.parseador-nuevo-chk:checked')]
+                        .map(chk => lista[parseInt(chk.dataset.idx)]);
+                    if (sel.length === 0) { toast('No hay dispositivos seleccionados', 'error'); return; }
+                    _crearNuevosDisp(sel);
+                };
+            }
+
+            const btnTodos = document.getElementById('btn-parseador-nuevos-todos');
+            if (btnTodos) {
+                btnTodos.textContent = 'Deseleccionar todos';
+                btnTodos.onclick = () => {
+                    const chks = [...contenedor.querySelectorAll('.parseador-nuevo-chk')];
+                    const todosChecked = chks.every(c => c.checked);
+                    chks.forEach(c => { c.checked = !todosChecked; });
+                    btnTodos.textContent = todosChecked ? 'Seleccionar todos' : 'Deseleccionar todos';
+                };
+            }
+
+            MM.abrir('modal-parseador-nuevos-disp');
+        }
+
+        function _crearNuevosDisp(lista) {
+            historial.empujar('Parseador de canales: agregar dispositivos sin match');
+            const ahora = S.fechaISO();
+            lista.forEach(cam => {
+                const nuevo = S.sanitizarDisp({
+                    id:        S.genId(),
+                    tipo:      'camara',
+                    mac:       (cam.mac_address || '').trim(),
+                    modelo:    (cam.modelo      || '').trim(),
+                    serial:    (cam.nro_serie   || '').trim(),
+                    firmware:  (cam.firmware    || '').trim(),
+                    estado:    '',
+                    updatedAt: ahora,
+                });
+                if (nuevo) _data.dispositivos.push(nuevo);
+            });
+            guardar(); render();
+            MM.cerrar('modal-parseador-nuevos-disp');
+            toast(`${lista.length} dispositivo${lista.length !== 1 ? 's' : ''} agregado${lista.length !== 1 ? 's' : ''} a activos`, 'success');
+        }
+
+        function accionCancelar() {
+            if (_pasoActual === 'mapping') {
+                _setStep('upload');
+            } else if (_pasoActual === 'preview') {
+                _setStep('mapping');
+            } else {
+                MM.cerrar('modal-parseador-canales');
+                setTimeout(() => UI.abrirAjustes(), 180);
+            }
+        }
+
+        let _dropzoneReady = false;
+        function _iniciarDropzone() {
+            if (_dropzoneReady) return;
+            _dropzoneReady = true;
+            const zone    = document.getElementById('parseador-dropzone');
+            const fileInp = document.getElementById('file-parseador');
+            if (!zone || !fileInp) return;
+            zone.addEventListener('click', () => fileInp.click());
+            fileInp.addEventListener('change', () => {
+                const file = fileInp.files[0];
+                if (file) _procesarArchivo(file);
+            });
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('importar-dropzone-drag'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('importar-dropzone-drag'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('importar-dropzone-drag');
+                const file = e.dataTransfer?.files[0];
+                if (file) _procesarArchivo(file);
+            });
+        }
+
+        function abrir() {
+            _resetUI();
+            MM.abrir('modal-parseador-canales');
+            _iniciarDropzone();
+        }
+
+        return { abrir, accionCancelar, mostrarPreview, aplicar };
+    })();
+    // ════════════════════════════════════════════════════════════════════════════
+    // § FIN PARSEADOR DE CANALES
+    // ════════════════════════════════════════════════════════════════════════════
+
     function _bindStaticEvents() {
         const on = (id, evt, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(evt, fn); };
 
@@ -6460,6 +6865,12 @@
             if (icon === '#icon-download') btn.addEventListener('click', () => UI.exportarJSON());
             if (icon === '#icon-trash') btn.addEventListener('click', () => UI.borrarTodosLosDatos());
         });
+        // Parseador de canales
+        on('btn-ajustes-parseador',     'click', () => ParseadorCanales.abrir());
+        on('btn-parseador-cancelar',    'click', () => ParseadorCanales.accionCancelar());
+        on('btn-parseador-ver-cambios', 'click', () => ParseadorCanales.mostrarPreview());
+        on('btn-parseador-aplicar',     'click', () => ParseadorCanales.aplicar());
+
         on('label-recordar-grupos', 'click', () => UI.toggleRecordarGrupos());
         on('btn-ajustes-gist-subir', 'click', () => GistSync.subir());
         on('btn-ajustes-gist-bajar', 'click', () => GistSync.bajar());

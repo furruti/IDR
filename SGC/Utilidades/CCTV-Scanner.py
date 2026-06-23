@@ -309,6 +309,10 @@ def procesar_nvr(args):
                 chan_name_elem = channel.find('name')
                 camera_desc = chan_name_elem.text if chan_name_elem is not None else "N/A"
 
+                # PARCHE PARA CARACTERES RAROS DEL NVR
+                if camera_desc != "N/A":
+                    camera_desc = camera_desc.replace("~N", "Ñ").replace("~n", "ñ")
+
                 ip_address = "N/A"
                 descriptor = channel.find('sourceInputPortDescriptor')
                 if descriptor is not None:
@@ -479,7 +483,7 @@ def procesar_camara(args):
                 
                 camera_name_real = texto('deviceName')
                 if camera_name_real != "N/A": 
-                    camera_name = camera_name_real
+                    camera_name = camera_name_real.replace("~N", "Ñ").replace("~n", "ñ")
                     
                 mac_address = texto('macAddress')
                 firmware    = texto('firmwareVersion')
