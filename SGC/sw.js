@@ -1,4 +1,4 @@
-const CACHE_NAME = 'CCTVS-260624.1702-cache';
+const CACHE_NAME = 'CCTVS-260624.1715-cache';
 const urlsToCache = [
   './',
   './index.html',

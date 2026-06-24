@@ -6125,16 +6125,16 @@
             const modal = document.querySelector('.modal.show');
             if (modal) {
                 const accion = {
-                    'modal-nuevo-disp': () => UI.guardarNuevoDispositivo(),
-                    'modal-editar-disp': () => UI.guardarEdicionDispositivo(),
-                    'modal-nuevo-grab': () => UI.guardarNuevoGrabador(),
-                    'modal-editar-grab': () => UI.guardarEdicionGrabador(),
-                    'modal-canal': () => UI.guardarAsignacionCanal(),
-                    'modal-nuevo-otro-prod': () => UI.guardarOtroProd('nuevo-otro-prod'),
+                    'modal-nuevo-disp':       () => UI.guardarNuevoDispositivo(),
+                    'modal-editar-disp':      () => UI.guardarEdicionDispositivo(),
+                    'modal-nuevo-grab':       () => UI.guardarNuevoGrabador(),
+                    'modal-editar-grab':      () => UI.guardarEdicionGrabador(),
+                    'modal-canal':            () => UI.guardarAsignacionCanal(),
+                    'modal-nuevo-otro-prod':  () => UI.guardarOtroProd('nuevo-otro-prod'),
                     'modal-editar-otro-prod': () => UI.guardarOtroProd('editar-otro-prod'),
-                    'modal-tipos-dispositivo': () => UI.agregarTipoCustom(),
-                    'modal-edificios': () => UI.agregarEdificio(),
-                    'modal-confirmar': () => document.getElementById('modal-confirmar-ok')?.click(),
+                    'modal-tipos-dispositivo':() => UI.agregarTipoCustom(),
+                    'modal-edificios':        () => UI.agregarEdificio(),
+                    'modal-confirmar':        () => document.getElementById('modal-confirmar-ok')?.click(),
                 }[modal.id];
                 if (accion) { e.preventDefault(); accion(); }
             }
@@ -7156,14 +7156,12 @@
         on('btn-alternar-tema', 'click', () => UI.alternarTema());
 
         // Modal tipos dispositivo
-        on('nuevo-tipo-label', 'keydown', (e) => { if (e.key === 'Enter') UI.agregarTipoCustom(); });
         document.querySelector('#modal-tipos-dispositivo .icon-btn.btn-edit')
             ?.addEventListener('click', () => UI.agregarTipoCustom());
         document.querySelector('#modal-tipos-dispositivo .btn-cancel')
             ?.addEventListener('click', () => UI.cerrarTiposDispositivo());
 
         // Modal edificios
-        on('nuevo-edificio-nombre', 'keydown', (e) => { if (e.key === 'Enter') UI.agregarEdificio(); });
         document.querySelector('#modal-edificios .icon-btn.btn-edit')
             ?.addEventListener('click', () => UI.agregarEdificio());
         document.querySelector('#modal-edificios .btn-cancel')
