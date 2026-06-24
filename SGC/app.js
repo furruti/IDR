@@ -6531,7 +6531,7 @@
                     html += `<tr>
                         <td class="parseador-td-canal">${cam.channel_id}</td>
                         <td>${esc(cam.camera_name || '')}</td>
-                        <td class="parseador-td-ip">${esc(cam.ip_address || '')}</td>
+                        <td class="parseador-td-ip ip-copiable" data-copy="${esc(cam.ip_address || '')}" title="Copiar IP">${esc(cam.ip_address || '')}</td>
                         <td>${disp
                             ? esc(disp.mac || disp.modelo || disp.id)
                             : `<span class="parseador-td-nodisp">— Sin coincidencia</span>`

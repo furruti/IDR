@@ -442,8 +442,7 @@
                                 <div class="canal-disp-item" data-orden="forma">Tipo / Forma</div>
                             </div>
                         </div>
-                        <button id="btn-reporte-agrupamiento" class="icon-btn btn-inline"
-                            title="Generar reporte">
+                        <button id="btn-reporte-agrupamiento" class="icon-btn btn-inline" title="Generar reporte">
                             <svg class="icon icon-line">
                                 <use href="#icon-report" />
                             </svg>
@@ -540,6 +539,29 @@
                             <div class="toggle-thumb"></div>
                         </div>
                     </div>
+                </div>              
+                <div class="ajustes-section">
+                    <div class="section-label">Herramientas</div>
+                    <div class="btn-group btn-group--no-mt">
+                        <button class="btn-ajustes" id="btn-ajustes-parseador">
+                            <svg class="icon icon-line">
+                                <use href="#icon-sliders" />
+                            </svg>
+                            Parseador de canales
+                            <svg class="icon icon-line btn-ajustes-chevron">
+                                <use href="#icon-chevron-right" />
+                            </svg>
+                        </button>
+                        <button class="btn-ajustes" id="btn-ajustes-parseador-datos">
+                            <svg class="icon icon-line">
+                                <use href="#icon-cpu" />
+                            </svg>
+                            Parseador de datos
+                            <svg class="icon icon-line btn-ajustes-chevron">
+                                <use href="#icon-chevron-right" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="ajustes-section">
                     <div class="section-label">Sincronización</div>
@@ -567,7 +589,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="ajustes-section">
                     <div class="section-label">Datos Locales</div>
                     <div class="btn-group btn-group--no-mt">
@@ -600,32 +621,7 @@
                         </button>
                     </div>
                 </div>
-
-                <div class="ajustes-section">
-                    <div class="section-label">Herramientas</div>
-                    <div class="btn-group btn-group--no-mt">
-                        <button class="btn-ajustes" id="btn-ajustes-parseador">
-                            <svg class="icon icon-line">
-                                <use href="#icon-sliders" />
-                            </svg>
-                            Parseador de canales
-                            <svg class="icon icon-line btn-ajustes-chevron">
-                                <use href="#icon-chevron-right" />
-                            </svg>
-                        </button>
-                        <button class="btn-ajustes" id="btn-ajustes-parseador-datos">
-                            <svg class="icon icon-line">
-                                <use href="#icon-cpu" />
-                            </svg>
-                            Parseador de datos
-                            <svg class="icon icon-line btn-ajustes-chevron">
-                                <use href="#icon-chevron-right" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
             </div>
-
             <div class="modal-sticky-footer">
                 <div class="btn-group btn-group--no-mt">
                     <button class="btn-cancel">
@@ -1644,12 +1640,6 @@
                         </p>
                     </div>
                     <input type="file" id="file-parseador-datos" accept=".json,application/json" class="hidden">
-                    <div class="btn-group btn-group--no-mt">
-                        <button id="btn-parseador-datos-continuar" class="btn-edit btn-flex hidden">
-                            <svg class="icon icon-line"><use href="#icon-chevron-right" /></svg>
-                            Continuar
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Paso 2: Preview de cambios -->
@@ -1667,6 +1657,13 @@
 
             <div class="modal-sticky-footer">
                 <div class="btn-group btn-group--no-mt">
+                    <button id="btn-parseador-datos-continuar" class="btn-edit btn-flex hidden">
+                        <svg class="icon icon-line">
+                            <use href="#icon-chevron-right" />
+                        </svg>
+                        Continuar
+                    </button>
+
                     <button class="btn-edit btn-flex hidden" id="btn-parseador-datos-aplicar">
                         <svg class="icon icon-line">
                             <use href="#icon-save" />
@@ -1711,12 +1708,6 @@
                         </p>
                     </div>
                     <input type="file" id="file-parseador" accept=".json,application/json" class="hidden">
-                    <div class="btn-group btn-group--no-mt">
-                        <button id="btn-parseador-continuar" class="btn-edit btn-flex hidden">
-                            <svg class="icon icon-line"><use href="#icon-chevron-right" /></svg>
-                            Continuar
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Paso 2: Mapeo NVR → Grabador -->
@@ -1742,6 +1733,13 @@
 
             <div class="modal-sticky-footer">
                 <div class="btn-group btn-group--no-mt">
+                    <button id="btn-parseador-continuar" class="btn-edit btn-flex hidden">
+                        <svg class="icon icon-line">
+                            <use href="#icon-chevron-right" />
+                        </svg>
+                        Continuar
+                    </button>
+
                     <button class="btn-edit btn-flex hidden" id="btn-parseador-ver-cambios">
                         <svg class="icon icon-line">
                             <use href="#icon-eye" />
@@ -1769,5 +1767,5 @@
 </body>
 
 <!-- lushibosca-->
- 
+
 </html>
