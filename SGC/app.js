@@ -7098,6 +7098,8 @@
             _jsonData   = null;
             _lookup     = null;
             _pasoActual = 'upload';
+            const fileInp = document.getElementById('file-parseador-datos');
+            if (fileInp) fileInp.value = '';
             const label = document.getElementById('parseador-datos-dropzone-label');
             if (label) label.innerHTML = 'Seleccioná o arrastrá el archivo <strong>cctv_online.json</strong>';
             const cont = document.getElementById('parseador-datos-preview-contenido');
