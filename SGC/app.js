@@ -249,9 +249,11 @@
         }
 
         function guardarEdificios() {
-
             _edificios.sort((a, b) => a.localeCompare(b));
             localStorage.setItem(KEY_EDIFICIOS, JSON.stringify(_edificios));
+            // Disparar autosync igual que guardar() para que los cambios en edificios
+            // suban a Gist cuando el autosync está activado
+            if (typeof GistSync !== 'undefined') GistSync.subirAuto();
         }
         cargarEdificios();
 
