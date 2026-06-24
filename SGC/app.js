@@ -6865,6 +6865,280 @@
             if (icon === '#icon-download') btn.addEventListener('click', () => UI.exportarJSON());
             if (icon === '#icon-trash') btn.addEventListener('click', () => UI.borrarTodosLosDatos());
         });
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // § PARSEADOR DE DATOS (serial / firmware / modelo)
+    // ════════════════════════════════════════════════════════════════════════════
+    const ParseadorDatos = (() => {
+
+        let _jsonData   = null;   // cctv_online.json parseado
+        let _lookup     = null;   // { MAC_UPPER: { serial, firmware, modelo, _tipo, _nombre } }
+        let _pasoActual = 'upload';
+
+        const esc = S.escapeHtml ?? (s => String(s ?? '')
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;'));
+
+        function _normMAC(mac) {
+            return (mac || '').trim().toUpperCase();
+        }
+
+        function _buildLookup(data) {
+            const lookup = {};
+            const camaras = (data.camaras || []).map(c => ({ ...c, _tipo: 'camara', _nombre: c.camera_name || '' }));
+            const nvrs    = (data.nvrs    || []).map(n => ({ ...n, _tipo: 'nvr',    _nombre: n.nvr_name    || '' }));
+            [...camaras, ...nvrs].forEach(item => {
+                const mac = _normMAC(item.mac_address);
+                if (!mac) return;
+                lookup[mac] = {
+                    serial:   (item.nro_serie || '').trim(),
+                    firmware: (item.firmware  || '').trim(),
+                    modelo:   (item.modelo    || '').trim(),
+                    _tipo:    item._tipo,
+                    _nombre:  item._nombre,
+                    _ip:      (item.ip_address || item.ip || '').trim(),
+                };
+            });
+            return lookup;
+        }
+
+        function _calcularCambios() {
+            const actualizaciones = [];
+            const macUsadas = new Set();
+
+            _data.dispositivos.forEach(disp => {
+                const mac = _normMAC(disp.mac);
+                if (!mac) return;
+                const src = _lookup[mac];
+                if (!src) return;
+                macUsadas.add(mac);
+
+                const campos = [];
+                if (src.serial   !== (disp.serial   || '')) campos.push({ campo: 'serial',   viejo: disp.serial   || '', nuevo: src.serial   });
+                if (src.firmware !== (disp.firmware  || '')) campos.push({ campo: 'firmware',  viejo: disp.firmware  || '', nuevo: src.firmware  });
+                if (src.modelo   !== (disp.modelo    || '')) campos.push({ campo: 'modelo',    viejo: disp.modelo    || '', nuevo: src.modelo    });
+                if (campos.length) actualizaciones.push({ disp, src, campos });
+            });
+
+            // Nuevos: MACs en online que no matchean ningún dispositivo existente
+            const nuevos = [];
+            Object.entries(_lookup).forEach(([mac, src]) => {
+                if (macUsadas.has(mac)) return;
+                // verificar que tampoco aparezca como MAC secundaria
+                const yaExiste = _data.dispositivos.some(d => {
+                    return (d.mac || '').split(/[,;\s]+/).some(m => _normMAC(m) === mac);
+                });
+                if (!yaExiste) nuevos.push({ mac, src });
+            });
+
+            return { actualizaciones, nuevos };
+        }
+
+        function _setStep(paso) {
+            _pasoActual = paso;
+            ['upload', 'preview'].forEach(s => {
+                const el = document.getElementById(`parseador-datos-step-${s}`);
+                if (el) el.classList.toggle('hidden', s !== paso);
+            });
+            const stepLabel = document.getElementById('parseador-datos-step-label');
+            if (stepLabel) stepLabel.textContent = paso === 'upload' ? '1 / 2' : '2 / 2';
+
+            const btnAplicar = document.getElementById('btn-parseador-datos-aplicar');
+            if (btnAplicar) btnAplicar.classList.toggle('hidden', paso !== 'preview');
+        }
+
+        function _procesarArchivo(file) {
+            if (!file || !file.name.endsWith('.json')) {
+                toast('El archivo debe ser un .json', 'error'); return;
+            }
+            const label = document.getElementById('parseador-datos-dropzone-label');
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.camaras && !data.nvrs)
+                        throw new Error('El archivo no tiene claves "camaras" ni "nvrs"');
+                    _jsonData = data;
+                    _lookup   = _buildLookup(data);
+                    if (label) label.innerHTML =
+                        `<span class="parseador-label-ok">✓ ${esc(file.name)}</span>` +
+                        `<br><span class="parseador-label-meta">` +
+                        `${(data.nvrs || []).length} NVR(s) · ${(data.camaras || []).length} cámara(s)</span>`;
+                    _mostrarPreview();
+                } catch (err) {
+                    if (label) label.innerHTML =
+                        `<span class="parseador-label-err">✗ Archivo inválido</span>` +
+                        `<br><span class="parseador-label-meta">${esc(err.message)}</span>`;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function _mostrarPreview() {
+            const cont = document.getElementById('parseador-datos-preview-contenido');
+            if (!cont) return;
+            const { actualizaciones, nuevos } = _calcularCambios();
+            const sinCambios = Object.keys(_lookup).length - actualizaciones.length - nuevos.length;
+
+            let html = `<div class="parseador-resumen-grid">
+                <div class="parseador-resumen-item">
+                    <div class="parseador-resumen-num parseador-resumen-num--update">${actualizaciones.length}</div>
+                    <div class="parseador-resumen-label">a actualizar</div>
+                </div>
+                <div class="parseador-resumen-item">
+                    <div class="parseador-resumen-num parseador-resumen-num--new">${nuevos.length}</div>
+                    <div class="parseador-resumen-label">a agregar</div>
+                </div>
+                <div class="parseador-resumen-item">
+                    <div class="parseador-resumen-num">${sinCambios < 0 ? 0 : sinCambios}</div>
+                    <div class="parseador-resumen-label">sin cambios</div>
+                </div>
+            </div>`;
+
+            if (actualizaciones.length) {
+                html += `<div class="section-label parseador-preview-section-label">Actualizaciones</div>`;
+                html += `<table class="parseador-datos-tabla"><thead><tr>
+                    <th>Dispositivo</th><th>MAC</th><th>Campo</th><th>Valor actual</th><th>Nuevo valor</th>
+                </tr></thead><tbody>`;
+                actualizaciones.forEach(({ disp, campos }) => {
+                    const rowspan = campos.length;
+                    campos.forEach((c, i) => {
+                        html += `<tr>`;
+                        if (i === 0) {
+                            html += `<td rowspan="${rowspan}" class="parseador-datos-td-nombre">
+                                ${esc(disp.modelo || disp.marca || '—')}
+                                <span class="parseador-nuevo-chip">${esc(disp.tipo)}</span>
+                            </td>
+                            <td rowspan="${rowspan}" class="parseador-td-ip">${esc(disp.mac)}</td>`;
+                        }
+                        html += `<td class="parseador-datos-td-campo">${esc(c.campo)}</td>
+                            <td class="parseador-datos-td-viejo">${esc(c.viejo) || '<em class="parseador-empty">vacío</em>'}</td>
+                            <td class="parseador-datos-td-nuevo">${esc(c.nuevo)}</td>
+                        </tr>`;
+                    });
+                });
+                html += `</tbody></table>`;
+            }
+
+            if (nuevos.length) {
+                html += `<div class="section-label parseador-preview-section-label">Nuevos dispositivos</div>`;
+                html += `<table class="parseador-datos-tabla"><thead><tr>
+                    <th>Nombre (fuente)</th><th>MAC</th><th>Modelo</th><th>Tipo</th>
+                </tr></thead><tbody>`;
+                nuevos.forEach(({ mac, src }) => {
+                    html += `<tr>
+                        <td>${esc(src._nombre || '—')}</td>
+                        <td class="parseador-td-ip">${esc(mac)}</td>
+                        <td>${esc(src.modelo || '—')}</td>
+                        <td><span class="parseador-nuevo-chip">${esc(src._tipo)}</span></td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+
+            if (!actualizaciones.length && !nuevos.length) {
+                html += `<p class="parseador-hint parseador-hint--centered">No se detectaron cambios ni dispositivos nuevos.</p>`;
+            }
+
+            cont.innerHTML = html;
+            _setStep('preview');
+        }
+
+        function aplicar() {
+            if (!_jsonData || !_lookup) { toast('No hay datos cargados', 'error'); return; }
+            const { actualizaciones, nuevos } = _calcularCambios();
+            if (!actualizaciones.length && !nuevos.length) {
+                toast('No hay cambios para aplicar', 'info'); return;
+            }
+
+            historial.empujar('Parseador de datos: actualizar dispositivos');
+            const ahora = S.fechaISO();
+
+            // Actualizar existentes
+            actualizaciones.forEach(({ disp, campos }) => {
+                const idx = _data.dispositivos.findIndex(d => d.id === disp.id);
+                if (idx === -1) return;
+                campos.forEach(c => { _data.dispositivos[idx][c.campo] = c.nuevo; });
+                _data.dispositivos[idx].updatedAt = ahora;
+            });
+
+            // Agregar nuevos
+            nuevos.forEach(({ mac, src }) => {
+                const tipo = src._tipo === 'nvr' ? 'nvr' : 'camara';
+                const nuevo = S.sanitizarDisp({
+                    id:        S.genId(),
+                    tipo,
+                    mac:       mac.toLowerCase(),
+                    modelo:    src.modelo,
+                    serial:    src.serial,
+                    firmware:  src.firmware,
+                    estado:    '',
+                    updatedAt: ahora,
+                });
+                if (nuevo) _data.dispositivos.push(nuevo);
+            });
+
+            guardar(); render();
+            MM.cerrar('modal-parseador-datos');
+
+            const partes = [];
+            if (actualizaciones.length) partes.push(`${actualizaciones.length} actualizado${actualizaciones.length !== 1 ? 's' : ''}`);
+            if (nuevos.length)         partes.push(`${nuevos.length} agregado${nuevos.length !== 1 ? 's' : ''}`);
+            toast(partes.join(' · '), 'success');
+        }
+
+        function accionCancelar() {
+            if (_pasoActual === 'preview') {
+                _setStep('upload');
+            } else {
+                MM.cerrar('modal-parseador-datos');
+                setTimeout(() => UI.abrirAjustes(), 180);
+            }
+        }
+
+        let _dropzoneReady = false;
+        function _iniciarDropzone() {
+            if (_dropzoneReady) return;
+            _dropzoneReady = true;
+            const zone    = document.getElementById('parseador-datos-dropzone');
+            const fileInp = document.getElementById('file-parseador-datos');
+            if (!zone || !fileInp) return;
+            zone.addEventListener('click', () => fileInp.click());
+            fileInp.addEventListener('change', () => {
+                const file = fileInp.files[0];
+                if (file) _procesarArchivo(file);
+            });
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('importar-dropzone-drag'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('importar-dropzone-drag'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('importar-dropzone-drag');
+                const file = e.dataTransfer.files[0];
+                if (file) _procesarArchivo(file);
+            });
+        }
+
+        function abrir() {
+            _jsonData   = null;
+            _lookup     = null;
+            _pasoActual = 'upload';
+            const label = document.getElementById('parseador-datos-dropzone-label');
+            if (label) label.innerHTML = 'Seleccioná o arrastrá el archivo <strong>cctv_online.json</strong>';
+            const cont = document.getElementById('parseador-datos-preview-contenido');
+            if (cont) cont.innerHTML = '';
+            _setStep('upload');
+            _iniciarDropzone();
+            MM.cerrar('modal-ajustes');
+            setTimeout(() => MM.abrir('modal-parseador-datos'), 180);
+        }
+
+        return { abrir, aplicar, accionCancelar };
+    })(); // fin ParseadorDatos
+
+        // Parseador de datos
+        on('btn-ajustes-parseador-datos',   'click', () => ParseadorDatos.abrir());
+        on('btn-parseador-datos-aplicar',   'click', () => ParseadorDatos.aplicar());
+        on('btn-parseador-datos-cancelar',  'click', () => ParseadorDatos.accionCancelar());
         // Parseador de canales
         on('btn-ajustes-parseador',     'click', () => ParseadorCanales.abrir());
         on('btn-parseador-cancelar',    'click', () => ParseadorCanales.accionCancelar());

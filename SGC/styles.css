@@ -3656,3 +3656,49 @@ button:disabled {
     color: var(--text-muted);
     white-space: nowrap;
 }
+
+/* ── Parseador de datos: tabla de preview ── */
+.parseador-preview-section-label {
+    margin-top: var(--sp-4);
+    margin-bottom: var(--sp-2);
+}
+.parseador-datos-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-xs);
+    margin-bottom: var(--sp-3);
+}
+.parseador-datos-tabla thead th {
+    text-align: left;
+    padding: var(--sp-1) var(--sp-2);
+    border-bottom: 2px solid var(--border);
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.parseador-datos-tabla tbody tr { border-bottom: 1px solid var(--border); }
+.parseador-datos-tabla tbody tr:last-child { border-bottom: none; }
+.parseador-datos-tabla tbody td {
+    padding: var(--sp-1) var(--sp-2);
+    vertical-align: middle;
+}
+.parseador-datos-td-nombre {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.parseador-datos-td-campo {
+    font-family: monospace;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.parseador-datos-td-viejo { color: var(--text-muted); }
+.parseador-datos-td-nuevo { color: var(--c-green); font-weight: 600; }
+.parseador-resumen-num--update { color: var(--c-blue); }
+.parseador-resumen-num--new    { color: var(--c-green); }
+.parseador-empty { font-style: italic; color: var(--text-muted); }
+
+.parseador-hint--centered { text-align: center; margin-top: var(--sp-4); }
