@@ -1038,8 +1038,7 @@
                     && remoteCount >= _GUARD_MIN_REMOTE
                     && localCount < remoteCount * _GUARD_RATIO_MIN) {
 
-                    // Muestra toast persistente con acciones (no auto-dismiss)
-                    _mostrarAlertaVaciado(localCount, remoteCount);
+                    toast(`Autosync bloqueado: el Gist remoto tiene ${remoteCount} dispositivos pero localmente hay ${localCount}. Bajá el Gist antes de subir.`, 'warning');
                     return; // ← aborta la subida
                 }
             }
@@ -1089,42 +1088,6 @@
             } finally {
                 _setBusy(false);
             }
-        }
-
-        // Alerta visual no-auto-dismiss cuando el autosync detecta posible vaciado
-        function _mostrarAlertaVaciado(localCount, remoteCount) {
-            document.getElementById('gist-guard-alert')?.remove();
-
-            const div = document.createElement('div');
-            div.id = 'gist-guard-alert';
-            div.className = 'gist-guard-alert';
-            div.innerHTML = `
-                <span class="gist-guard-alert__icon">&#9888;&#65039;</span>
-                <div class="gist-guard-alert__body">
-                    <strong>Sincronizacion bloqueada</strong>
-                    <p>El Gist remoto tiene <strong>${remoteCount}</strong> dispositivos pero
-                    localmente hay <strong>${localCount}</strong>.
-                    Subir ahora sobreescribiria datos en GitHub.</p>
-                    <div class="gist-guard-alert__btns">
-                        <button class="btn btn-sm btn-primary" id="gist-guard-btn-bajar">Bajar datos del Gist</button>
-                        <button class="btn btn-sm btn-danger"  id="gist-guard-btn-forzar">Subir de todos modos</button>
-                        <button class="btn btn-sm"             id="gist-guard-btn-cerrar">Ignorar</button>
-                    </div>
-                </div>`;
-
-            document.body.appendChild(div);
-
-            div.querySelector('#gist-guard-btn-bajar').addEventListener('click', () => {
-                div.remove();
-                bajar();
-            });
-            div.querySelector('#gist-guard-btn-forzar').addEventListener('click', () => {
-                div.remove();
-                _ejecutarSubida(false, true);
-            });
-            div.querySelector('#gist-guard-btn-cerrar').addEventListener('click', () => div.remove());
-
-            toast('Autosync bloqueado: La carga elimina demasiados datos. Revisa los ajustes de sincronizacion.', 'warning');
         }
 
         function subir() { _ejecutarSubida(false, true); }  // manual: siempre forzada
@@ -3763,7 +3726,6 @@
         abrirGist() {
             MM.cerrar('modal-ajustes');
             setTimeout(() => {
-                document.getElementById('gist-guard-alert')?.remove();
                 GistSync.poblarModal();
                 MM.abrir('modal-gist', { onEscape: () => UI.cerrarGist() });
             }, 150);
