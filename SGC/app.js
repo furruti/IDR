@@ -6732,8 +6732,9 @@
 
         function abrir() {
             _resetUI();
-            MM.abrir('modal-parseador-canales');
             _iniciarDropzone();
+            MM.cerrar('modal-ajustes');
+            setTimeout(() => MM.abrir('modal-parseador-canales', { onEscape: () => accionCancelar() }), 180);
         }
 
         return { abrir, accionCancelar, mostrarPreview, aplicar };
@@ -7093,7 +7094,7 @@
             _setStep('upload');
             _iniciarDropzone();
             MM.cerrar('modal-ajustes');
-            setTimeout(() => MM.abrir('modal-parseador-datos'), 180);
+            setTimeout(() => MM.abrir('modal-parseador-datos', { onEscape: () => accionCancelar() }), 180);
         }
 
         return { abrir, aplicar, accionCancelar };
