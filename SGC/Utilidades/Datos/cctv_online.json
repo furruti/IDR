@@ -7,754 +7,3020 @@
             "nro_serie": "3220220821CCRRK42927297WCVLU",
             "mac_address": "c0:6d:ed:1e:f0:27",
             "firmware": "V4.51.127",
-            "protocolo_conexion": "HTTP:80",
+            "protocolo_conexion": "HTTPS/TLS1.2:443",
             "total_camaras": 62
+        },
+        {
+            "ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "modelo": "DS-9664NI-I16",
+            "nro_serie": "1620170927CCRR102639631WCVU",
+            "mac_address": "4c:bd:8f:9a:25:fc",
+            "firmware": "V4.61.000",
+            "protocolo_conexion": "HTTP:80",
+            "total_camaras": 57
+        },
+        {
+            "ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "modelo": "DS-9664NI-I16",
+            "nro_serie": "1620170927CCRR102639647WCVU",
+            "mac_address": "4c:bd:8f:9a:26:0c",
+            "firmware": "V4.61.025",
+            "protocolo_conexion": "HTTP:80",
+            "total_camaras": 60
+        },
+        {
+            "ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "modelo": "DS-9664NI-I16",
+            "nro_serie": "1620170927CCRR102639649WCVU",
+            "mac_address": "4c:bd:8f:9a:26:0e",
+            "firmware": "V4.61.025",
+            "protocolo_conexion": "HTTP:80",
+            "total_camaras": 51
+        },
+        {
+            "ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "modelo": "DS-9664NI-I16",
+            "nro_serie": "1620170927CCRR102639659WCVU",
+            "mac_address": "4c:bd:8f:9a:26:18",
+            "firmware": "V4.61.025",
+            "protocolo_conexion": "HTTP:80",
+            "total_camaras": 57
+        },
+        {
+            "ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "modelo": "DS-96128NI-I16",
+            "nro_serie": "3220180423CCRRC17484926WCVLU",
+            "mac_address": "64:db:8b:a9:7a:a7",
+            "firmware": "V4.51.125",
+            "protocolo_conexion": "HTTP:80",
+            "total_camaras": 83
         }
     ],
     "camaras": [
         {
             "ip_address": "10.32.30.3",
             "camera_name": "ANX C 8vo PASILLO 1",
-            "mac_address": "c0:6d:ed:9d:70:e4",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171241",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 1,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 1
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.3.30.9",
             "camera_name": "P03 INGRESO HEMICICLO",
-            "mac_address": "c0:6d:ed:9d:70:d0",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171221",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 2,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 2
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.41.30.14",
-            "camera_name": "Grupo Electrogeno",
-            "mac_address": "c0:6d:ed:93:9f:b2",
-            "modelo": "DS-2CD2746G2T-IZS",
-            "nro_serie": "20220808AAWRK40565261",
-            "firmware": "V5.7.3",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "ANX C GRUPO ELECTROGENO",
+            "channel_id": 3,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 3
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.81.30.19",
             "camera_name": "ANXH-P5-1",
-            "mac_address": "b4:a3:82:49:d9:5c",
-            "modelo": "DS-2CD2625FHWD-IZS",
-            "nro_serie": "20171122AAWR128783738",
-            "firmware": "V5.6.821",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 4,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 4
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.23",
-            "camera_name": "TERRAZA CALLAO",
-            "mac_address": "c0:6d:ed:9d:70:d7",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171228",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "ANX-A TERRAZA CALLAO",
+            "channel_id": 5,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 5
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.32.30.2",
             "camera_name": "TERRAZA ANX-C",
-            "mac_address": "c0:6d:ed:9d:70:db",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171232",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 6,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 6
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.41.30.15",
             "camera_name": "TERRAZA ANX-D",
-            "mac_address": "c0:6d:ed:9d:71:0a",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171279",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 7,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 7
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.11.30.79",
             "camera_name": "1SS ASCENSOR VISITA",
-            "mac_address": "c0:6d:ed:9d:70:cd",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171218",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 8,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 8
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.11.30.78",
             "camera_name": "1SS MONTACARGA",
-            "mac_address": "98:8b:0a:16:e6:30",
-            "modelo": "DS-2CD2721G0-IS",
-            "nro_serie": "20190307AAWRC97723300",
-            "firmware": "V5.5.91",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 9,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 9
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.11.30.80",
             "camera_name": "DEPOSITO PREVENCION SINIESTROS",
-            "mac_address": "c0:6d:ed:93:9f:b1",
-            "modelo": "DS-2CD2746G2T-IZS",
-            "nro_serie": "20220808AAWRK40565260",
-            "firmware": "V5.7.3",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 10,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 10
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.9",
             "camera_name": "PAÑOL 1",
-            "mac_address": "c0:6d:ed:9d:70:ea",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171247",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 11,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 11
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.10",
             "camera_name": "PAÑOL 2",
-            "mac_address": "c0:6d:ed:9d:70:d1",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171222",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 12,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 12
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.41.30.16",
             "camera_name": "DOMO MITRE 2",
-            "mac_address": "98:8b:0a:2b:9c:3f",
-            "modelo": "DS-2DE5225IW-AE",
-            "nro_serie": "20190322CCWRD00985526W",
-            "firmware": "V5.6.18",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 13,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 13
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.11",
             "camera_name": "ANX B PISO 2",
-            "mac_address": "c0:6d:ed:9d:70:fa",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171263",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 14,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 14
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.12",
             "camera_name": "ANX B PISO 5",
-            "mac_address": "c0:6d:ed:9d:70:e1",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171238",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 15,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 15
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.13",
             "camera_name": "ANX B PISO 8",
-            "mac_address": "c0:6d:ed:9d:70:e2",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171239",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 16,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 16
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.14",
             "camera_name": "DTV INGRESO",
-            "mac_address": "c0:6d:ed:9d:71:06",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171275",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 17,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 17
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.15",
             "camera_name": "DTV ESTUDIO",
-            "mac_address": "c0:6d:ed:9d:71:0b",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171280",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 18,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 18
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.16",
             "camera_name": "DTV PISO 1",
-            "mac_address": "c0:6d:ed:9d:70:f9",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171262",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 19,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 19
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.17",
             "camera_name": "DTV CONTROL",
-            "mac_address": "c0:6d:ed:9d:71:01",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171270",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 20,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 20
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.41.30.17",
             "camera_name": "ANX D 2DO CONTRA FRENTE ",
-            "mac_address": "64:db:8b:49:9c:bb",
-            "modelo": "DS-2CD2625FHWD-IZS",
-            "nro_serie": "20180108AAWR166497555",
-            "firmware": "V5.6.821",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 21,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 21
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.1.30.251",
             "camera_name": "RECINTO1",
-            "mac_address": "c0:6d:ed:9d:70:f6",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171259",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 22,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 22
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.1.30.252",
             "camera_name": "RECINTO2",
-            "mac_address": "c0:6d:ed:9d:70:fc",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171265",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 23,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 23
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.11.30.82",
             "camera_name": "1SS DEPOSITO",
-            "mac_address": "c0:6d:ed:9d:71:04",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171273",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 24,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 24
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.11.30.83",
             "camera_name": "DEPOSITO SOPORTE 4SS",
-            "mac_address": "98:8b:0a:16:e5:f2",
-            "modelo": "DS-2CD2721G0-IS",
-            "nro_serie": "20190307AAWRC97723238",
-            "firmware": "V5.5.800",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 25,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 25
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.18",
             "camera_name": "DTV ESTUDIO 2",
-            "mac_address": "c0:6d:ed:9d:70:f2",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171255",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 26,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 26
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.11",
             "camera_name": "DC 1",
-            "mac_address": "3c:e3:6b:ec:c7:de",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9C03251PAGFE35C",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 27,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 27
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.12",
             "camera_name": "DC 2",
-            "mac_address": "f4:b1:c2:f6:72:02",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9H0199BPAG0FEFC",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 28,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 28
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.13",
             "camera_name": "DC 4",
-            "mac_address": "3c:e3:6b:ec:c7:e4",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9C03251PAG54CC4",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 29,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 29
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.14",
             "camera_name": "DC 3",
-            "mac_address": "f4:b1:c2:f6:71:c6",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9H0199BPAG19A9A",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 30,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 30
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.15",
             "camera_name": "DC 5",
-            "mac_address": "3c:e3:6b:ec:c7:68",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9C03251PAG2936D",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 31,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 31
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.16",
             "camera_name": "DC 6",
-            "mac_address": "3c:e3:6b:ec:c7:eb",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9C03251PAG72E6C",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 32,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 32
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.17",
             "camera_name": "DC EXT 1",
-            "mac_address": "3c:e3:6b:ec:c7:76",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9C03251PAG078DC",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 33,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 33
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.14.30.18",
             "camera_name": "DC EXT 2",
-            "mac_address": "3c:e3:6b:ec:c7:e5",
-            "modelo": "DH-IPC-HDPW1230R1P-0280B-S5",
-            "nro_serie": "9C03251PAGB17F4",
-            "firmware": "2.840.0000000.6.R,build:2023-01-11",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 34,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 34
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.1.30.30",
             "camera_name": "INGRESO BAJO RECINTO",
-            "mac_address": "c0:6d:ed:9d:70:d5",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171226",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 35,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 35
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.3.30.7",
             "camera_name": "PALACIO 1P PASILLO A SENADO",
-            "mac_address": "c0:6d:ed:9d:70:fb",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171264",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 36,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 36
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.3.30.8",
             "camera_name": "PALACIO 3P ALA ENTRE RIOS",
-            "mac_address": "c0:6d:ed:9d:70:f0",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171253",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 37,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 37
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.41.30.18",
             "camera_name": "SS AUTOMOTORES",
-            "mac_address": "c0:6d:ed:9d:70:d2",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171223",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 38,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 38
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.1.30.33",
             "camera_name": "RECINTO CATERING 1",
-            "mac_address": "c0:6d:ed:9d:70:fd",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171266",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 39,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 39
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.91.30.18",
             "camera_name": "PASCO DEPOSITO 2",
-            "mac_address": "c0:6d:ed:9d:71:05",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171274",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 40,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 40
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.2.30.1",
             "camera_name": "1P ASCENSOR 7",
-            "mac_address": "c0:6d:ed:9d:70:dd",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171234",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 41,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 41
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.1.30.34",
-            "camera_name": "PALACIO RECINTO CATERING 2",
-            "mac_address": "c0:6d:ed:9d:70:f5",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171258",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "RECINTO CATERING 2",
+            "channel_id": 42,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 42
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.31.30.19",
             "camera_name": "DTV SALA STREAMING",
-            "mac_address": "c0:6d:ed:9d:70:ce",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171219",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 43,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 43
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.3.30.11",
             "camera_name": "PALACIO 2P MUSEO 1",
-            "mac_address": "c0:6d:ed:9d:70:ff",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171268",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 44,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 44
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.3.30.12",
-            "camera_name": "PALACIO 2P MUSEO 2",
-            "mac_address": "c0:6d:ed:9d:70:ed",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171250",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "PALACIO 2P MUSEO ",
+            "channel_id": 45,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 45
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.12.30.14",
             "camera_name": "EP2 COCINA ",
-            "mac_address": "98:8b:0a:16:e6:6a",
-            "modelo": "DS-2CD2721G0-IS",
-            "nro_serie": "20190307AAWRC97723358",
-            "firmware": "V5.5.91",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 46,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 46
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.12.30.15",
-            "camera_name": "IP CAMERA",
-            "mac_address": "c0:6d:ed:9d:70:e7",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171244",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "EP2 MOSTRADOR COMEDOR",
+            "channel_id": 47,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 47
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.11.30.84",
-            "camera_name": "2SS DEPOSITO GASTRONOMIA",
-            "mac_address": "98:8b:0a:16:e5:bf",
-            "modelo": "DS-2CD2721G0-IS",
-            "nro_serie": "20190307AAWRC97723187",
-            "firmware": "V5.5.800",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "2SS DEPOSITO GASTRONOMIA ",
+            "channel_id": 48,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 48
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.24",
-            "camera_name": "IP CAMERA",
-            "mac_address": "c0:6d:ed:9d:70:fe",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171267",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "camera_name": "P12 PASILLO MITRE",
+            "channel_id": 49,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 49
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.25",
             "camera_name": "P12 PASILLO CENTRAL 2",
-            "mac_address": "c0:6d:ed:9d:70:cc",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171217",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 50,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 50
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.26",
             "camera_name": "P12 PASILLO RIVADAVIA ",
-            "mac_address": "c0:6d:ed:9d:70:e6",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171243",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 51,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 51
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.27",
             "camera_name": "P10 PASILLO MITRE",
-            "mac_address": "c0:6d:ed:9d:71:08",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171277",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 52,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 52
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.28",
             "camera_name": "P10 PASILLO CENTRAL 2",
-            "mac_address": "c0:6d:ed:9d:70:d3",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171224",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 53,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 53
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.16.30.29",
             "camera_name": "P10 PASILLO RIVADAVIA",
-            "mac_address": "c0:6d:ed:9d:70:e9",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171246",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 54,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 54
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.15.30.25",
             "camera_name": "P8 PASILLO MITRE",
-            "mac_address": "c0:6d:ed:9d:70:ef",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171252",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 55,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 55
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.15.30.26",
             "camera_name": "P8 PASILLO CENTRAL 2",
-            "mac_address": "c0:6d:ed:9d:71:09",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171278",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 56,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 56
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.15.30.27",
             "camera_name": "P8 PASILLO RIVADAVIA",
-            "mac_address": "c0:6d:ed:9d:70:dc",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171233",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 57,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 57
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.15.30.28",
             "camera_name": "P6 PASILLO MITRE",
-            "mac_address": "c0:6d:ed:9d:70:f4",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171257",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 58,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 58
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.15.30.29",
             "camera_name": "P6 PASILLO CENTRAL 2",
-            "mac_address": "c0:6d:ed:9d:71:03",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171272",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 59,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 59
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.15.30.30",
             "camera_name": "P6 PASILLO RIVADAVIA",
-            "mac_address": "c0:6d:ed:9d:70:f3",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171256",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 60,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 60
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.32.30.4",
             "camera_name": "ANX C 8vo PASILLO 2",
-            "mac_address": "c0:6d:ed:9d:70:e5",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171242",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 61,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 61
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
         },
         {
             "ip_address": "10.32.30.5",
             "camera_name": "ANX C 8vo PASILLO 3",
-            "mac_address": "c0:6d:ed:9d:71:07",
-            "modelo": "DS-2CD1323G0E-I",
-            "nro_serie": "20220815AAWRK42171276",
-            "firmware": "V5.7.23",
-            "protocolo_conexion": "HTTP:80",
-            "nvr_name": "Network Video Recorder",
+            "channel_id": 62,
             "nvr_ip": "10.105.0.195",
-            "channel_id": 62
+            "nvr_name": "Network Video Recorder",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.0",
+            "camera_name": "N/A",
+            "channel_id": 1,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.18",
+            "camera_name": "DOMO CALLAO",
+            "channel_id": 2,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.5",
+            "camera_name": "DOMO RIOBAMBA",
+            "channel_id": 3,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.6",
+            "camera_name": "DOMO EXPLANADA",
+            "channel_id": 4,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.3",
+            "camera_name": "DOMO MITRE",
+            "channel_id": 5,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.11",
+            "camera_name": "PAL INGRESO LEG",
+            "channel_id": 6,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.12",
+            "camera_name": "PAL-INGRESOP",
+            "channel_id": 7,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.13",
+            "camera_name": "INGRESO POZOS 1",
+            "channel_id": 8,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.14",
+            "camera_name": "CAJERO PALACIO",
+            "channel_id": 9,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.21",
+            "camera_name": "CAJEROS EP1",
+            "channel_id": 10,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.0",
+            "camera_name": "INGRESO ANEXO D",
+            "channel_id": 11,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.0",
+            "camera_name": "INGRESO ANEXO C",
+            "channel_id": 12,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.1",
+            "camera_name": "INGRESO DTV",
+            "channel_id": 13,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.0",
+            "camera_name": "PALACIO TESORERIA EXT",
+            "channel_id": 14,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.1",
+            "camera_name": "TESORERIA INTERNA",
+            "channel_id": 15,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.5",
+            "camera_name": "TESORERIA PUBLICO",
+            "channel_id": 16,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.2",
+            "camera_name": "SALON BLANCO 1",
+            "channel_id": 17,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.3",
+            "camera_name": "PAL PATIO BUSTOS",
+            "channel_id": 18,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.4",
+            "camera_name": "SALON BLANCO 2",
+            "channel_id": 19,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.15",
+            "camera_name": "HALL PRESIDENCIA",
+            "channel_id": 20,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.27",
+            "camera_name": "EXTERIOR RIVADAVIA",
+            "channel_id": 21,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.11",
+            "camera_name": "MOLINETE PERSONAL",
+            "channel_id": 22,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.14",
+            "camera_name": "PB PUERTA LATERAL",
+            "channel_id": 23,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.15",
+            "camera_name": "INGRESO GENERAL",
+            "channel_id": 24,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.9",
+            "camera_name": "PB-7 MOSTRADOR RECEPCION",
+            "channel_id": 25,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.16",
+            "camera_name": "PB-8 ASCENSOR VISITAS",
+            "channel_id": 26,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.8",
+            "camera_name": "9-PB MOLINETES VISITA",
+            "channel_id": 27,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.10",
+            "camera_name": "PB-10 ASCENSORES DIP. RIOBAMBA",
+            "channel_id": 28,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.12",
+            "camera_name": "PASILLO TRASERO",
+            "channel_id": 29,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.13",
+            "camera_name": "PB BAR",
+            "channel_id": 30,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.7",
+            "camera_name": "PB-13 ESCALERA PB",
+            "channel_id": 31,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.23",
+            "camera_name": "EP1 PASO ANEXO C",
+            "channel_id": 32,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.22",
+            "camera_name": "EP1 RELOJ RRHH",
+            "channel_id": 33,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.17",
+            "camera_name": "INGRESO POZOS 2",
+            "channel_id": 34,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.2",
+            "camera_name": "PB-ANEXO B",
+            "channel_id": 35,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.30",
+            "camera_name": "BICICLETERO",
+            "channel_id": 36,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.2.30.2",
+            "camera_name": "FONDO PASOS PERDIDOS",
+            "channel_id": 37,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.4",
+            "camera_name": "RIV 1829 P4",
+            "channel_id": 38,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.32",
+            "camera_name": "PAL PASILLO FONDO",
+            "channel_id": 39,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.24",
+            "camera_name": "EP1-3 ACCESO ANEXO B",
+            "channel_id": 40,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.17",
+            "camera_name": "EXTERIOR RIOBAMBA",
+            "channel_id": 41,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.2",
+            "camera_name": "PAL 1P ALA ENTRE RIOS",
+            "channel_id": 42,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.3",
+            "camera_name": " PAL 1P ALA ENTRE RIOS 2",
+            "channel_id": 43,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.9",
+            "camera_name": "SALA PRENSA",
+            "channel_id": 44,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.16",
+            "camera_name": "PAL ALA ENTRE RIOS",
+            "channel_id": 45,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.21",
+            "camera_name": "PASILLO A PASOS PERDIDOS",
+            "channel_id": 46,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.18",
+            "camera_name": "2P ALA POZOS",
+            "channel_id": 47,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.1",
+            "camera_name": "PALACIO 3P",
+            "channel_id": 48,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.10",
+            "camera_name": "2P ALA ENTRE RIOS",
+            "channel_id": 49,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.4",
+            "camera_name": "DOMO HALL ANEXO A",
+            "channel_id": 50,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.6",
+            "camera_name": "PAL PRESIDENCIA 2",
+            "channel_id": 51,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.7",
+            "camera_name": "PAL P1 INGRESO BANDERAS",
+            "channel_id": 52,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.8",
+            "camera_name": "PAL P1 ASCENSOR PRES",
+            "channel_id": 53,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.35",
+            "camera_name": "DOMO RIVADAVIA 2",
+            "channel_id": 54,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.1",
+            "camera_name": "TERRAZA ANX-A",
+            "channel_id": 55,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.6",
+            "camera_name": "DOMO ENTRE RIOS",
+            "channel_id": 56,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.5",
+            "camera_name": "DOMO C. POZOS",
+            "channel_id": 57,
+            "nvr_ip": "10.105.0.196",
+            "nvr_name": "NVR Testing",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.71",
+            "camera_name": "1 COCHERA ANEXO C",
+            "channel_id": 1,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.72",
+            "camera_name": "2 COCHERA ANEXO C",
+            "channel_id": 2,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.73",
+            "camera_name": "3 COCHERA ANEXO C",
+            "channel_id": 3,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.74",
+            "camera_name": "2DO SS BIS",
+            "channel_id": 4,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.55",
+            "camera_name": "3ER SS BIS 1",
+            "channel_id": 5,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.38",
+            "camera_name": "1SS COM",
+            "channel_id": 6,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.75",
+            "camera_name": "2SS BAJADA",
+            "channel_id": 7,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.37",
+            "camera_name": "1SS COCH PRESIDENCIA",
+            "channel_id": 8,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.76",
+            "camera_name": "2SS PASILLO 1",
+            "channel_id": 9,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.50",
+            "camera_name": "3SS ASCENSOR",
+            "channel_id": 10,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.51",
+            "camera_name": "3SS PASILLO 2",
+            "channel_id": 11,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.52",
+            "camera_name": "3SS ACCESO",
+            "channel_id": 12,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.53",
+            "camera_name": "3SS PASILLO 1",
+            "channel_id": 13,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.54",
+            "camera_name": "3ER SS BIS 2",
+            "channel_id": 14,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.41",
+            "camera_name": "4TO SS BIS BAJADA",
+            "channel_id": 15,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.42",
+            "camera_name": "4SS ASCENSOR",
+            "channel_id": 16,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.43",
+            "camera_name": "4SS BIS",
+            "channel_id": 17,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.40",
+            "camera_name": "4SS PASILLO 1",
+            "channel_id": 18,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.44",
+            "camera_name": "4SS ACCESO",
+            "channel_id": 19,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.45",
+            "camera_name": "4SS PASILLO 2",
+            "channel_id": 20,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.47",
+            "camera_name": "5SS PASILLO 1",
+            "channel_id": 21,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.48",
+            "camera_name": "5SS ASCENSOR",
+            "channel_id": 22,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.49",
+            "camera_name": "5SS PASILLO 2",
+            "channel_id": 23,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.46",
+            "camera_name": "5SS ACCESO",
+            "channel_id": 24,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.20",
+            "camera_name": "RAMPA SALIDA",
+            "channel_id": 25,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.81",
+            "camera_name": "4SS DEPOSITO SOPORTE TEC",
+            "channel_id": 26,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.77",
+            "camera_name": "BARRERA SALIDA 1SS",
+            "channel_id": 27,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.36",
+            "camera_name": "RAMPA",
+            "channel_id": 28,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.1",
+            "camera_name": "INGRESO DGIS",
+            "channel_id": 29,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.18",
+            "camera_name": "3SS ACCESO DEPOSITO",
+            "channel_id": 30,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.19",
+            "camera_name": "5SS ACCESO DEPOSITO",
+            "channel_id": 31,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.10",
+            "camera_name": "ACCESO DEPOSITO ANXC",
+            "channel_id": 32,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.11",
+            "camera_name": "ACCESO DEPOSITO ANXD",
+            "channel_id": 33,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.87.2",
+            "camera_name": "IPCamera 01",
+            "channel_id": 34,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.19",
+            "camera_name": "PAL PASILLO POZOS",
+            "channel_id": 35,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.20",
+            "camera_name": "PAL PASILLO PRINCIPAL",
+            "channel_id": 36,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.33",
+            "camera_name": "ASCENSOR PB 1",
+            "channel_id": 37,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.34",
+            "camera_name": "ASCENSOR PB 2",
+            "channel_id": 38,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.12",
+            "camera_name": "P7 ASCENSOR 8 Y 9",
+            "channel_id": 39,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.13",
+            "camera_name": "P7 ACCESO MONTACARGA",
+            "channel_id": 40,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.14",
+            "camera_name": "P7 ASCENSOR 12 Y 13",
+            "channel_id": 41,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.15",
+            "camera_name": "P7 ACCESO CENTRAL",
+            "channel_id": 42,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.16",
+            "camera_name": "P7 AREA CENTRAL",
+            "channel_id": 43,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.17",
+            "camera_name": "P7 ESCALERA ",
+            "channel_id": 44,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.4",
+            "camera_name": "P5 ASCENSOR 8 Y 9",
+            "channel_id": 45,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.5",
+            "camera_name": "P5 ACCESO ESCALERA ",
+            "channel_id": 46,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.6",
+            "camera_name": "P5 ASCENSOR 12 Y 13",
+            "channel_id": 47,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.7",
+            "camera_name": "P5 ASCENSOR LEGISLADORES",
+            "channel_id": 48,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.8",
+            "camera_name": "P5 ASCENSORES PUBLICO 2",
+            "channel_id": 49,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.5",
+            "camera_name": "P4 ASCENSOR 8 Y 9",
+            "channel_id": 50,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.6",
+            "camera_name": "P4 ESCALERA",
+            "channel_id": 51,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.7",
+            "camera_name": "P4 ASCENSOR 12 Y 13",
+            "channel_id": 52,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.8",
+            "camera_name": "P4 ASCENSOR LEGISLADORES",
+            "channel_id": 53,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.9",
+            "camera_name": "P4 ASCENSORES PUBLICO",
+            "channel_id": 54,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.1",
+            "camera_name": "P2 ASCENSOR 8 Y 9",
+            "channel_id": 55,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.2",
+            "camera_name": "P2 ASCENSOR 12 Y 13",
+            "channel_id": 56,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.3",
+            "camera_name": "P2 ESCALERA",
+            "channel_id": 57,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.4",
+            "camera_name": "P2 ASCENSOR LEGISLADORES 2",
+            "channel_id": 58,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.5",
+            "camera_name": "P2 PASCENSORES PUBLICO",
+            "channel_id": 59,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.13",
+            "camera_name": "P2 MONTACARGA",
+            "channel_id": 60,
+            "nvr_ip": "10.105.0.197",
+            "nvr_name": "HCDN-NVR-4",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.11",
+            "camera_name": "P2 ASCENSOR LEGISLADORES 1",
+            "channel_id": 1,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.3",
+            "camera_name": "3P ASCENSORES 12/13",
+            "channel_id": 2,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.2",
+            "camera_name": "P3 ASCENSOR LEGISLADORES ",
+            "channel_id": 3,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.100",
+            "camera_name": "IPCamera 04",
+            "channel_id": 4,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.100",
+            "camera_name": "IPCamera 05",
+            "channel_id": 5,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.100",
+            "camera_name": "IPCamera 06",
+            "channel_id": 6,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.101",
+            "camera_name": "IPCamera 07",
+            "channel_id": 7,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.4",
+            "camera_name": "P3 ASCENSORES 8 y 9",
+            "channel_id": 8,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.12",
+            "camera_name": "P3 ACCESO ESCALERA ",
+            "channel_id": 9,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.13.30.1",
+            "camera_name": "P3 ACCESO GENERAL",
+            "channel_id": 10,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.100",
+            "camera_name": "IPCamera 11",
+            "channel_id": 11,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.18",
+            "camera_name": "P6 ASCENSORES 12 Y 13",
+            "channel_id": 12,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.19",
+            "camera_name": "P6 ACCESO MONTACARGA",
+            "channel_id": 13,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.20",
+            "camera_name": "P6 ASCENSOR 8 Y 9",
+            "channel_id": 14,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.21",
+            "camera_name": "P6 PASILLO CENTRAL",
+            "channel_id": 15,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.22",
+            "camera_name": "P6 ESCALERA",
+            "channel_id": 16,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.23",
+            "camera_name": "P6 ASCENSOR LEGISLADORES",
+            "channel_id": 17,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.24",
+            "camera_name": "8P ASCENSOR LEGISLADORES",
+            "channel_id": 18,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.2",
+            "camera_name": "P9 ACCESO CENTRAL",
+            "channel_id": 19,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.3",
+            "camera_name": "P9 ASCENSOR 8 Y 9",
+            "channel_id": 20,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.4",
+            "camera_name": "P9 ACCESO MONTACARGA",
+            "channel_id": 21,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.5",
+            "camera_name": "P9 ASCENSOR 12 Y 13",
+            "channel_id": 22,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.6",
+            "camera_name": "P9 AREA CENTRAL",
+            "channel_id": 23,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.7",
+            "camera_name": "P9 ESCALERA",
+            "channel_id": 24,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.8",
+            "camera_name": "P8 ASCENSOR 8 Y 9",
+            "channel_id": 25,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.9",
+            "camera_name": "P8 ACCESO MONTACARGA",
+            "channel_id": 26,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.10",
+            "camera_name": "P8 ASCENSOR 12 Y 13",
+            "channel_id": 27,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.16",
+            "camera_name": "P10 ASCENSOR LEGISLADORES",
+            "channel_id": 28,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.17",
+            "camera_name": "P11 DESFIBRILADOR",
+            "channel_id": 29,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.18",
+            "camera_name": "P12 ASCENSOR LEGISLADORES",
+            "channel_id": 30,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.9",
+            "camera_name": "P5 ASCENSORES PUBLICO 1",
+            "channel_id": 31,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.10",
+            "camera_name": "5P CCO",
+            "channel_id": 32,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.14.30.0",
+            "camera_name": "INGRESO DGIS (interior)",
+            "channel_id": 33,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.66",
+            "camera_name": "6SS PASILLO",
+            "channel_id": 34,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.67",
+            "camera_name": "6SS INGRESO",
+            "channel_id": 35,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.68",
+            "camera_name": "6SS TAB FONDO",
+            "channel_id": 36,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.15.30.11",
+            "camera_name": "P8 PASILLO CENTRAL",
+            "channel_id": 37,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.69",
+            "camera_name": "DEP SECADM EXT",
+            "channel_id": 38,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.70",
+            "camera_name": "DEP SECADM INT1",
+            "channel_id": 39,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.59",
+            "camera_name": "SS2 - ASCENSORES",
+            "channel_id": 40,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.60",
+            "camera_name": "ARCH DGAC EXT",
+            "channel_id": 41,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.61",
+            "camera_name": "ARCH DGAC INT1",
+            "channel_id": 42,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.62",
+            "camera_name": "ARCH DGAC INT2",
+            "channel_id": 43,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.63",
+            "camera_name": "SUMINISTROS 1",
+            "channel_id": 44,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.64",
+            "camera_name": "SUMINISTROS 2",
+            "channel_id": 45,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.65",
+            "camera_name": "SUMINISTROS 3",
+            "channel_id": 46,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.1",
+            "camera_name": "SINIESTRO",
+            "channel_id": 47,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.2",
+            "camera_name": "OPERADOR RAMPA",
+            "channel_id": 48,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.3",
+            "camera_name": "INGRESO RAMPA 1",
+            "channel_id": 49,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.28",
+            "camera_name": "EP2 SALA CONSULTORIOS",
+            "channel_id": 50,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.39",
+            "camera_name": "EP2 COMEDOR LEGISLADORES",
+            "channel_id": 51,
+            "nvr_ip": "10.105.0.198",
+            "nvr_name": "HCDN-NVR-3",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.8",
+            "camera_name": "ANEXO D - P8",
+            "channel_id": 1,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.7",
+            "camera_name": "ANEXO D - P7",
+            "channel_id": 2,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.6",
+            "camera_name": "ANEXO D - P6",
+            "channel_id": 3,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.5",
+            "camera_name": "ANEXO D - P5",
+            "channel_id": 4,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.4",
+            "camera_name": "ANEXO D - P4",
+            "channel_id": 5,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.3",
+            "camera_name": "ANEXO D - P3",
+            "channel_id": 6,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.2",
+            "camera_name": "ANEXO D - P2",
+            "channel_id": 7,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.1",
+            "camera_name": "ANEXO D - P1",
+            "channel_id": 8,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.0",
+            "camera_name": "ANXH - P6 -1",
+            "channel_id": 9,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.1",
+            "camera_name": "ANXH-P6-2",
+            "channel_id": 10,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.2",
+            "camera_name": "ANXH-P6-HALL",
+            "channel_id": 11,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.3",
+            "camera_name": "ANXH-P5-1",
+            "channel_id": 12,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.4",
+            "camera_name": "ANXH-P5-HALL",
+            "channel_id": 13,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.5",
+            "camera_name": "ANXH-P4-1",
+            "channel_id": 14,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.6",
+            "camera_name": "ANXH-P4-2",
+            "channel_id": 15,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.7",
+            "camera_name": "ANXH-P4-HALL",
+            "channel_id": 16,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.8",
+            "camera_name": "ANXH-P3-1",
+            "channel_id": 17,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.9",
+            "camera_name": "ANXH-P3-2",
+            "channel_id": 18,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.10",
+            "camera_name": "ANXH-P3-HALL",
+            "channel_id": 19,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.11",
+            "camera_name": "ANXH-P2-1",
+            "channel_id": 20,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.12",
+            "camera_name": "ANXH-P2-2",
+            "channel_id": 21,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.13",
+            "camera_name": "ANXH-P2-HALL",
+            "channel_id": 22,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.14",
+            "camera_name": "ANXH-P1-1",
+            "channel_id": 23,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.15",
+            "camera_name": "ANXH-P1-2",
+            "channel_id": 24,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.16",
+            "camera_name": "ANXH-P1-HALL",
+            "channel_id": 25,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.6",
+            "camera_name": "LACTANCIA 1",
+            "channel_id": 26,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.7",
+            "camera_name": "LACTANCIA 2",
+            "channel_id": 27,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.8",
+            "camera_name": "RRHH 4P ANXC",
+            "channel_id": 28,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.32.30.0",
+            "camera_name": "ANEXO C 5P",
+            "channel_id": 29,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.32.30.1",
+            "camera_name": "ANEXO C 7P",
+            "channel_id": 30,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.21",
+            "camera_name": "SALA 2P ALA RIVADAVIA ",
+            "channel_id": 31,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.20",
+            "camera_name": "SALA 2P ALA MITRE",
+            "channel_id": 32,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.4",
+            "camera_name": "HALL JARDIN INT",
+            "channel_id": 33,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.5",
+            "camera_name": "HALL JARDIN EXT",
+            "channel_id": 34,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.6",
+            "camera_name": "HALL MITRE 2085",
+            "channel_id": 35,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.17",
+            "camera_name": "ANEXO H - PB",
+            "channel_id": 36,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.9",
+            "camera_name": "INGRESO ANEXO D",
+            "channel_id": 37,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.12",
+            "camera_name": "TALLERES 1P ANEXO D",
+            "channel_id": 38,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.13",
+            "camera_name": "TALLERES PB ANEXO D",
+            "channel_id": 39,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.7",
+            "camera_name": "P12 ASCENSOR 8 Y 9",
+            "channel_id": 40,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.8",
+            "camera_name": "P12 ASCENSOR 12 Y 13",
+            "channel_id": 41,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.9",
+            "camera_name": "P12 ACCESO MONTACARGA",
+            "channel_id": 42,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.10",
+            "camera_name": "P12 PASILLO CENTRAL",
+            "channel_id": 43,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.11",
+            "camera_name": "P11 ASCENSOR 8 Y 9",
+            "channel_id": 44,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.12",
+            "camera_name": "P11 ASCENSOR 12 y 13",
+            "channel_id": 45,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.13",
+            "camera_name": "P11 ACCESO MONTACARGA",
+            "channel_id": 46,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.14",
+            "camera_name": "P11 ACCESO CENTRAL",
+            "channel_id": 47,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.15",
+            "camera_name": "P11 ESCALERA",
+            "channel_id": 48,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.19",
+            "camera_name": "P10 ASCENSOR 8 Y 9",
+            "channel_id": 49,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.20",
+            "camera_name": "P10 ASCENSOR 12 Y 13",
+            "channel_id": 50,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.21",
+            "camera_name": "P10 ACCESO MONTACARGA",
+            "channel_id": 51,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.22",
+            "camera_name": "P10 PASILLO CENTRAL",
+            "channel_id": 52,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.2",
+            "camera_name": "P13 ESCALERA",
+            "channel_id": 53,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.3",
+            "camera_name": "P13 ASCENSOR 8 y 9",
+            "channel_id": 54,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.4",
+            "camera_name": "P13 ACCESO MONTACARGA",
+            "channel_id": 55,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.5",
+            "camera_name": "P13 ASCENSOR 12 Y 13",
+            "channel_id": 56,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.6",
+            "camera_name": "P13 ACCESO CENTRAL",
+            "channel_id": 57,
+            "nvr_ip": "10.105.0.199",
+            "nvr_name": "HCDN-NVR-2",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.0",
+            "camera_name": "N/A",
+            "channel_id": 1,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.81.30.18",
+            "camera_name": "DOMO CALLAO",
+            "channel_id": 2,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.5",
+            "camera_name": "DOMO RIOBAMBA",
+            "channel_id": 3,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.6",
+            "camera_name": "DOMO EXPLANADA",
+            "channel_id": 4,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.3",
+            "camera_name": "DOMO MITRE",
+            "channel_id": 5,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.11",
+            "camera_name": "PAL INGRESO LEG",
+            "channel_id": 6,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.12",
+            "camera_name": "PAL-INGRESOP",
+            "channel_id": 7,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.13",
+            "camera_name": "INGRESO POZOS 1",
+            "channel_id": 8,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.14",
+            "camera_name": "CAJERO PALACIO",
+            "channel_id": 9,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.21",
+            "camera_name": "CAJEROS EP1",
+            "channel_id": 10,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.41.30.0",
+            "camera_name": "INGRESO ANEXO D",
+            "channel_id": 11,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.0",
+            "camera_name": "INGRESO ANEXO C",
+            "channel_id": 12,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.1",
+            "camera_name": "INGRESO DTV",
+            "channel_id": 13,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.0",
+            "camera_name": "PALACIO TESORERIA EXT",
+            "channel_id": 14,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.1",
+            "camera_name": "TESORERIA INTERNA",
+            "channel_id": 15,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.5",
+            "camera_name": "TESORERIA PUBLICO",
+            "channel_id": 16,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.2",
+            "camera_name": "SALON BLANCO 1",
+            "channel_id": 17,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.3",
+            "camera_name": "PAL PATIO BUSTOS",
+            "channel_id": 18,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.4",
+            "camera_name": "SALON BLANCO 2",
+            "channel_id": 19,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.15",
+            "camera_name": "HALL PRESIDENCIA",
+            "channel_id": 20,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.27",
+            "camera_name": "EXTERIOR RIVADAVIA",
+            "channel_id": 21,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.11",
+            "camera_name": "MOLINETE PERSONAL",
+            "channel_id": 22,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.14",
+            "camera_name": "PB PUERTA LATERAL",
+            "channel_id": 23,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.15",
+            "camera_name": "INGRESO GENERAL",
+            "channel_id": 24,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.9",
+            "camera_name": "PB-7 MOSTRADOR RECEPCION",
+            "channel_id": 25,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.16",
+            "camera_name": "PB-8 ASCENSOR VISITAS",
+            "channel_id": 26,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.8",
+            "camera_name": "9-PB MOLINETES VISITA",
+            "channel_id": 27,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.10",
+            "camera_name": "PB-10 ASCENSORES DIP. RIOBAMBA",
+            "channel_id": 28,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.12",
+            "camera_name": "PASILLO TRASERO",
+            "channel_id": 29,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.13",
+            "camera_name": "PB BAR",
+            "channel_id": 30,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.7",
+            "camera_name": "PB-13 ESCALERA PB",
+            "channel_id": 31,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.23",
+            "camera_name": "EP1 PASO ANEXO C",
+            "channel_id": 32,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.22",
+            "camera_name": "EP1 RELOJ RRHH",
+            "channel_id": 33,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.17",
+            "camera_name": "INGRESO POZOS 2",
+            "channel_id": 34,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.31.30.2",
+            "camera_name": "PB-ANEXO B",
+            "channel_id": 35,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.30",
+            "camera_name": "BICICLETERO",
+            "channel_id": 36,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.2.30.2",
+            "camera_name": "FONDO PASOS PERDIDOS",
+            "channel_id": 37,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.4",
+            "camera_name": "RIV 1829 P4",
+            "channel_id": 38,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.32",
+            "camera_name": "PAL PASILLO FONDO",
+            "channel_id": 39,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.24",
+            "camera_name": "EP1-3 ACCESO ANEXO B",
+            "channel_id": 40,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.17",
+            "camera_name": "EXTERIOR RIOBAMBA",
+            "channel_id": 41,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.2",
+            "camera_name": "PAL 1P ALA ENTRE RIOS",
+            "channel_id": 42,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.3",
+            "camera_name": " PAL 1P ALA ENTRE RIOS 2",
+            "channel_id": 43,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.9",
+            "camera_name": "SALA PRENSA",
+            "channel_id": 44,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.16",
+            "camera_name": "PAL ALA ENTRE RIOS",
+            "channel_id": 45,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.21",
+            "camera_name": "PASILLO A PASOS PERDIDOS",
+            "channel_id": 46,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.18",
+            "camera_name": "2P ALA POZOS",
+            "channel_id": 47,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.1",
+            "camera_name": "PALACIO 3P",
+            "channel_id": 48,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.10",
+            "camera_name": "2P ALA ENTRE RIOS",
+            "channel_id": 49,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.4",
+            "camera_name": "DOMO HALL ANEXO A",
+            "channel_id": 50,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.6",
+            "camera_name": "PAL PRESIDENCIA 2",
+            "channel_id": 51,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.7",
+            "camera_name": "PAL P1 INGRESO BANDERAS",
+            "channel_id": 52,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.8",
+            "camera_name": "PAL P1 ASCENSOR PRES",
+            "channel_id": 53,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.35",
+            "camera_name": "DOMO RIVADAVIA 2",
+            "channel_id": 54,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.16.30.1",
+            "camera_name": "TERRAZA ANX-A",
+            "channel_id": 55,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.6",
+            "camera_name": "DOMO ENTRE RIOS",
+            "channel_id": 56,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.3.30.5",
+            "camera_name": "DOMO C. POZOS",
+            "channel_id": 57,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.7",
+            "camera_name": "PASCO 650 ENTRADA",
+            "channel_id": 58,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.8",
+            "camera_name": "PASCO 650 COCHERA 1",
+            "channel_id": 59,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.31",
+            "camera_name": "PAL INGRESO CATERING",
+            "channel_id": 60,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.29",
+            "camera_name": "ESCALERA AUDITORIO",
+            "channel_id": 61,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.31",
+            "camera_name": "PASARELA EP1 ANX-A",
+            "channel_id": 62,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.11.30.32",
+            "camera_name": "ANXA-PB ENTRADA LEGISLADORES",
+            "channel_id": 63,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.6",
+            "camera_name": "P1 ASCENSOR 8 Y 9",
+            "channel_id": 64,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.7",
+            "camera_name": "P1 ASCENSOR 12 Y 13",
+            "channel_id": 65,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.8",
+            "camera_name": "P1 ESCALERA",
+            "channel_id": 66,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.9",
+            "camera_name": "P1 ASCENSOR LEGISLADORES",
+            "channel_id": 67,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.12.30.10",
+            "camera_name": "P1 ASCENSOR PUBLICO",
+            "channel_id": 68,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.10",
+            "camera_name": "PASCO 650 COCHERA 3",
+            "channel_id": 69,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.11",
+            "camera_name": "PASCO 650 COCHERA 4",
+            "channel_id": 70,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.12",
+            "camera_name": "PASCO 650 COCHERA 5",
+            "channel_id": 71,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.13",
+            "camera_name": "PASCO 650 DEPOSITO FONDO",
+            "channel_id": 72,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.14",
+            "camera_name": "PASCO 650 DEPOSITO FRENTE",
+            "channel_id": 73,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.22",
+            "camera_name": "INGRESO IMPRENTA",
+            "channel_id": 74,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.23",
+            "camera_name": "IMP PASILLO ACCESO",
+            "channel_id": 75,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.24",
+            "camera_name": "INGRESO IMPRESION",
+            "channel_id": 76,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.25",
+            "camera_name": "IMPRESION 1",
+            "channel_id": 77,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.26",
+            "camera_name": "IMPRESION 2",
+            "channel_id": 78,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.27",
+            "camera_name": "ENCUADERNACION 1",
+            "channel_id": 79,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.1.30.28",
+            "camera_name": "ENCUADERNACION 2",
+            "channel_id": 80,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.15",
+            "camera_name": "YRIGOYEN 1920",
+            "channel_id": 81,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.16",
+            "camera_name": "PUERTA ANX E",
+            "channel_id": 82,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
+        },
+        {
+            "ip_address": "10.91.30.17",
+            "camera_name": "HALL MITRE 2085 - 2",
+            "channel_id": 83,
+            "nvr_ip": "10.105.0.200",
+            "nvr_name": "HCDN-NVR-1",
+            "origen_datos": "NVR (Modo Básico)"
         }
     ]
 }

@@ -1,1 +1,2 @@
-Todas las cámaras respondieron correctamente de forma directa. ¡0 fallas!
+=== LOG VACÍO ===
+Al ejecutar un Escaneo Básico (Solo NVRs), no se puede determinar qué cámaras están realmente offline en la red.

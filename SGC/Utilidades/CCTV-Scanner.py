@@ -8,14 +8,17 @@ DOCUMENTACIÓN GENERAL: Scanner de CCTV (Hikvision ISAPI / Dahua CGI)
 Python 3.8 o superior  →  https://www.python.org/downloads/
   En Windows: marcar "Add Python to PATH" durante la instalación.
 
-Paquetes externos (instalar una sola vez con pip):
+Paquetes externos:
+  - requests (OBLIGATORIO) : comunicación HTTP/HTTPS con NVRs y cámaras.
+  - urllib3                : se instala automáticamente como dependencia de requests.
+  - keyring (OPCIONAL)     : almacenamiento seguro de credenciales en el S.O.
 
-    pip install requests keyring (windows)
-    pip3 install requests keyring (macOS / Linux)
+Instalación rápida:
+    pip install requests         (Instalación mínima)
+    pip install requests keyring (Recomendado para PC de escritorio)
 
-  - requests : comunicación HTTP/HTTPS con NVRs y cámaras.
-  - keyring   : almacenamiento seguro de credenciales en el S.O.
-  - urllib3   : se instala automáticamente como dependencia de requests.
+Si "keyring" no está instalado (ej. servidores Linux), el script seguirá funcionando 
+pidiendo la contraseña de forma manual o leyéndola del archivo JSON.
 
 --------------------------------------------------------------------------------
 2. FUNCIONAMIENTO DEL SCRIPT
@@ -23,9 +26,10 @@ Paquetes externos (instalar una sola vez con pip):
 El flujo lógico del programa se ejecuta en los siguientes pasos:
 
 1. Lectura de Credenciales y Parámetros:
-   - Intenta leer configuración desde el archivo "CCTV-Scanner-config.json" colocado
-     en la misma carpeta del script.
+   - Intenta leer configuración desde el archivo "CCTV-Scanner-config.json".
    - Si no lo encuentra, activa el Modo Interactivo pidiendo los datos por consola.
+   - Orden de prioridad de contraseñas: 
+     1º Archivo JSON -> 2º Keyring (si está instalado) -> 3º Ingreso manual.
 
 2. Fase 1 - Extracción desde NVRs (asíncrona): 
    Se conecta a los NVRs en paralelo mediante ISAPI para extraer los canales IP, 
@@ -48,6 +52,7 @@ El flujo lógico del programa se ejecuta en los siguientes pasos:
 --------------------------------------------------------------------------------
 {
     "nvr_user": "apinfo",
+    "nvr_pass": "TuClaveSecreta123", 
     "opcion_puerto": "3",
     "max_workers": 50,
     "tipo_escaneo": "2",
@@ -58,6 +63,7 @@ El flujo lógico del programa se ejecuta en los siguientes pasos:
 }
 
 Explicación de los Campos Clave:
+- nvr_pass (Opcional): Ideal para automatizar el script en servidores sin Keyring.
 - opcion_puerto (String) -> Control de TLS para optimizar velocidad:
   "1": Fallback Total (TLS 1.3 -> 1.2 -> 1.0 -> HTTP).
   "2": Estándar Legacy (TLS 1.2 -> 1.0 -> HTTP).
@@ -66,6 +72,7 @@ Explicación de los Campos Clave:
   "5": Solo HTTP (80) + Compatibilidad Cámaras Antiguas.
 - max_workers: Cantidad de hilos (Recomendado 10-20 en redes normales).
 - tipo_escaneo: "1" (Solo NVRs, muy rápido) o "2" (Completo Unicast).
+- nvrs: direcciones ip de los nvr a scanear
 ================================================================================
 """
 
@@ -80,27 +87,34 @@ import getpass
 import ipaddress
 import time
 
+# --- GESTIÓN DE DEPENDENCIAS OBLIGATORIAS ---
 try:
     import requests
     import urllib3
     from requests.adapters import HTTPAdapter
     from requests.auth import HTTPDigestAuth, HTTPBasicAuth
-    import keyring
 except ImportError as e:
     print("\n" + "="*70)
-    print(" [ERROR FATAL] Faltan dependencias para ejecutar el script.")
+    print(" [ERROR FATAL] Falta la dependencia 'requests' para ejecutar el script.")
     print("="*70)
     print(f" Detalle técnico: {e}")
-    print("\n Para solucionarlo, abrí tu terminal (CMD, PowerShell o Terminal)")
-    print(" y ejecutá según tu sistema operativo:\n")
+    print("\n Para solucionarlo, abrí tu terminal y ejecutá según tu sistema operativo:\n")
     print(" Windows:")
-    print("      pip install requests keyring\n")
+    print("      pip install requests\n")
     print(" macOS / Linux:")
-    print("      pip3 install requests keyring")
-    print("      (o también: python3 -m pip install requests keyring)\n")
+    print("      pip3 install requests\n")
     print("="*70 + "\n")
     input(" Presioná Enter para salir...")
     sys.exit(1)
+
+# --- GESTIÓN DE DEPENDENCIAS OPCIONALES ---
+try:
+    import keyring
+    HAS_KEYRING = True
+except ImportError:
+    HAS_KEYRING = False
+    print("\n[INFO] La librería 'keyring' no está instalada. El script funcionará,")
+    print("       pero el almacenamiento seguro de contraseñas en el S.O. estará desactivado.")
 
 try:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -307,8 +321,8 @@ def procesar_nvr(args):
                 chan_id = chan_id_elem.text if chan_id_elem is not None else "N/A"
                 
                 chan_name_elem = channel.find('name')
-                camera_desc = chan_name_elem.text if chan_name_elem is not None else "N/A"
-
+                camera_desc = chan_name_elem.text if (chan_name_elem is not None and chan_name_elem.text is not None) else "N/A"
+                
                 # PARCHE PARA CARACTERES RAROS DEL NVR
                 if camera_desc != "N/A":
                     camera_desc = camera_desc.replace("~N", "Ñ").replace("~n", "ñ")
@@ -482,7 +496,8 @@ def procesar_camara(args):
                     nro_serie = serial_raw
                 
                 camera_name_real = texto('deviceName')
-                if camera_name_real != "N/A": 
+                if camera_name_real is not None and camera_name_real != "N/A": 
+                    # PARCHE
                     camera_name = camera_name_real.replace("~N", "Ñ").replace("~n", "ñ")
                     
                 mac_address = texto('macAddress')
@@ -580,8 +595,12 @@ def ejecutar_escaneo_unificado():
             input("Presioná Enter para continuar con el asistente manual...")
 
     user = None
-    if config_data and "nvr_user" in config_data:
-        user = str(config_data["nvr_user"]).strip()
+    password = None
+
+    # 1. Intentar sacar User y Pass directamente del JSON
+    if config_data:
+        user = str(config_data.get("nvr_user", "")).strip() or None
+        password = str(config_data.get("nvr_pass", "")).strip() or None
 
     if not user:
         print("\n[!] No se detectó usuario en la configuración.")
@@ -591,24 +610,33 @@ def ejecutar_escaneo_unificado():
             return
         usar_interactivo = True
 
-    password = keyring.get_password("CCTV_Daemon", user)
-
+    # 2. Si no hay contraseña en el JSON, buscarla con Keyring o manualmente
     if not password:
-        print(f"\n[INFO] No hay credenciales guardadas en el S.O. para '{user}'.")
-        password = getpass.getpass(f"  -> Ingresá la contraseña para '{user}': ").strip()
+        # Intento A: Leer de Keyring (solo si está instalado)
+        if HAS_KEYRING:
+            password = keyring.get_password("CCTV_Daemon", user)
 
+        # Intento B: Si Keyring falló o no está instalado, pedir a mano
         if not password:
-            print("[ERROR] La contraseña no puede estar vacía. Saliendo.")
-            return
-        usar_interactivo = True
+            if HAS_KEYRING:
+                print(f"\n[INFO] No hay credenciales guardadas en el S.O. para '{user}'.")
+                
+            password = getpass.getpass(f"  -> Ingresá la contraseña para '{user}': ").strip()
 
-        guardar = input(f"  ¿Querés guardar esta clave en el S.O.? [s/n]: ").strip().lower()
-        if guardar == 's':
-            try:
-                keyring.set_password("CCTV_Daemon", user, password)
-                print("[OK] Contraseña guardada.")
-            except Exception as e:
-                print(f"[WARN] No se pudo guardar la clave: {e}")
+            if not password:
+                print("[ERROR] La contraseña no puede estar vacía. Saliendo.")
+                return
+            usar_interactivo = True
+
+            # Preguntar para guardar en el S.O. (solo si Keyring está disponible)
+            if HAS_KEYRING:
+                guardar = input(f"  ¿Querés guardar esta clave en el S.O. para la próxima? [s/n]: ").strip().lower()
+                if guardar == 's':
+                    try:
+                        keyring.set_password("CCTV_Daemon", user, password)
+                        print("[OK] Contraseña guardada.")
+                    except Exception as e:
+                        print(f"[WARN] No se pudo guardar la clave: {e}")
 
     nvr_list = []
     if config_data and "nvrs" in config_data:
