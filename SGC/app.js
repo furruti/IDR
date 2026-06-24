@@ -6363,6 +6363,9 @@
             const labels = { upload: '1 / 3', mapping: '2 / 3', preview: '3 / 3' };
             const lbl = document.getElementById('parseador-step-label');
             if (lbl) lbl.textContent = labels[paso] || '';
+            // Mostrar "Continuar" en paso 1 solo si ya hay datos cargados
+            const btnContinuar = document.getElementById('btn-parseador-continuar');
+            if (btnContinuar) btnContinuar.classList.toggle('hidden', paso !== 'upload' || !_jsonData);
         }
 
         function _resetUI() {
@@ -6720,6 +6723,8 @@
                 const file = fileInp.files[0];
                 if (file) _procesarArchivo(file);
             });
+            document.getElementById('btn-parseador-continuar')
+                ?.addEventListener('click', () => { if (_jsonData) { _renderMapping(); _setStep('mapping'); } });
             zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('importar-dropzone-drag'); });
             zone.addEventListener('dragleave', () => zone.classList.remove('importar-dropzone-drag'));
             zone.addEventListener('drop', e => {
@@ -6910,6 +6915,10 @@
 
             const btnAplicar = document.getElementById('btn-parseador-datos-aplicar');
             if (btnAplicar) btnAplicar.classList.toggle('hidden', paso !== 'preview');
+
+            // Mostrar "Continuar" en paso 1 solo si ya hay datos cargados
+            const btnContinuar = document.getElementById('btn-parseador-datos-continuar');
+            if (btnContinuar) btnContinuar.classList.toggle('hidden', paso !== 'upload' || !_jsonData);
         }
 
         function _procesarArchivo(file) {
@@ -7073,6 +7082,8 @@
                 const file = fileInp.files[0];
                 if (file) _procesarArchivo(file);
             });
+            document.getElementById('btn-parseador-datos-continuar')
+                ?.addEventListener('click', () => { if (_jsonData) _mostrarPreview(); });
             zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('importar-dropzone-drag'); });
             zone.addEventListener('dragleave', () => zone.classList.remove('importar-dropzone-drag'));
             zone.addEventListener('drop', e => {
