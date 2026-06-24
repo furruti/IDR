@@ -6566,7 +6566,7 @@
                         <td>${esc(cam.camera_name || '')}</td>
                         <td class="parseador-td-ip">${esc(cam.ip_address || '')}</td>
                         <td>${disp
-                            ? `<span class="parseador-badge-match">✓ ${esc(disp.modelo || disp.mac || disp.id)}</span>`
+                            ? esc(disp.mac || disp.modelo || disp.id)
                             : `<span class="parseador-td-nodisp">— Sin coincidencia</span>`
                         }</td>
                     </tr>`;
@@ -6870,6 +6870,7 @@
         on('btn-parseador-cancelar',    'click', () => ParseadorCanales.accionCancelar());
         on('btn-parseador-ver-cambios', 'click', () => ParseadorCanales.mostrarPreview());
         on('btn-parseador-aplicar',     'click', () => ParseadorCanales.aplicar());
+        on('btn-parseador-nuevos-cerrar', 'click', () => MM.cerrar('modal-parseador-nuevos-disp'));
 
         on('label-recordar-grupos', 'click', () => UI.toggleRecordarGrupos());
         on('btn-ajustes-gist-subir', 'click', () => GistSync.subir());
