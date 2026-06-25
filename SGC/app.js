@@ -166,7 +166,8 @@
             const core = {
                 d: (obj.dispositivos || []).map(x => [
                     x.id, x.tipo, x.estado || null, x.mac || null, x.serial || null, x.canales || null,
-                    x.marca || null, x.modelo || null, x.patrimonio || null, x.firmware || null, x.forma || null
+                    x.marca || null, x.modelo || null, x.patrimonio || null, x.firmware || null, x.forma || null,
+                    x.comentario || null
                 ]),
                 g: (obj.grabadores || []).map(x => [
                     x.id, x.dispositivoId || null, x.canales_n || 16,
@@ -324,6 +325,7 @@
                 mac: sanitize(d.mac || '', 500),
                 patrimonio: sanitize(d.patrimonio || '', 60),
                 firmware: sanitize(d.firmware || '', 80),
+                comentario: sanitize(d.comentario || '', 300),
             };
 
             if (tipo === 'camara') {
@@ -3230,6 +3232,7 @@
             firmware: d.firmware || '',
             forma: d.forma || '',
             canales: String(d.canales || 16),
+            comentario: d.comentario || '',
         };
     }
 
@@ -4392,6 +4395,7 @@
                 canales: document.getElementById(`${prefijo}-canales`).value,
                 patrimonio: _v(prefijo, 'patrimonio'),
                 firmware: _v(prefijo, 'firmware'),
+                comentario: _v(prefijo, 'comentario'),
             };
 
             const _tsNow = new Date().toISOString();
@@ -4417,6 +4421,8 @@
             document.getElementById(`${prefijo}-mac`).value = d.mac || '';
             document.getElementById(`${prefijo}-patrimonio`).value = d.patrimonio || '';
             document.getElementById(`${prefijo}-firmware`).value = d.firmware || '';
+            const comentarioEl = document.getElementById(`${prefijo}-comentario`);
+            if (comentarioEl) comentarioEl.value = d.comentario || '';
             const esCamara = d.tipo === 'camara';
             document.getElementById(`${prefijo}-forma-group`).classList.toggle('hidden', !esCamara);
             document.getElementById(`${prefijo}-forma`).value = d.forma || '';
@@ -4589,6 +4595,7 @@
                 canales: document.getElementById(`${prefijo}-canales`).value,
                 patrimonio: _v(prefijo, 'patrimonio'),
                 firmware: _v(prefijo, 'firmware'),
+                comentario: _v(prefijo, 'comentario'),
             };
 
             const obj = S.sanitizarDisp({ ...base, id: _edicion.dispId, mac: macs[0] || '' });
@@ -5992,6 +5999,8 @@
         document.getElementById(`${prefijo}-forma-group`).classList.add('hidden');
         document.getElementById(`${prefijo}-canales`).value = '16';
         document.getElementById(`${prefijo}-canales-group`).classList.add('hidden');
+        const comentarioEl = document.getElementById(`${prefijo}-comentario`);
+        if (comentarioEl) comentarioEl.value = '';
     }
 
     function _limpiarFormGrab(prefijo) {
@@ -7329,7 +7338,8 @@
         const LOCK_CFG = {
             'modal-editar-disp': {
                 inputs: ['editar-disp-tipo', 'editar-disp-forma', 'editar-disp-canales', 'editar-disp-marca',
-                    'editar-disp-modelo', 'editar-disp-mac', 'editar-disp-serial', 'editar-disp-patrimonio', 'editar-disp-firmware'],
+                    'editar-disp-modelo', 'editar-disp-mac', 'editar-disp-serial', 'editar-disp-patrimonio', 'editar-disp-firmware',
+                    'editar-disp-comentario'],
                 btns: [
                     () => document.querySelector('#modal-editar-disp .btn-edit'),
                     () => document.querySelector('#modal-editar-disp .btn-delete'),

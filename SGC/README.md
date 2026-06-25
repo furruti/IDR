@@ -5,6 +5,9 @@
 
 ## (Changelog)
 
+### 260625
+* **Nuevo:** Se agrega campo comentarios al modal de activos
+
 ### 260624
 * **Nuevo:** Parseador de datos
 * **Nuevo:** Parseador de canales
