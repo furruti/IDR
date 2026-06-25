@@ -2,46 +2,10 @@
     'use strict';
 
     // ════════════════════════════════════════════════════════════════════════════
-    // § MIGRACIÓN localStorage — renombra claves viejas (sin prefijo) a nuevas
-    // Corre una sola vez; se marca con la clave 'cctvs:migrated_v1'
-    // ════════════════════════════════════════════════════════════════════════════
-    ; (() => {
-        try {
-            if (!localStorage.getItem('cctvs:migrated_v1')) {
-                const migraciones = [
-                    ['cctv_tema', 'cctvs:cctv_tema'],
-                    ['cctv_tab', 'cctvs:cctv_tab'],
-                    ['cctv_activos_orden', 'cctvs:cctv_activos_orden'],
-                    ['cctv_activos_recordar', 'cctvs:cctv_activos_recordar'],
-                    ['cctv_act_collapsed', 'cctvs:cctv_act_collapsed'],
-                    ['cctv_pisos_collapsed', 'cctvs:cctv_pisos_collapsed'],
-                    ['cctv_tipos_custom', 'cctvs:cctv_tipos_custom'],
-                    ['cctv_edificios', 'cctvs:cctv_edificios'],
-                    ['cctv_data_v1', 'cctvs:cctv_data_v1'],
-                    ['cctv_gist_cfg', 'cctvs:cctv_gist_cfg'],
-                    ['cctv_grab_expanded', 'cctvs:cctv_grab_expanded'],
-                    ['cctv_busq_activos', 'cctvs:cctv_busq_activos'],
-                ];
-                migraciones.forEach(([vieja, nueva]) => {
-                    const val = localStorage.getItem(vieja);
-                    if (val !== null) {
-                        localStorage.setItem(nueva, val);
-                        localStorage.removeItem(vieja);
-                    }
-                });
-                localStorage.setItem('cctvs:migrated_v1', '1');
-            }
-        } catch (_) { }
-    })();
-
-    // ════════════════════════════════════════════════════════════════════════════
     // § BOOT — dark-mode y tab inicial (síncrono, antes del parse completo)
     // ════════════════════════════════════════════════════════════════════════════
     ; (() => {
-        try {
-            const t = localStorage.getItem('cctvs:cctv_tema');
-            if (t === 'true' || t === null) document.documentElement.classList.add('dark-mode');
-            document.body.classList.remove('dark-mode');
+        try {            
             const saved = JSON.parse(localStorage.getItem('cctvs:cctv_tab') || 'null');
             const tab = (saved && saved.tab && (Date.now() - saved.ts) < 3600000) ? saved.tab : 'dashboard';
             document.body.setAttribute('data-tab-inicial', tab);
@@ -3272,7 +3236,7 @@
 
     // Etiqueta legible de un dispositivo para mensajes de error/UI
     function _labelDisp(d) {
-        return [d.marca, d.modelo].filter(Boolean).join(' ') || d.serial || d.mac || d.id;
+        return d.mac || d.serial || [d.marca, d.modelo].filter(Boolean).join(' ') || d.id;
     }
 
     // Retorna true si el dispositivo con ese id tiene un estado inactivo en _data
