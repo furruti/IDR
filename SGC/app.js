@@ -5,7 +5,7 @@
     // § BOOT — dark-mode y tab inicial (síncrono, antes del parse completo)
     // ════════════════════════════════════════════════════════════════════════════
     ; (() => {
-        try {            
+        try {
             const saved = JSON.parse(localStorage.getItem('cctvs:cctv_tab') || 'null');
             const tab = (saved && saved.tab && (Date.now() - saved.ts) < 3600000) ? saved.tab : 'dashboard';
             document.body.setAttribute('data-tab-inicial', tab);
