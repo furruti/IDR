@@ -1,0 +1,12 @@
+{
+  "name": "idr",
+  "version": "1.0.0",
+  "description": "IDR Project",
+  "main": "app.js",
+  "scripts": {
+    "dev": "live-server"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
