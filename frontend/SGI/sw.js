@@ -1,4 +1,4 @@
-const CACHE_NAME = 'SGI-V260611.1500-cache';
+const CACHE_NAME = 'SGI-V260611.1500-frontend-cache';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,7 +6,6 @@ const urlsToCache = [
   './icon.svg',
   './app.js',
   './styles.css',
-  './fondos.js',
   './flash.js',
 ];
 
