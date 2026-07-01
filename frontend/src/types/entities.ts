@@ -1,0 +1,2 @@
+export type LegacyRecord = Record<string, unknown>;
+export type Rack = LegacyRecord; export type Edificio = LegacyRecord; export type Material = LegacyRecord; export type Movimiento = LegacyRecord; export type Categoria = LegacyRecord; export type Herramienta = LegacyRecord; export type Camara = LegacyRecord; export type Grabador = LegacyRecord; export type Dispositivo = LegacyRecord; export type Licencia = LegacyRecord; export type Persona = LegacyRecord; export type Area = LegacyRecord; export type Patchera = LegacyRecord; export type Puerto = LegacyRecord;

@@ -1,36 +1,45 @@
-# IDR - Sistema de Gestión
+# IDR
 
-## Arquitectura actual
+Migración tecnológica fiel de IDR desde HTML/CSS/JavaScript vanilla hacia una base moderna con frontend Next.js + React + TypeScript y backend NestJS + TypeScript.
+
+## Arquitectura
+
+- `legacy/frontend-vanilla/`: aplicación original preservada como referencia funcional y visual.
+- `frontend/`: aplicación Next.js con App Router. En esta etapa monta la versión legacy preservada en rutas modernas y sirve sus recursos desde una ruta Next.js `legacy-static`, sin duplicar binarios originales, para mantener equivalencia visual y funcional exacta mientras se encapsulan servicios TypeScript.
+- `backend/`: API NestJS mínima con health check.
+- `deploy/`: documentación de despliegue futuro. Rancher/Kubernetes no está implementado.
+
+## Tecnologías
+
+- Frontend: Next.js, React, TypeScript, CSS tradicional.
+- Backend: NestJS, TypeScript, ConfigModule, ValidationPipe, filtro global de errores.
+- Persistencia temporal: localStorage, JSON y GitHub Gist existentes.
+- Base de datos: no implementada.
+- ORM Prisma: no implementado.
+- Autenticación: no implementada.
+
+## Estructura
 
 ```text
-frontend/
+IDR/
+├── frontend/
+├── backend/
+├── legacy/frontend-vanilla/
+├── deploy/
+├── .gitignore
+└── README.md
 ```
 
-Contiene la aplicación IDR existente en HTML, CSS y JavaScript vanilla. Conserva Service Workers, manifests PWA, localStorage y la sincronización actual mediante GitHub Gist.
+## Ejecución
 
-```text
-backend/
-```
-
-Contiene la base inicial de la futura API Node.js con Express. En esta etapa solo expone un endpoint de comprobación de salud.
-
-```text
-deploy/
-```
-
-Contendrá configuraciones de Rancher y Kubernetes en una etapa posterior.
-
-## Ejecutar el frontend
-
-El `package.json` existente pertenecía exclusivamente al frontend porque solo define `live-server` para servir la aplicación web. Por eso se movió a `frontend/package.json`, evitando mezclar dependencias del frontend con las del backend.
-
-Desde la raíz del repositorio:
+### Legacy
 
 ```bash
-npx live-server frontend
+cd legacy/frontend-vanilla
+npx live-server
 ```
 
-O instalando las dependencias del frontend:
+### Frontend
 
 ```bash
 cd frontend
@@ -38,7 +47,9 @@ npm install
 npm run dev
 ```
 
-## Ejecutar el backend
+Puerto: `3000`.
+
+### Backend
 
 ```bash
 cd backend
@@ -46,9 +57,11 @@ npm install
 npm run dev
 ```
 
-Endpoint de comprobación:
+Puerto: `3002`.
 
-```text
+Health endpoint:
+
+```http
 GET http://localhost:3002/api/v1/health
 ```
 
@@ -62,12 +75,87 @@ Respuesta esperada:
 }
 ```
 
-## Estado del proyecto
+## Variables de entorno
 
-- El frontend aún conserva localStorage.
-- La sincronización mediante GitHub Gist todavía no fue reemplazada.
-- La base de datos todavía no fue implementada.
-- La autenticación todavía no fue implementada.
-- La separación realizada es solamente estructural y preparatoria.
-- No se implementaron roles, permisos ni endpoints funcionales de los módulos.
-- No se implementó despliegue en Rancher ni Kubernetes.
+Frontend: `frontend/.env.example`
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3002/api/v1
+```
+
+Backend: `backend/.env.example`
+
+```env
+NODE_ENV=development
+PORT=3002
+CORS_ORIGIN=http://localhost:3000
+
+# DATABASE_URL=
+# AUTH_ISSUER_URL=
+# AUTH_AUDIENCE=
+```
+
+## Rutas migradas
+
+| Ruta nueva | Módulo legacy |
+| --- | --- |
+| `/` | Launcher principal |
+| `/cctv` | `SGC/index.html` |
+| `/materiales` | `SGI/index.html` |
+| `/racks` | `SGR/index.html` |
+| `/licencias` | `SGL/index.html` |
+| `/patcheras` | `SGP/patcheras.html` |
+
+Redirecciones compatibles configuradas:
+
+- `/SGC/index.html` → `/cctv`
+- `/SGI/index.html` → `/materiales`
+- `/SGR/index.html` → `/racks`
+- `/SGL/index.html` → `/licencias`
+- `/SGP/index.html` → `/patcheras`
+
+## Estado de migración por módulo
+
+| Módulo | Estado migración | Equivalencia visual | Equivalencia funcional | Observaciones |
+| ------ | ---------------- | ------------------- | ---------------------- | ------------- |
+| Launcher | Migrado a ruta Next.js | IGUAL | IGUAL | Se monta el HTML legacy preservado. |
+| Racks | Migrado a ruta Next.js | IGUAL | IGUAL | Se monta `SGR/index.html`. |
+| Materiales | Migrado a ruta Next.js | IGUAL | IGUAL | Se monta `SGI/index.html`. |
+| CCTV | Migrado a ruta Next.js | IGUAL | IGUAL | Se monta `SGC/index.html`. |
+| Licencias | Migrado a ruta Next.js | IGUAL | IGUAL | Se monta `SGL/index.html`. |
+| Patcheras | Migrado a ruta Next.js | IGUAL | IGUAL | Se conserva el estado existente de `SGP/patcheras.html`. |
+
+## Claves localStorage conservadas documentadas
+
+- `cctvs:cctv_data_v1`
+- `SGI_activos`
+- `SGI_herramientas`
+- `SGI_dark`
+- `SGI_tab`
+- `SGI_tab_time`
+- `SGI_hist_colapsos`
+- `SGI_gist_cfg`
+- `mat_gist_cfg` (migración legacy interna hacia `SGI_gist_cfg`)
+- `RCK_data`
+
+## GitHub Gist
+
+Se conserva la integración legacy dentro de los archivos preservados. No se ejecutaron operaciones contra Gists reales durante esta etapa. Los servicios TypeScript nuevos incluyen helpers de payload sin realizar escrituras remotas.
+
+## Pendientes
+
+- Migrar progresivamente DOM vanilla a componentes React declarativos módulo por módulo.
+- Ampliar inventario completo de claves localStorage y archivos Gist por módulo.
+- Agregar comparaciones visuales automatizadas con capturas.
+- Implementar PostgreSQL en una etapa futura.
+- Implementar Prisma en una etapa futura.
+- Implementar autenticación/autorización en una etapa futura.
+- Implementar Rancher/Kubernetes en una etapa futura.
+
+## Aclaraciones
+
+- La persistencia sigue siendo localStorage/Gist.
+- PostgreSQL no está implementado.
+- Prisma no está implementado.
+- Rancher no está implementado.
+- No hay endpoints de negocio en backend.
