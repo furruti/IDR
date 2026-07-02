@@ -1,4 +1,4 @@
-import { signIn } from '@/lib/auth';
+import AutoSignIn from './AutoSignIn';
 
 type Props = {
   searchParams: Promise<{
@@ -18,9 +18,5 @@ export default async function SsoPage({ searchParams }: Props) {
   const params = await searchParams;
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
 
-  await signIn('keycloak', {
-    redirectTo: callbackUrl,
-  });
-
-  return null;
+  return <AutoSignIn callbackUrl={callbackUrl} />;
 }
