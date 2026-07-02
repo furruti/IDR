@@ -1,0 +1,8 @@
+﻿stages:
+  - test
+
+verificar-pipeline:
+  stage: test
+  script:
+    - echo "Pipeline de IDR-test funcionando"
+    - echo "Commit: $CI_COMMIT_SHORT_SHA"
