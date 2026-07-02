@@ -13,7 +13,7 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "next-auth": "beta"
+    "next-auth": "^5.0.0-beta.31"
   },
   "devDependencies": {
     "jsdom": "latest",
