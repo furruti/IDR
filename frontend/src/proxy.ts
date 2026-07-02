@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 
 const authRoutePrefix = '/api/auth';
 const nextRoutePrefix = '/_next';
+const ssoRoute = '/auth/sso';
 const publicFiles = new Set(['/favicon.ico']);
 const publicFilePattern = /\.(?:avif|css|gif|ico|jpg|jpeg|js|map|png|svg|txt|webmanifest|webp|woff|woff2)$/i;
 
@@ -12,13 +13,14 @@ export const proxy = auth((request) => {
   const isAllowedWithoutSession =
     nextUrl.pathname.startsWith(authRoutePrefix) ||
     nextUrl.pathname.startsWith(nextRoutePrefix) ||
+    nextUrl.pathname === ssoRoute ||
     publicFiles.has(nextUrl.pathname) ||
     publicFilePattern.test(nextUrl.pathname);
 
   if (!isAuthenticated && !isAllowedWithoutSession) {
-    const signInUrl = new URL('/api/auth/signin/keycloak', nextUrl);
-    signInUrl.searchParams.set('callbackUrl', `${nextUrl.pathname}${nextUrl.search}`);
-    return NextResponse.redirect(signInUrl);
+    const ssoUrl = new URL(ssoRoute, nextUrl);
+    ssoUrl.searchParams.set('callbackUrl', `${nextUrl.pathname}${nextUrl.search}`);
+    return NextResponse.redirect(ssoUrl);
   }
 
   return NextResponse.next();
