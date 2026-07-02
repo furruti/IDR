@@ -1,5 +1,6 @@
 import NextAuth, { type DefaultSession, type Session } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
+import Credentials from 'next-auth/providers/credentials';
 import type { JWT } from 'next-auth/jwt';
 
 type KeycloakProfile = {
@@ -27,21 +28,52 @@ function getRoles(profile?: KeycloakProfile): string[] {
   return [...roles];
 }
 
+const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
+
+const authProviders = isBypass
+  ? [
+      Credentials({
+        id: 'credentials',
+        name: 'Bypass Auth',
+        credentials: {},
+        async authorize() {
+          return {
+            id: 'bypass-user-id',
+            name: 'Usuario Bypass',
+            email: 'bypass@hcdn.gob.ar',
+          };
+        },
+      }),
+    ]
+  : [
+      Keycloak({
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+        clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
+        issuer: getKeycloakIssuer(),
+      }),
+    ];
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  providers: [
-    Keycloak({
-      clientId: process.env.KEYCLOAK_CLIENT_ID,
-      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
-      issuer: getKeycloakIssuer(),
-    }),
-  ],
+  providers: authProviders,
   session: {
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, user }) {
+      if (isBypass) {
+        if (user) {
+          token.user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          } satisfies DefaultSession['user'];
+          token.roles = ['admin', 'user']; // Roles por defecto para bypass
+        }
+        return token;
+      }
+
       const keycloakProfile = profile as KeycloakProfile | undefined;
 
       if (account) {

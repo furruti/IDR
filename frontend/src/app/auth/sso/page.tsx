@@ -17,6 +17,7 @@ function getSafeCallbackUrl(callbackUrl?: string) {
 export default async function SsoPage({ searchParams }: Props) {
   const params = await searchParams;
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
+  const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
 
-  return <AutoSignIn callbackUrl={callbackUrl} />;
+  return <AutoSignIn callbackUrl={callbackUrl} isBypass={isBypass} />;
 }

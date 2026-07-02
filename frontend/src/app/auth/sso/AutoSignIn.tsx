@@ -5,18 +5,20 @@ import { useEffect, useRef } from 'react';
 
 type Props = {
   callbackUrl: string;
+  isBypass?: boolean;
 };
 
-export default function AutoSignIn({ callbackUrl }: Props) {
+export default function AutoSignIn({ callbackUrl, isBypass = false }: Props) {
   const hasCalled = useRef(false);
 
   useEffect(() => {
     if (!hasCalled.current) {
       hasCalled.current = true;
+      const provider = isBypass ? 'credentials' : 'keycloak';
       // Llamar a next-auth client-side signIn
-      signIn('keycloak', { callbackUrl });
+      signIn(provider, { callbackUrl });
     }
-  }, [callbackUrl]);
+  }, [callbackUrl, isBypass]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50/50">
@@ -28,7 +30,9 @@ export default function AutoSignIn({ callbackUrl }: Props) {
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm border border-gray-100">
         <h2 className="text-xl font-semibold text-gray-900">Iniciar sesión</h2>
         <p className="mt-2 text-sm text-gray-500 mb-6">
-          Serás redirigido a Keycloak para autenticarte.
+          {isBypass 
+            ? 'Bypass activado. Iniciando sesión automáticamente...' 
+            : 'Serás redirigido a Keycloak para autenticarte.'}
         </p>
 
         <button
@@ -55,7 +59,7 @@ export default function AutoSignIn({ callbackUrl }: Props) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
-          <span>Redirigiendo...</span>
+          <span>{isBypass ? 'Autenticando...' : 'Redirigiendo...'}</span>
         </button>
       </div>
     </div>
