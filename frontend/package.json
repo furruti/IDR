@@ -11,17 +11,18 @@
   },
   "dependencies": {
     "next": "latest",
+    "next-auth": "^5.0.0-beta.31",
     "react": "latest",
     "react-dom": "latest",
     "next-auth": "^5.0.0-beta.31"
   },
   "devDependencies": {
-    "jsdom": "latest",
-    "typescript": "latest",
-    "vitest": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "@vitejs/plugin-react": "latest"
+    "@vitejs/plugin-react": "latest",
+    "jsdom": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
   }
 }
