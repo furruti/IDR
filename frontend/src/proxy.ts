@@ -5,7 +5,7 @@ const publicRoutes = ['/login'];
 const authRoutePrefix = '/api/auth';
 const nextRoutePrefix = '/_next';
 
-export default auth((request) => {
+export const proxy = auth((request) => {
   const { nextUrl } = request;
   const isAuthenticated = Boolean(request.auth);
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
