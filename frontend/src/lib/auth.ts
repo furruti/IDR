@@ -37,10 +37,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       issuer: getKeycloakIssuer(),
     }),
   ],
-  pages: {
-    signIn: '/login',
-    error: '/login',
-  },
   session: {
     strategy: 'jwt',
   },
