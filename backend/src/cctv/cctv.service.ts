@@ -3,12 +3,13 @@ import { randomUUID } from 'crypto';
 import { DatabaseService } from '../database/database.service';
 import { CreateCameraDto } from './dto/create-camera.dto';
 import { UpdateCameraDto } from './dto/update-camera.dto';
+import { CameraResponse, RecorderResponse } from './dto/cctv.responses';
 
 @Injectable()
 export class CctvService {
   constructor(private readonly database: DatabaseService) { }
 
-  async findAllCameras() {
+  async findAllCameras(): Promise<CameraResponse[]> {
     const result = await this.database.query(`
     SELECT
       d.id,
@@ -86,10 +87,10 @@ export class CctvService {
       d.mac_address NULLS LAST
   `);
 
-    return result.rows;
+    return result.rows as CameraResponse[];
   }
 
-  async findCameraById(id: string) {
+  async findCameraById(id: string): Promise<CameraResponse> {
     const result = await this.database.query(
       `
       SELECT
@@ -117,10 +118,10 @@ export class CctvService {
       throw new NotFoundException('Cámara no encontrada');
     }
 
-    return result.rows[0];
+    return result.rows[0] as CameraResponse;
   }
 
-  async createCamera(input: CreateCameraDto) {
+  async createCamera(input: CreateCameraDto): Promise<CameraResponse> {
     const id = input.id ?? randomUUID();
 
     try {
@@ -172,7 +173,7 @@ export class CctvService {
     }
   }
 
-  async updateCamera(id: string, input: UpdateCameraDto) {
+  async updateCamera(id: string, input: UpdateCameraDto): Promise<CameraResponse> {
     await this.findCameraById(id);
 
     await this.database.transaction(async (client) => {
@@ -238,7 +239,7 @@ export class CctvService {
     return { deleted: true, id };
   }
 
-  async findAllRecorders() {
+  async findAllRecorders(): Promise<RecorderResponse[]> {
     const result = await this.database.query(`
       SELECT
         d.id,
@@ -265,6 +266,6 @@ export class CctvService {
       ORDER BY d.device_type, d.brand, d.model
     `);
 
-    return result.rows;
+    return result.rows as RecorderResponse[];
   }
 }
