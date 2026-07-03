@@ -6,42 +6,85 @@ import { UpdateCameraDto } from './dto/update-camera.dto';
 
 @Injectable()
 export class CctvService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(private readonly database: DatabaseService) { }
 
   async findAllCameras() {
     const result = await this.database.query(`
-      SELECT
-        d.id,
-        d.status,
-        d.brand,
-        d.model,
-        d.serial_number AS "serialNumber",
-        d.mac_address AS "macAddress",
-        d.asset_number AS "assetNumber",
-        d.firmware,
-        d.comments,
-        c.form_factor AS "formFactor",
-        c.description,
-        c.ip_address::text AS "ipAddress",
-        b.name AS building,
-        f.name AS floor,
-        r.code AS rack,
-        s.name AS "switchName",
-        cnc.switch_port AS "switchPort",
-        rc.recorder_id AS "recorderId",
-        rc.channel_number AS "channelNumber"
-      FROM idr.cctv_devices d
-      INNER JOIN idr.cameras c ON c.device_id = d.id
-      LEFT JOIN idr.camera_locations cl ON cl.camera_id = d.id
-      LEFT JOIN idr.buildings b ON b.id = cl.building_id
-      LEFT JOIN idr.floors f ON f.id = cl.floor_id
-      LEFT JOIN idr.camera_network_connections cnc ON cnc.camera_id = d.id
-      LEFT JOIN idr.racks r ON r.id = cnc.rack_id
-      LEFT JOIN idr.switches s ON s.id = cnc.switch_id
-      LEFT JOIN idr.recorder_channels rc ON rc.camera_id = d.id
-      WHERE d.device_type = 'camera'
-      ORDER BY d.brand NULLS LAST, d.model NULLS LAST
-    `);
+    SELECT
+      d.id,
+      d.status,
+      d.brand,
+      d.model,
+      d.serial_number AS "serialNumber",
+      d.mac_address AS "macAddress",
+      d.asset_number AS "assetNumber",
+      d.firmware,
+      d.comments,
+      c.form_factor AS "formFactor",
+      c.description,
+      c.ip_address::text AS "ipAddress",
+      b.name AS building,
+      f.name AS floor,
+      r.code AS rack,
+      s.name AS "switchName",
+      cnc.switch_port AS "switchPort",
+
+      COALESCE(
+        jsonb_agg(
+          DISTINCT jsonb_build_object(
+            'recorderId', rc.recorder_id,
+            'recorderName', recorder_device.description,
+            'channelNumber', rc.channel_number
+          )
+        ) FILTER (WHERE rc.recorder_id IS NOT NULL),
+        '[]'::jsonb
+      ) AS assignments
+
+    FROM idr.cctv_devices d
+
+    INNER JOIN idr.cameras c
+      ON c.device_id = d.id
+
+    LEFT JOIN idr.camera_locations cl
+      ON cl.camera_id = d.id
+
+    LEFT JOIN idr.buildings b
+      ON b.id = cl.building_id
+
+    LEFT JOIN idr.floors f
+      ON f.id = cl.floor_id
+
+    LEFT JOIN idr.camera_network_connections cnc
+      ON cnc.camera_id = d.id
+
+    LEFT JOIN idr.racks r
+      ON r.id = cnc.rack_id
+
+    LEFT JOIN idr.switches s
+      ON s.id = cnc.switch_id
+
+    LEFT JOIN idr.recorder_channels rc
+      ON rc.camera_id = d.id
+
+    LEFT JOIN idr.recorders recorder_device
+      ON recorder_device.device_id = rc.recorder_id
+
+    WHERE d.device_type = 'camera'
+
+    GROUP BY
+      d.id,
+      c.device_id,
+      b.name,
+      f.name,
+      r.code,
+      s.name,
+      cnc.switch_port
+
+    ORDER BY
+      d.brand NULLS LAST,
+      d.model NULLS LAST,
+      d.mac_address NULLS LAST
+  `);
 
     return result.rows;
   }
