@@ -57,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: authProviders,
+  debug: process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true',
   session: {
     strategy: 'jwt',
   },
@@ -76,9 +77,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const keycloakProfile = profile as KeycloakProfile | undefined;
 
+      // ATENCIÓN: Evitamos guardar el access_token y el id_token enteros en el token de NextAuth.
+      // Los tokens de Keycloak son muy grandes y causan que la cookie supere los 4KB.
+      // Cuando esto pasa, los Proxies Reversos (Nginx/Ingress) en producción descartan la cookie silenciosamente,
+      // lo que resulta en que /api/auth/session devuelva `null` después del login.
       if (account) {
-        token.accessToken = account.access_token;
-        token.idToken = account.id_token;
         token.expiresAt = account.expires_at;
       }
 

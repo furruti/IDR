@@ -8,7 +8,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
   app.setGlobalPrefix('api/v1');
-  app.enableCors({ origin: config.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000' });
+
+  const corsOriginString = config.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000';
+  const corsOrigins = corsOriginString.split(',').map(origin => origin.trim());
+  app.enableCors({ origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins });
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableShutdownHooks();
