@@ -14,9 +14,11 @@
         "@nestjs/common": "latest",
         "@nestjs/config": "latest",
         "@nestjs/core": "latest",
+        "@nestjs/mapped-types": "^2.1.1",
         "@nestjs/platform-express": "latest",
         "class-transformer": "latest",
         "class-validator": "latest",
+        "pg": "^8.22.0",
         "reflect-metadata": "latest",
         "rxjs": "latest"
     },
@@ -24,6 +26,7 @@
         "@nestjs/cli": "latest",
         "@nestjs/testing": "latest",
         "@types/node": "latest",
+        "@types/pg": "^8.20.0",
         "supertest": "latest",
         "typescript": "latest",
         "vitest": "latest"
