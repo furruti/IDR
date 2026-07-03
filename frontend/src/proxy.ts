@@ -14,6 +14,7 @@ export const proxy = auth((request) => {
     nextUrl.pathname.startsWith(authRoutePrefix) ||
     nextUrl.pathname.startsWith(nextRoutePrefix) ||
     nextUrl.pathname === ssoRoute ||
+    nextUrl.pathname === '/auth/reauth' ||
     publicFiles.has(nextUrl.pathname) ||
     publicFilePattern.test(nextUrl.pathname);
 
