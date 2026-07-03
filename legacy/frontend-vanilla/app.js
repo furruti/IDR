@@ -129,6 +129,14 @@
             });
         }
 
+        const btnLogout = document.getElementById('btn-logout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.location.href = '/api/auth/logout';
+            });
+        }
+
         setupPWA();
         setupNavigation(); // Llamamos a la nueva función aquí
     }

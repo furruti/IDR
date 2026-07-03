@@ -60,6 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true',
   session: {
     strategy: 'jwt',
+    maxAge: 12 * 60 * 60, // 12 horas
   },
   callbacks: {
     async jwt({ token, account, profile, user }) {

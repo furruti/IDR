@@ -1,4 +1,4 @@
-import AutoSignIn from './AutoSignIn';
+import { signIn } from '@/lib/auth';
 
 type Props = {
   searchParams: Promise<{
@@ -19,5 +19,6 @@ export default async function SsoPage({ searchParams }: Props) {
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
   const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
 
-  return <AutoSignIn callbackUrl={callbackUrl} isBypass={isBypass} />;
+  const provider = isBypass ? 'credentials' : 'keycloak';
+  await signIn(provider, { callbackUrl });
 }
