@@ -2440,142 +2440,13 @@
         document.getElementById('dash-camaras').innerHTML = `<div class="flex-col">${vistaHtml}</div>`;
     }
 
-    let _dashCache = null;
-
-    async function renderDashboard() {
-        const contenedor = document.getElementById('dash-disp-tree');
-        const dashCamaras = document.getElementById('dash-camaras');
-        const dashGrabadores = document.getElementById('dash-grabadores');
-
-        if (!_dashCache) {
-            if (contenedor) contenedor.innerHTML = '<div style="padding:1rem;text-align:center;">Cargando...</div>';
-            if (dashCamaras) dashCamaras.innerHTML = '<div style="padding:1rem;text-align:center;">Cargando cámaras...</div>';
-            if (dashGrabadores) dashGrabadores.innerHTML = '<div style="padding:1rem;text-align:center;">Cargando grabadores...</div>';
-
-            try {
-                const [resCam, resRec] = await Promise.all([
-                    fetch('/api/v1/cctv/cameras'),
-                    fetch('/api/v1/cctv/recorders')
-                ]);
-                
-                if (!resCam.ok) throw new Error('Error cámaras: ' + resCam.status);
-                if (!resRec.ok) throw new Error('Error grabadores: ' + resRec.status);
-
-                const cameras = await resCam.json();
-                const recorders = await resRec.json();
-                
-                console.log('cameras loaded', cameras.length);
-                console.log('recorders loaded', recorders.length);
-
-                _dashCache = { cameras, recorders };
-            } catch (err) {
-                console.error('Error cargando datos reales:', err);
-                if (contenedor) contenedor.innerHTML = '<div style="padding:1rem;color:red">Error cargando dashboard</div>';
-                if (dashCamaras) dashCamaras.innerHTML = '<div style="padding:1rem;color:red">Error cargando cámaras</div>';
-                if (dashGrabadores) dashGrabadores.innerHTML = '<div style="padding:1rem;color:red">Error cargando grabadores</div>';
-                return;
-            }
-        }
-
-        const { cameras, recorders } = _dashCache;
-
-        // RENDER GRABADORES
-        if (dashGrabadores) {
-            if (recorders.length === 0) {
-                dashGrabadores.innerHTML = '<div class="dash-empty-text">Sin grabadores registrados</div>';
-            } else {
-                let html = '<div class="flex-col" style="gap:1rem;">';
-                html += `<div style="font-weight:600; font-size:1.1em; color:#333;">Total Grabadores: <span style="color:#0088cc">${recorders.length}</span></div>`;
-                recorders.forEach(r => {
-                    const desc = r.description || 'Sin descripción';
-                    const brandModel = `${r.brand || ''} ${r.model || ''}`.trim() || 'Sin marca/modelo';
-                    html += `
-                    <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px; background:#f8fafc; margin-bottom:8px;">
-                        <strong style="color:#1e293b; font-size:1.05em;">${desc}</strong> <span style="color:#64748b; font-size:0.9em">(${brandModel})</span><br>
-                        <div style="margin-top:6px; color:#475569; font-size:0.9em; line-height:1.4;">
-                            IP: <strong>${r.ipAddress || 'N/A'}</strong><br>
-                            Rack: <strong>${r.rack || 'N/A'}</strong><br>
-                            Capacidad: <strong>${r.channelCapacity || 0}</strong> canales | Asignadas: <strong>${r.assignedCameras || 0}</strong>
-                        </div>
-                    </div>`;
-                });
-                html += '</div>';
-                dashGrabadores.innerHTML = html;
-            }
-        }
-
-        // RENDER CAMARAS
-        if (dashCamaras) {
-            if (cameras.length === 0) {
-                dashCamaras.innerHTML = '<div class="dash-empty-text">Sin cámaras registradas</div>';
-            } else {
-                const vista = _dash.camarasVista || 'forma';
-                
-                ['forma', 'edificio', 'modelo'].forEach(v => {
-                    const btn = document.getElementById(`mini-tab-${v}`);
-                    if (btn) {
-                        if (vista === v) btn.classList.add('activa');
-                        else btn.classList.remove('activa');
-                    }
-                });
-
-                const groups = {};
-                cameras.forEach(c => {
-                    let key = 'Desconocido';
-                    if (vista === 'forma') key = c.formFactor || 'Sin forma';
-                    if (vista === 'edificio') key = c.building || 'Sin edificio';
-                    if (vista === 'modelo') key = c.model || 'Sin modelo';
-
-                    if (!groups[key]) groups[key] = [];
-                    groups[key].push(c);
-                });
-
-                let html = '<div class="flex-col" style="gap:1rem;">';
-                html += `<div style="font-weight:600; font-size:1.1em; margin-bottom:10px; color:#333;">Total Cámaras: <span style="color:#0088cc">${cameras.length}</span></div>`;
-
-                Object.keys(groups).sort().forEach(groupName => {
-                    const groupCams = groups[groupName];
-                    html += `
-                    <details style="border:1px solid #e2e8f0; border-radius:8px; margin-bottom:8px; overflow:hidden;">
-                        <summary style="padding:12px 16px; background:#f1f5f9; cursor:pointer; font-weight:600; color:#334155; list-style:none; display:flex; justify-content:space-between; align-items:center;">
-                            <span>${groupName}</span>
-                            <span style="background:#cbd5e1; color:#334155; padding:2px 8px; border-radius:999px; font-size:0.85em;">${groupCams.length}</span>
-                        </summary>
-                        <div style="padding:16px; display:flex; flex-direction:column; gap:12px; background:#ffffff;">
-                    `;
-                    
-                    groupCams.forEach(c => {
-                        const asigs = (c.assignments || []).map(a => `${a.recorderName || a.recorderId} (Canal ${a.channelNumber})`).join(', ');
-                        html += `
-                        <div style="border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:12px;">
-                            <strong style="color:#0f172a;">${c.description || 'Sin descripción'}</strong><br>
-                            <div style="margin-top:4px; color:#475569; font-size:0.9em; line-height:1.5;">
-                                IP: <strong>${c.ipAddress || 'N/A'}</strong> | 
-                                Ubicación: <strong>${c.building || 'N/A'}</strong> - Piso <strong>${c.floor || 'N/A'}</strong><br>
-                                Red: Rack <strong>${c.rack || 'N/A'}</strong>, Puerto <strong>${c.switchPort || 'N/A'}</strong><br>
-                                Asignación: <strong style="color:#0284c7">${asigs || 'Ninguna'}</strong>
-                            </div>
-                        </div>
-                        `;
-                    });
-
-                    html += `</div></details>`;
-                });
-                
-                html += '</div>';
-                dashCamaras.innerHTML = html;
-            }
-        }
-
-        // RENDER GENERAL TREE
-        if (contenedor) {
-            contenedor.innerHTML = `
-            <div style="padding:2rem; text-align:center; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
-                <h3 style="color:#475569; margin-bottom:0.5rem; font-size:1.1em; font-weight:600;">Total Dispositivos (CCTV)</h3>
-                <div style="font-size:3em; font-weight:bold; color:#0284c7;">${cameras.length + recorders.length}</div>
-            </div>
-            `;
-        }
+    function renderDashboard() {
+        const disps = _data.dispositivos;
+        const grabs = [..._data.grabadores].sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
+        const idsEnProd = _calcIdsEnProd();
+        _renderResumenGeneral(disps, grabs, idsEnProd);
+        _renderResumenGrabadores(grabs);
+        _renderResumenCamaras(disps, grabs, idsEnProd);
     }
 
     function _buildAsignaciones() {
@@ -7533,6 +7404,108 @@
     })();
 
     // ════════════════════════════════════════════════════════════════════════════
+    // § ADAPTADOR POSTGRESQL -> LEGACY
+    // ════════════════════════════════════════════════════════════════════════════
+    
+    function quitarSufijo32(ip) {
+        if (!ip) return '';
+        return ip.replace(/\/32$/, '');
+    }
+
+    function mapCameraStatus(camera) {
+        if (camera.status === 'revisar') return 'revisar';
+        if (camera.status === 'averiado') return 'averiado';
+        if (camera.status === 'perdido') return 'perdido';
+        if (camera.status === 'descontinuado') return 'descontinuado';
+        if (camera.status === 'desafectado') return 'desafectado';
+        
+        return null;
+    }
+
+    function mapCameraToLegacy(camera) {
+        return {
+            id: camera.id,
+            tipo: 'camara',
+            forma: camera.formFactor || '',
+            marca: camera.brand || '',
+            modelo: camera.model || '',
+            mac: camera.macAddress || '',
+            serie: camera.serialNumber || '',
+            patrimonio: camera.assetNumber || '',
+            firmware: camera.firmware || '',
+            descripcion: camera.description || '',
+            ip: quitarSufijo32(camera.ipAddress),
+            edificio: camera.building || '',
+            piso: camera.floor || '',
+            rack: camera.rack || '',
+            puerto: camera.switchPort || '',
+            estado: mapCameraStatus(camera),
+            assignments: camera.assignments
+        };
+    }
+
+    function mapRecorderToLegacy(recorder, allCameras) {
+        const canales = [];
+        const capacity = recorder.channelCapacity || 0;
+        for (let i = 1; i <= capacity; i++) {
+            const cam = allCameras.find(c => c.assignments?.some(a => a.recorderId === recorder.id && a.channelNumber === i));
+            if (cam) {
+                canales.push({
+                    canal: i,
+                    dispositivoId: cam.id,
+                    edificio: cam.building || '',
+                    piso: cam.floor || ''
+                });
+            } else {
+                canales.push({ canal: i, dispositivoId: null, edificio: '', piso: '' });
+            }
+        }
+
+        return {
+            id: recorder.id,
+            tipo: recorder.type || 'nvr',
+            marca: recorder.brand || '',
+            modelo: recorder.model || '',
+            serie: recorder.serialNumber || '',
+            mac: recorder.macAddress || '',
+            patrimonio: recorder.assetNumber || '',
+            firmware: recorder.firmware || '',
+            descripcion: recorder.description || '',
+            ip: quitarSufijo32(recorder.ipAddress),
+            rack: recorder.rack || '',
+            canales_n: capacity,
+            canales_data: canales,
+            dispositivoId: recorder.id
+        };
+    }
+
+    async function cargarDatosDesdeApi() {
+        try {
+            const [camerasResponse, recordersResponse] = await Promise.all([
+                fetch('/api/v1/cctv/cameras'),
+                fetch('/api/v1/cctv/recorders')
+            ]);
+
+            if (!camerasResponse.ok || !recordersResponse.ok) {
+                throw new Error('No se pudieron cargar los datos CCTV');
+            }
+
+            const cameras = await camerasResponse.json();
+            const recorders = await recordersResponse.json();
+
+            _data.dispositivos = cameras.map(mapCameraToLegacy);
+            _data.grabadores = recorders.map(r => mapRecorderToLegacy(r, cameras));
+            _data.otros_prod = []; // Sin servidores por ahora
+
+            render();
+            toast('Datos cargados de PostgreSQL', 'success');
+        } catch (error) {
+            console.error('Error cargando API:', error);
+            toast('Error cargando base de datos', 'error');
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
     // § INIT — arranque de la aplicación
     // ════════════════════════════════════════════════════════════════════════════
     TABS.forEach(t => {
@@ -7552,7 +7525,7 @@
 
     ModalLock.init();
     GistSync.init();
-    GistSync.verificarAlAbrir();
+    cargarDatosDesdeApi();
 
     // ── ZOOM FLOTANTE DE THUMBNAILS ──
     // Solo activo en dispositivos con mouse — en táctil no tiene sentido y genera conflictos con el click
