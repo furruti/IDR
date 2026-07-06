@@ -43,3 +43,25 @@ export interface RecorderResponse {
   configuredChannels: number;
   assignedCameras: number;
 }
+
+export type InfrastructureDeviceType = 'server' | 'monitor' | 'pc' | 'network_keyboard';
+
+export interface InfrastructureDeviceResponse {
+  id: string;
+  type: InfrastructureDeviceType;
+  status: string | null;
+  brand: string | null;
+  model: string | null;
+  serialNumber: string | null;
+  macAddress: string | null;
+  assetNumber: string | null;
+  firmware: string | null;
+  comments: string | null;
+  description: string | null;
+  ipAddress: string | null;
+  building: string | null;
+  floor: string | null;
+  rack: string | null;
+  hostname: string | null;
+  role: string | null;
+}

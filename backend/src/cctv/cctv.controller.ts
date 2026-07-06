@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/commo
 import { CctvService } from './cctv.service';
 import { CreateCameraDto } from './dto/create-camera.dto';
 import { UpdateCameraDto } from './dto/update-camera.dto';
-import { CameraResponse, RecorderResponse } from './dto/cctv.responses';
+import { CameraResponse, InfrastructureDeviceResponse, RecorderResponse } from './dto/cctv.responses';
 
 @Controller('cctv')
 export class CctvController {
@@ -36,5 +36,10 @@ export class CctvController {
   @Get('recorders')
   findAllRecorders(): Promise<RecorderResponse[]> {
     return this.cctvService.findAllRecorders();
+  }
+
+  @Get('infrastructure-devices')
+  findAllInfrastructureDevices(): Promise<InfrastructureDeviceResponse[]> {
+    return this.cctvService.findAllInfrastructureDevices();
   }
 }

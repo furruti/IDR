@@ -169,6 +169,10 @@
             dvr: { label: 'DVR', emoji: '📼', badge: 'badge-dvr', dot: 'var(--c-orange)', builtin: true },
             analitica: { label: 'Analítica', emoji: '🧠', badge: 'badge-analitica', dot: 'var(--c-purple)', builtin: true },
             encoder: { label: 'Encoder', emoji: '🔌', badge: 'badge-encoder', dot: 'var(--c-teal)', builtin: true },
+            servidor: { label: 'Servidor', emoji: '🖥️', badge: 'badge-otro', dot: 'var(--c-purple)', builtin: true },
+            monitor: { label: 'Monitor', emoji: '🖥️', badge: 'badge-otro', dot: 'var(--c-blue)', builtin: true },
+            pc: { label: 'PC', emoji: '💻', badge: 'badge-otro', dot: 'var(--c-green)', builtin: true },
+            teclado_red: { label: 'Teclado red', emoji: '⌨️', badge: 'badge-otro', dot: 'var(--c-orange)', builtin: true },
         };
 
         const KEY_TIPOS = `${APP_KEY}:cctv_tipos_custom`;
@@ -1844,7 +1848,7 @@
     }
 
     function _renderResumenGeneral(disps, grabs, idsEnProd) {
-        const tiposServidores = ['nvr', 'dvr', 'analitica', 'encoder'];
+        const tiposServidores = ['nvr', 'dvr', 'analitica', 'encoder', 'servidor'];
 
         // Calculamos profundidad: 0 (Main), 1 (Estados), 2 (Desglose L2), 3 (Pisos L3 de Edificio)
         const depth = (!_dash.tipoAbierto) ? 0 :
@@ -7444,6 +7448,53 @@
         };
     }
 
+    function mapDeviceTypeToLegacy(type) {
+        const map = {
+            server: 'servidor',
+            monitor: 'monitor',
+            pc: 'pc',
+            network_keyboard: 'teclado_red'
+        };
+        return map[type] || type || '';
+    }
+
+    function mapInfrastructureDeviceToLegacy(device) {
+        return {
+            id: device.id,
+            tipo: mapDeviceTypeToLegacy(device.type),
+            estado: device.status || null,
+            marca: device.brand || '',
+            modelo: device.model || '',
+            mac: device.macAddress || '',
+            serial: device.serialNumber || '',
+            serie: device.serialNumber || '',
+            patrimonio: device.assetNumber || '',
+            firmware: device.firmware || '',
+            comentario: device.comments || '',
+            descripcion: device.description || '',
+            ip: quitarSufijo32(device.ipAddress),
+            edificio: device.building || '',
+            piso: device.floor || '',
+            rack: device.rack || '',
+            hostname: device.hostname || '',
+            rol: device.role || ''
+        };
+    }
+
+    function mapInfrastructureDeviceToLegacyProduction(device) {
+        return {
+            id: `prod_${device.id}`,
+            dispositivoId: device.id,
+            descripcion: device.description || device.hostname || '',
+            ip: quitarSufijo32(device.ipAddress),
+            edificio: device.building || '',
+            piso: device.floor || '',
+            rack: device.rack || '',
+            puerto: '',
+            comentarios: device.comments || device.role || ''
+        };
+    }
+
     function mapRecorderToLegacy(recorder, allCameras) {
         const canales = [];
         const capacity = recorder.channelCapacity || 0;
@@ -7481,21 +7532,27 @@
 
     async function cargarDatosDesdeApi() {
         try {
-            const [camerasResponse, recordersResponse] = await Promise.all([
+            const [camerasResponse, recordersResponse, infrastructureResponse] = await Promise.all([
                 fetch('/api/v1/cctv/cameras'),
-                fetch('/api/v1/cctv/recorders')
+                fetch('/api/v1/cctv/recorders'),
+                fetch('/api/v1/cctv/infrastructure-devices')
             ]);
 
-            if (!camerasResponse.ok || !recordersResponse.ok) {
+            if (!camerasResponse.ok || !recordersResponse.ok || !infrastructureResponse.ok) {
                 throw new Error('No se pudieron cargar los datos CCTV');
             }
 
             const cameras = await camerasResponse.json();
             const recorders = await recordersResponse.json();
+            const infrastructureDevices = await infrastructureResponse.json();
+            const legacyInfrastructureDevices = infrastructureDevices.map(mapInfrastructureDeviceToLegacy);
 
-            _data.dispositivos = cameras.map(mapCameraToLegacy);
+            _data.dispositivos = [
+                ...cameras.map(mapCameraToLegacy),
+                ...legacyInfrastructureDevices
+            ];
             _data.grabadores = recorders.map(r => mapRecorderToLegacy(r, cameras));
-            _data.otros_prod = []; // Sin servidores por ahora
+            _data.otros_prod = infrastructureDevices.map(mapInfrastructureDeviceToLegacyProduction)
 
             render();
             toast('Datos cargados de PostgreSQL', 'success');
@@ -7525,6 +7582,7 @@
 
     ModalLock.init();
     GistSync.init();
+    // GistSync.verificarAlAbrir() queda obsoleto como cargador de datos: PostgreSQL es la fuente de verdad.
     cargarDatosDesdeApi();
 
     // ── ZOOM FLOTANTE DE THUMBNAILS ──

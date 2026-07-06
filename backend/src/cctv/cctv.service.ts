@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { DatabaseService } from '../database/database.service';
 import { CreateCameraDto } from './dto/create-camera.dto';
 import { UpdateCameraDto } from './dto/update-camera.dto';
-import { CameraResponse, RecorderResponse } from './dto/cctv.responses';
+import { CameraResponse, InfrastructureDeviceResponse, RecorderResponse } from './dto/cctv.responses';
 
 @Injectable()
 export class CctvService {
@@ -237,6 +237,39 @@ export class CctvService {
     });
 
     return { deleted: true, id };
+  }
+
+
+  async findAllInfrastructureDevices(): Promise<InfrastructureDeviceResponse[]> {
+    const result = await this.database.query(`
+      SELECT
+        d.id,
+        d.device_type AS type,
+        d.status,
+        d.brand,
+        d.model,
+        d.serial_number AS "serialNumber",
+        d.mac_address AS "macAddress",
+        d.asset_number AS "assetNumber",
+        d.firmware,
+        d.comments,
+        i.description,
+        i.ip_address::text AS "ipAddress",
+        b.name AS building,
+        f.name AS floor,
+        r.code AS rack,
+        i.hostname,
+        i.role
+      FROM idr.cctv_devices d
+      INNER JOIN idr.infrastructure_devices i ON i.device_id = d.id
+      LEFT JOIN idr.buildings b ON b.id = i.building_id
+      LEFT JOIN idr.floors f ON f.id = i.floor_id
+      LEFT JOIN idr.racks r ON r.id = i.rack_id
+      WHERE d.device_type IN ('server', 'monitor', 'pc', 'network_keyboard')
+      ORDER BY d.device_type, i.description NULLS LAST, d.brand NULLS LAST, d.model NULLS LAST
+    `);
+
+    return result.rows as InfrastructureDeviceResponse[];
   }
 
   async findAllRecorders(): Promise<RecorderResponse[]> {
