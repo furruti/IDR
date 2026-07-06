@@ -1,0 +1,28 @@
+{
+  "dispositivos": [
+    {
+      "id": "srv_example_1",
+      "tipo": "servidor",
+      "marca": "Marca de ejemplo",
+      "modelo": "Modelo de ejemplo",
+      "serial": "SERIAL-EJEMPLO-1",
+      "mac": "AA:BB:CC:DD:EE:FF",
+      "patrimonio": "INV-EJEMPLO-1",
+      "comentario": "Registro ficticio para validar el importador"
+    }
+  ],
+  "grabadores": [],
+  "otros_prod": [
+    {
+      "id": "prod_example_1",
+      "dispositivoId": "srv_example_1",
+      "descripcion": "Servidor de ejemplo",
+      "ip": "192.0.2.10",
+      "edificio": "Edificio de ejemplo",
+      "piso": "1",
+      "rack": "Rack de ejemplo",
+      "puerto": "1",
+      "comentarios": "No importar en producción"
+    }
+  ]
+}
