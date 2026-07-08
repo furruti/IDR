@@ -8,7 +8,8 @@ const TYPE_MAP = {
   servidor: 'server', server: 'server', servidores: 'server',
   monitor: 'monitor', monitores: 'monitor',
   pc: 'pc', pcs: 'pc', computadora: 'pc', computador: 'pc',
-  teclado_red: 'network_keyboard', teclado: 'network_keyboard', network_keyboard: 'network_keyboard', networkkeyboard: 'network_keyboard'
+  teclado_red: 'network_keyboard', teclado: 'network_keyboard', network_keyboard: 'network_keyboard', networkkeyboard: 'network_keyboard',
+  nvr: 'server', encoder: 'server', analitica: 'server', dvr: 'server'
 };
 
 function arg(name) {
@@ -59,24 +60,34 @@ function extract(payload) {
 
 const payload = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 const { dispositivos, otros } = extract(payload);
-const byDeviceId = new Map(dispositivos.map(d => [text(d.id), d]).filter(([id]) => id));
 
-const rows = otros.map((op, index) => {
-  const linked = byDeviceId.get(text(op.dispositivoId) || '') || {};
-  const type = normType(linked.tipo ?? op.tipo);
-  const legacyId = text(linked.id) || text(op.dispositivoId) || text(op.id);
-  const asset = text(linked.patrimonio ?? linked.inventario ?? op.inventario);
-  const serial = text(linked.serial ?? linked.serie ?? op.serial);
-  const name = text(op.descripcion ?? linked.descripcion ?? linked.nombre ?? linked.hostname ?? op.hostname);
-  const mac = normMac(text(linked.mac ?? op.mac));
-  const ip = text(op.ip ?? linked.ip);
+const allowedTypes = ['nvr', 'encoder', 'analitica', 'dvr', 'monitor', 'pc', 'teclado_red'];
+const filteredDevices = dispositivos.filter(d => {
+  const t = (text(d.tipo) || '').toLowerCase();
+  return allowedTypes.includes(t) && t !== 'camara';
+});
+
+const otherByDeviceId = new Map(otros.map(x => [text(x.dispositivoId), x]).filter(([id]) => id));
+
+const rows = filteredDevices.map((device, index) => {
+  const extra = otherByDeviceId.get(text(device.id)) || {};
+  
+  const type = normType(device.tipo);
+  const legacyId = text(device.id);
+  const asset = text(device.patrimonio ?? device.inventario ?? extra.inventario);
+  const serial = text(device.serial ?? device.serie ?? extra.serial);
+  const name = text(extra.descripcion ?? device.descripcion ?? device.modelo ?? device.tipo);
+  const mac = normMac(text(device.mac ?? extra.mac));
+  const ip = text(extra.ip ?? device.ip);
+  const status = text(device.estado);
+
   return {
-    sourceIndex: index, legacyProductionId: text(op.id), legacyId, id: stableId(type || 'server', legacyId, asset, name, serial), type,
-    status: text(linked.estado), brand: text(linked.marca), model: text(linked.modelo), serial, mac, asset,
-    firmware: text(linked.firmware), comments: text(linked.comentario ?? op.comentarios), description: name, ip,
-    building: text(op.edificio ?? linked.edificio), floor: text(op.piso ?? linked.piso), rack: text(op.rack ?? linked.rack),
-    port: text(op.puerto), hostname: text(linked.hostname ?? op.hostname), role: text(linked.role ?? linked.rol ?? op.role ?? op.rol),
-    raw: { otros_prod: op, dispositivo: linked }
+    sourceIndex: index, legacyProductionId: text(extra.id), legacyId, id: stableId(type || 'server', legacyId, asset, name, serial), type,
+    status, brand: text(device.marca), model: text(device.modelo), serial, mac, asset,
+    firmware: text(device.firmware), comments: text(extra.comentarios || device.comentario), description: name, ip,
+    building: text(extra.edificio ?? device.edificio), floor: text(extra.piso ?? device.piso), rack: text(extra.rack ?? device.rack),
+    port: text(extra.puerto), hostname: text(device.hostname ?? extra.hostname), role: text(device.tipo ?? extra.descripcion ?? extra.role ?? extra.rol),
+    raw: { otros_prod: extra, dispositivo: device }
   };
 });
 
@@ -87,7 +98,7 @@ const problems = {
   withoutType: rows.filter(r => !r.type).map(r => r.sourceIndex),
   invalidIps: rows.filter(r => !validIp(r.ip)).map(r => `${r.sourceIndex}:${r.ip}`),
   invalidMacs: rows.filter(r => !validMac(r.mac)).map(r => `${r.sourceIndex}:${r.mac}`),
-  duplicateIds: dup(rows.map(r => r.legacyId)), duplicateAssets: dup(rows.map(r => r.asset)), duplicateSerials: dup(rows.map(r => r.serial))
+  duplicateIds: dup(rows.map(r => r.legacyId)), duplicateAssets: dup(rows.map(r => r.asset).filter(a => a && !['NO', 'no'].includes(a))), duplicateSerials: dup(rows.map(r => r.serial).filter(s => s))
 };
 console.log('Resumen CCTV infraestructura');
 console.table({ total: rows.length, server: counts.server || 0, monitor: counts.monitor || 0, pc: counts.pc || 0, network_keyboard: counts.network_keyboard || 0 });
@@ -128,24 +139,62 @@ async function maybeLocation(client, table, value, extra = {}) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const stats = { createdCctv: 0, updatedCctv: 0, createdInfra: 0, updatedInfra: 0 };
     for (const r of rows) {
       try {
         const buildingId = await maybeLocation(client, 'buildings', r.building);
         const floorId = await maybeLocation(client, 'floors', r.floor, { buildingId });
         const rackId = await maybeLocation(client, 'racks', r.rack, { buildingId, floorId });
-        const meta = { legacy: r.raw, legacyProductionId: r.legacyProductionId, unresolvedLocation: { building: buildingId ? null : r.building, floor: floorId ? null : r.floor, rack: rackId ? null : r.rack } };
-        await client.query(`INSERT INTO idr.cctv_devices (id, legacy_id, device_type, status, brand, model, serial_number, mac_address, asset_number, firmware, comments, description)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-          ON CONFLICT (id) DO UPDATE SET legacy_id=EXCLUDED.legacy_id, device_type=EXCLUDED.device_type, status=EXCLUDED.status, brand=EXCLUDED.brand, model=EXCLUDED.model, serial_number=EXCLUDED.serial_number, mac_address=EXCLUDED.mac_address, asset_number=EXCLUDED.asset_number, firmware=EXCLUDED.firmware, comments=EXCLUDED.comments, description=EXCLUDED.description, updated_at=now()`,
-          [r.id, r.legacyId, r.type, r.status, r.brand, r.model, r.serial, r.mac, r.asset, r.firmware, r.comments, r.description]);
-        await client.query(`INSERT INTO idr.infrastructure_devices (device_id, ip_address, building_id, floor_id, rack_id, hostname, role, description, port, metadata)
-          VALUES ($1,$2::inet,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
-          ON CONFLICT (device_id) DO UPDATE SET ip_address=EXCLUDED.ip_address, building_id=EXCLUDED.building_id, floor_id=EXCLUDED.floor_id, rack_id=EXCLUDED.rack_id, hostname=EXCLUDED.hostname, role=EXCLUDED.role, description=EXCLUDED.description, port=EXCLUDED.port, metadata=EXCLUDED.metadata, updated_at=now()`,
-          [r.id, r.ip, buildingId, floorId, rackId, r.hostname, r.role, r.description, r.port, JSON.stringify(meta)]);
+        const meta = { legacy_tipo: r.raw.dispositivo.tipo, legacy_updatedAt: r.raw.dispositivo.updatedAt, legacy_canales: r.raw.dispositivo.canales, extra_puerto: r.port, legacy: r.raw, legacyProductionId: r.legacyProductionId, unresolvedLocation: { building: buildingId ? null : r.building, floor: floorId ? null : r.floor, rack: rackId ? null : r.rack } };
+        
+        let existingDeviceId = null;
+        if (r.legacyId) {
+          const byLegacy = await client.query('SELECT id FROM idr.cctv_devices WHERE legacy_id = $1 LIMIT 1', [r.legacyId]);
+          if (byLegacy.rowCount > 0) existingDeviceId = byLegacy.rows[0].id;
+          
+          if (!existingDeviceId) {
+            const byOldId = await client.query('SELECT id FROM idr.cctv_devices WHERE id = $1 LIMIT 1', [r.legacyId]);
+            if (byOldId.rowCount > 0) existingDeviceId = byOldId.rows[0].id;
+          }
+        }
+        if (!existingDeviceId && r.mac) {
+          const byMac = await client.query('SELECT id FROM idr.cctv_devices WHERE mac_address = $1 LIMIT 1', [r.mac]);
+          if (byMac.rowCount > 0) existingDeviceId = byMac.rows[0].id;
+        }
+        if (!existingDeviceId && r.asset && !['NO', 'no', 'RELEVAR', ''].includes(r.asset)) {
+          const byAsset = await client.query('SELECT id FROM idr.cctv_devices WHERE asset_number = $1 LIMIT 1', [r.asset]);
+          if (byAsset.rowCount > 0) existingDeviceId = byAsset.rows[0].id;
+        }
+
+        const finalDeviceId = existingDeviceId || r.id;
+
+        if (existingDeviceId) {
+          await client.query(`UPDATE idr.cctv_devices SET legacy_id=$2, device_type=$3, status=$4, brand=$5, model=$6, serial_number=$7, mac_address=$8, asset_number=$9, firmware=$10, comments=$11, description=$12, updated_at=now() WHERE id=$1`,
+            [finalDeviceId, r.legacyId, r.type, r.status, r.brand, r.model, r.serial, r.mac, r.asset, r.firmware, r.comments, r.description]);
+          stats.updatedCctv++;
+        } else {
+          await client.query(`INSERT INTO idr.cctv_devices (id, legacy_id, device_type, status, brand, model, serial_number, mac_address, asset_number, firmware, comments, description)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+            [finalDeviceId, r.legacyId, r.type, r.status, r.brand, r.model, r.serial, r.mac, r.asset, r.firmware, r.comments, r.description]);
+          stats.createdCctv++;
+        }
+
+        const checkInfra = await client.query('SELECT 1 FROM idr.infrastructure_devices WHERE device_id = $1 LIMIT 1', [finalDeviceId]);
+        if (checkInfra.rowCount > 0) {
+          await client.query(`UPDATE idr.infrastructure_devices SET ip_address=$2::inet, building_id=$3, floor_id=$4, rack_id=$5, hostname=$6, role=$7, description=$8, port=$9, metadata=$10::jsonb, updated_at=now() WHERE device_id=$1`,
+            [finalDeviceId, r.ip, buildingId, floorId, rackId, r.hostname, r.role, r.description, r.port, JSON.stringify(meta)]);
+          stats.updatedInfra++;
+        } else {
+          await client.query(`INSERT INTO idr.infrastructure_devices (device_id, ip_address, building_id, floor_id, rack_id, hostname, role, description, port, metadata)
+            VALUES ($1,$2::inet,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)`,
+            [finalDeviceId, r.ip, buildingId, floorId, rackId, r.hostname, r.role, r.description, r.port, JSON.stringify(meta)]);
+          stats.createdInfra++;
+        }
       } catch (error) { throw new Error(`Falló registro index=${r.sourceIndex} legacyId=${r.legacyId}: ${error.message}`); }
     }
     await client.query('COMMIT');
     console.log(`Importación completada: ${rows.length} registros.`);
+    console.log(stats);
   } catch (e) { await client.query('ROLLBACK'); throw e; }
   finally { client.release(); await pool.end(); }
 })();
