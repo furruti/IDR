@@ -38,6 +38,11 @@ export class CctvController {
     return this.cctvService.findAllRecorders();
   }
 
+  @Get('devices')
+  findAllDevices(): Promise<(CameraResponse | RecorderResponse | InfrastructureDeviceResponse)[]> {
+    return this.cctvService.findAllDevices();
+  }
+
   @Get('infrastructure-devices')
   findAllInfrastructureDevices(): Promise<InfrastructureDeviceResponse[]> {
     return this.cctvService.findAllInfrastructureDevices();

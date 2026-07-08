@@ -2,9 +2,10 @@
 -- IDR - CCTV infrastructure devices structure migration
 -- Adds/keeps support for non-camera/non-recorder CCTV devices.
 --
--- Data import is intentionally separated from this migration. Do not embed
--- the 41 legacy rows here; use backend/scripts/import-cctv-infrastructure.js
--- with an exported cctv_data.json/localStorage/Gist payload.
+-- IMPORTANT: this repository checkout does not include the real legacy
+-- cctv_data.json payload. Do not invent the 41 rows. Load the exported
+-- legacy payload with backend/scripts/import-cctv-infrastructure.js after
+-- applying this structural migration.
 -- ============================================================
 
 BEGIN;
@@ -58,5 +59,13 @@ CREATE INDEX IF NOT EXISTS ix_infrastructure_devices_building_floor
 CREATE INDEX IF NOT EXISTS ix_infrastructure_devices_rack
     ON idr.infrastructure_devices(rack_id)
     WHERE rack_id IS NOT NULL;
+
+-- Verification query expected after importing the real legacy payload:
+-- SELECT device_type, COUNT(*)
+-- FROM idr.cctv_devices
+-- GROUP BY device_type
+-- ORDER BY device_type;
+-- Expected final counts:
+-- camera=422, monitor=6, network_keyboard=4, nvr=6, pc=4, server=27.
 
 COMMIT;

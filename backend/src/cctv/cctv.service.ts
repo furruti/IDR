@@ -240,6 +240,16 @@ export class CctvService {
   }
 
 
+  async findAllDevices(): Promise<(CameraResponse | RecorderResponse | InfrastructureDeviceResponse)[]> {
+    const [cameras, recorders, infrastructureDevices] = await Promise.all([
+      this.findAllCameras(),
+      this.findAllRecorders(),
+      this.findAllInfrastructureDevices(),
+    ]);
+
+    return [...cameras, ...recorders, ...infrastructureDevices];
+  }
+
   async findAllInfrastructureDevices(): Promise<InfrastructureDeviceResponse[]> {
     const result = await this.database.query(`
       SELECT
