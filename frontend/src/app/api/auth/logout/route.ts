@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
-  const appOrigin = request.nextUrl.origin;
+  const appOrigin = (
+    process.env.AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    request.nextUrl.origin
+  ).replace(/\/$/, '');
   const postLogoutUrl = `${appOrigin}/auth/reauth`;
+
+  console.log('[Logout] appOrigin:', appOrigin);
+  console.log('[Logout] postLogoutUrl:', postLogoutUrl);
 
   let response: NextResponse;
 
