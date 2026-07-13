@@ -82,8 +82,8 @@ body.modal-open{overflow:hidden;}
 input,select,textarea{width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:var(--radius);font-size:0.95rem;background:var(--input-bg);color:var(--text-main);height:44px;transition:border-color var(--t-ui),background var(--t-ui);font-family:inherit;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
 input.error,select.error{border-color:var(--c-red);}
-input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;}
-input[type="number"]{-moz-appearance:textfield;}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0;}
+input[type="number"]{-moz-appearance:textfield;appearance:textfield;}
 textarea{height:auto;resize:vertical;}
 label{display:block;font-size:0.76rem;font-weight:600;color:var(--text-muted);margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.04em;padding-left:0.25rem;}
 ::-webkit-scrollbar{width:6px;height:6px;}
@@ -1711,6 +1711,10 @@ const GistSync = (() => {
     } catch(_) {}
 
     // ── Botones header ──
+    document.querySelector('.header-logo').addEventListener('click', () => window.parent.location.href = '/');
+    document.querySelector('.header-logo').style.cursor = 'pointer';
+    document.querySelector('.header-title').addEventListener('click', () => window.parent.location.href = '/');
+    document.querySelector('.header-title').style.cursor = 'pointer';
     document.getElementById('btn-dark-mode').addEventListener('click', toggleDarkMode);
     document.getElementById('btn-ajustes').addEventListener('click', () => MM.abrir('modal-ajustes'));
     document.getElementById('btn-undo').addEventListener('click', () => historial.undo());

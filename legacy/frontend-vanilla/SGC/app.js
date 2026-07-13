@@ -6,6 +6,9 @@
     // ════════════════════════════════════════════════════════════════════════════
     ; (() => {
         try {
+            if (localStorage.getItem('IDR_dark') === '1') {
+                document.documentElement.classList.add('dark-mode');
+            }
             const saved = JSON.parse(localStorage.getItem('cctvs:cctv_tab') || 'null');
             const tab = (saved && saved.tab && (Date.now() - saved.ts) < 3600000) ? saved.tab : 'dashboard';
             document.body.setAttribute('data-tab-inicial', tab);
@@ -6741,9 +6744,27 @@
         const on = (id, evt, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(evt, fn); };
 
         // Header
-        on('btn-inicio', 'click', () => window.location.href = '../index.html');
+        on('btn-inicio', 'click', () => window.parent.location.href = '/');
         on('btn-undo', 'click', () => historial.undo());
         on('btn-redo', 'click', () => historial.redo());
+
+        const syncThemeIcons = (isDark) => {
+            const icon1 = document.getElementById('icon-theme-use');
+            if (icon1) icon1.setAttribute('href', isDark ? '#icon-sun' : '#icon-moon');
+            const icon2 = document.getElementById('icono-tema');
+            if (icon2) icon2.setAttribute('href', isDark ? '#icon-sun' : '#icon-moon');
+            const btn1 = document.getElementById('btn-dark-mode');
+            if (btn1) btn1.title = isDark ? 'Modo claro' : 'Modo oscuro';
+        };
+        syncThemeIcons(document.documentElement.classList.contains('dark-mode'));
+
+        const toggleTheme = () => {
+            const isDark = document.documentElement.classList.toggle('dark-mode');
+            localStorage.setItem('IDR_dark', isDark ? '1' : '0');
+            syncThemeIcons(isDark);
+        };
+        on('btn-dark-mode', 'click', toggleTheme);
+        on('btn-alternar-tema', 'click', toggleTheme);
         document.querySelector('.header-buttons .icon-btn[title="Ajustes"]')
             ?.addEventListener('click', () => UI.abrirAjustes());
 

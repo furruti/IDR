@@ -94,7 +94,11 @@
 
                 // Esperamos a que termine la animación (400ms de animación + delays) para redirigir
                 setTimeout(() => {
-                    window.location.href = targetUrl;
+                    if (card.target === '_parent') {
+                        window.parent.location.href = targetUrl;
+                    } else {
+                        window.location.href = targetUrl;
+                    }
                 }, 500);
             });
         });

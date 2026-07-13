@@ -3703,8 +3703,8 @@ function _ejecutarReporte() {
     const _on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
 
     // Header
-    _on('btn-inicio-logo', 'click', () => window.location.href = '../index.html');
-    _on('btn-inicio-titulo', 'click', () => window.location.href = '../index.html');
+    _on('btn-inicio-logo', 'click', () => window.parent.location.href = '/');
+    _on('btn-inicio-titulo', 'click', () => window.parent.location.href = '/');
     _on('btn-undo', 'click', () => historial.undo());
     _on('btn-redo', 'click', () => historial.redo());
     _on('btn-ajustes', 'click', () => MM.abrir('modal-ajustes'));

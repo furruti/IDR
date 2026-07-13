@@ -2387,8 +2387,8 @@ function _initBindings() {
     document.getElementById('tab-inventario')?.addEventListener('click', () => switchTab('inventario'));
 
     // Header
-    document.getElementById('btn-inicio-logo')?.addEventListener('click', () => window.location.href = '../index.html');
-    document.getElementById('btn-inicio-titulo')?.addEventListener('click', () => window.location.href = '../index.html');
+    document.getElementById('btn-inicio-logo')?.addEventListener('click', () => window.parent.location.href = '/');
+    document.getElementById('btn-inicio-titulo')?.addEventListener('click', () => window.parent.location.href = '/');
     document.getElementById('btn-dark-mode')?.addEventListener('click', toggleDarkMode);
     document.getElementById('btn-ajustes')?.addEventListener('click', () => UI.abrirAjustes());
     document.getElementById('btn-undo')?.addEventListener('click', () => historial.undo());
