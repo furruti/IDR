@@ -20,6 +20,11 @@
     // en un dominio compartido (ej: GitHub Pages con múltiples apps)
     const APP_KEY = 'cctvs';
 
+    // Base URL para API de backend (soporta desarrollo local en puertos distintos y producción unificada)
+    const BACKEND_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3002'
+        : '';
+
     // Tabs de la aplicación
     const TABS = ['dashboard', 'activos', 'produccion'];
 
@@ -7532,10 +7537,13 @@
 
     async function cargarDatosDesdeApi() {
         try {
+            console.log('[CCTV] Iniciando carga API');
+            console.log('[CCTV] API base:', BACKEND_BASE_URL);
+
             const [camerasResponse, recordersResponse, infrastructureResponse] = await Promise.all([
-                fetch('/api/v1/cctv/cameras'),
-                fetch('/api/v1/cctv/recorders'),
-                fetch('/api/v1/cctv/infrastructure-devices')
+                fetch(`${BACKEND_BASE_URL}/api/v1/cctv/cameras`),
+                fetch(`${BACKEND_BASE_URL}/api/v1/cctv/recorders`),
+                fetch(`${BACKEND_BASE_URL}/api/v1/cctv/infrastructure-devices`)
             ]);
 
             if (!camerasResponse.ok || !recordersResponse.ok || !infrastructureResponse.ok) {
@@ -7545,6 +7553,11 @@
             const cameras = await camerasResponse.json();
             const recorders = await recordersResponse.json();
             const infrastructureDevices = await infrastructureResponse.json();
+            
+            console.log('[CCTV] cameras:', cameras.length);
+            console.log('[CCTV] recorders:', recorders.length);
+            console.log('[CCTV] infrastructure:', infrastructureDevices.length);
+
             const legacyInfrastructureDevices = infrastructureDevices.map(mapInfrastructureDeviceToLegacy);
 
             _data.dispositivos = [
@@ -7552,7 +7565,7 @@
                 ...legacyInfrastructureDevices
             ];
             _data.grabadores = recorders.map(r => mapRecorderToLegacy(r, cameras));
-            _data.otros_prod = infrastructureDevices.map(mapInfrastructureDeviceToLegacyProduction)
+            _data.otros_prod = infrastructureDevices.map(mapInfrastructureDeviceToLegacyProduction);
 
             render();
             toast('Datos cargados de PostgreSQL', 'success');
@@ -7565,25 +7578,30 @@
     // ════════════════════════════════════════════════════════════════════════════
     // § INIT — arranque de la aplicación
     // ════════════════════════════════════════════════════════════════════════════
-    TABS.forEach(t => {
-        const btn = document.getElementById('tab-' + t);
-        const panel = document.getElementById('panel-' + t);
-        if (btn) btn.classList.toggle('activa', t === _tabActual);
-        if (panel) panel.classList.toggle('hidden', t !== _tabActual);
-    });
+    async function initApp() {
+        TABS.forEach(t => {
+            const btn = document.getElementById('tab-' + t);
+            const panel = document.getElementById('panel-' + t);
+            if (btn) btn.classList.toggle('activa', t === _tabActual);
+            if (panel) panel.classList.toggle('hidden', t !== _tabActual);
+        });
 
-    requestAnimationFrame(() => {
-        document.body.removeAttribute('data-tab-inicial');
-    });
+        requestAnimationFrame(() => {
+            document.body.removeAttribute('data-tab-inicial');
+        });
 
-    _bindStaticEvents();
-    cargar();
-    render();
+        _bindStaticEvents();
+        cargar(); // Carga de fallback si existe
+        render(); // Render inicial vacío o de fallback
 
-    ModalLock.init();
-    GistSync.init();
-    // GistSync.verificarAlAbrir() queda obsoleto como cargador de datos: PostgreSQL es la fuente de verdad.
-    cargarDatosDesdeApi();
+        ModalLock.init();
+        GistSync.init();
+        // GistSync.verificarAlAbrir() queda obsoleto como cargador de datos: PostgreSQL es la fuente de verdad.
+        
+        await cargarDatosDesdeApi();
+    }
+
+    initApp();
 
     // ── ZOOM FLOTANTE DE THUMBNAILS ──
     // Solo activo en dispositivos con mouse — en táctil no tiene sentido y genera conflictos con el click
