@@ -137,7 +137,7 @@
         if (btnLogout) {
             btnLogout.addEventListener('click', (event) => {
                 event.preventDefault();
-                window.location.href = '/api/auth/logout';
+                window.top.location.href = '/api/auth/logout';
             });
         }
 
