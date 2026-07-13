@@ -1,31 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const keycloakLogoutUrl = new URL(
-    "https://sso-desa.hcdn.gob.ar/realms/hcdn/protocol/openid-connect/logout"
-  );
+  const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
+  const appOrigin = request.nextUrl.origin;
+  const postLogoutUrl = `${appOrigin}/auth/reauth`;
 
-  keycloakLogoutUrl.searchParams.set(
-    "client_id",
-    process.env.KEYCLOAK_CLIENT_ID || 'sder-idr'
-  );
+  let response: NextResponse;
 
-  keycloakLogoutUrl.searchParams.set(
-    "post_logout_redirect_uri",
-    "https://sder-idr-desa.hcdn.gob.ar/auth/reauth"
-  );
-
-  const response = NextResponse.redirect(keycloakLogoutUrl);
+  if (isBypass) {
+    response = NextResponse.redirect(postLogoutUrl);
+  } else {
+    const issuer = process.env.KEYCLOAK_ISSUER_URL ?? process.env.KEYCLOAK_ISSUER;
+    const clientId = process.env.KEYCLOAK_CLIENT_ID || 'sder-idr';
+    
+    if (issuer) {
+      const keycloakLogoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
+      keycloakLogoutUrl.searchParams.set("client_id", clientId);
+      keycloakLogoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
+      
+      response = NextResponse.redirect(keycloakLogoutUrl);
+    } else {
+      response = NextResponse.redirect(postLogoutUrl);
+    }
+  }
   
   const authCookies = [
     'authjs.session-token',
     '__Secure-authjs.session-token',
+    '__Host-authjs.session-token',
     'authjs.csrf-token',
     '__Host-authjs.csrf-token',
     'authjs.callback-url',
     '__Secure-authjs.callback-url',
     'next-auth.session-token',
     '__Secure-next-auth.session-token',
+    '__Host-next-auth.session-token',
     'next-auth.csrf-token',
     '__Host-next-auth.csrf-token',
     'next-auth.callback-url',
@@ -33,17 +42,13 @@ export async function GET(request: NextRequest) {
   ];
 
   authCookies.forEach((cookieName) => {
-    if (request.cookies.has(cookieName)) {
-      response.cookies.delete(cookieName);
-      
-      response.cookies.set({
-        name: cookieName,
-        value: '',
-        path: '/',
-        maxAge: 0,
-        expires: new Date(0),
-      });
-    }
+    response.cookies.set({
+      name: cookieName,
+      value: '',
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+    });
   });
 
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
