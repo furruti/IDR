@@ -25,6 +25,13 @@
         ? 'http://localhost:3002'
         : '';
 
+    function apiUrl(path) {
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        return BACKEND_BASE_URL
+            ? `${BACKEND_BASE_URL}${normalizedPath}`
+            : normalizedPath;
+    }
+
     // Tabs de la aplicación
     const TABS = ['dashboard', 'activos', 'produccion'];
 
@@ -7540,10 +7547,14 @@
             console.log('[CCTV] Iniciando carga API');
             console.log('[CCTV] API base:', BACKEND_BASE_URL);
 
+            console.log('[CCTV] URL cameras:', apiUrl('/api/v1/cctv/cameras'));
+            console.log('[CCTV] URL recorders:', apiUrl('/api/v1/cctv/recorders'));
+            console.log('[CCTV] URL infrastructure:', apiUrl('/api/v1/cctv/infrastructure-devices'));
+
             const [camerasResponse, recordersResponse, infrastructureResponse] = await Promise.all([
-                fetch(`${BACKEND_BASE_URL}/api/v1/cctv/cameras`),
-                fetch(`${BACKEND_BASE_URL}/api/v1/cctv/recorders`),
-                fetch(`${BACKEND_BASE_URL}/api/v1/cctv/infrastructure-devices`)
+                fetch(apiUrl('/api/v1/cctv/cameras')),
+                fetch(apiUrl('/api/v1/cctv/recorders')),
+                fetch(apiUrl('/api/v1/cctv/infrastructure-devices'))
             ]);
 
             if (!camerasResponse.ok || !recordersResponse.ok || !infrastructureResponse.ok) {
