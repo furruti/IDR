@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
 export async function GET(request: NextRequest) {
   const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
@@ -14,6 +15,13 @@ export async function GET(request: NextRequest) {
 
   let response: NextResponse;
 
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  });
+
+  const idToken = typeof token?.idToken === 'string' ? token.idToken : undefined;
+
   if (isBypass) {
     response = NextResponse.redirect(postLogoutUrl);
   } else {
@@ -23,7 +31,14 @@ export async function GET(request: NextRequest) {
     if (issuer) {
       const keycloakLogoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
       keycloakLogoutUrl.searchParams.set("client_id", clientId);
-      
+      keycloakLogoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
+
+      if (idToken) {
+        keycloakLogoutUrl.searchParams.set("id_token_hint", idToken);
+      }
+
+      console.log('[Logout] id_token_hint presente:', Boolean(idToken));
+
       response = NextResponse.redirect(keycloakLogoutUrl);
     } else {
       response = NextResponse.redirect(postLogoutUrl);

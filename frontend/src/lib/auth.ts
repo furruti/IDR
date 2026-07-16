@@ -84,6 +84,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // lo que resulta en que /api/auth/session devuelva `null` después del login.
       if (account) {
         token.expiresAt = account.expires_at;
+        if (account.id_token) {
+          token.idToken = account.id_token as string;
+        }
       }
 
       if (keycloakProfile) {
