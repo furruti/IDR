@@ -11,18 +11,23 @@ function getSafeCallbackUrl(callbackUrl?: string | null) {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const callbackUrl = getSafeCallbackUrl(searchParams.get('callbackUrl'));
+  const forceLogin = searchParams.get('forceLogin') === '1';
   const isBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
   const provider = isBypass ? 'credentials' : 'keycloak';
 
   console.log('[SSO] callbackUrl:', callbackUrl);
-  console.log('[SSO] forcing prompt login:', true);
+  console.log('[SSO] forceLogin:', forceLogin);
 
-  await signIn(
-    provider,
-    { callbackUrl },
-    {
-      prompt: 'login',
-      max_age: '0',
-    }
-  );
+  if (forceLogin) {
+    await signIn(
+      provider,
+      { redirectTo: callbackUrl },
+      new URLSearchParams({
+        prompt: 'login',
+        max_age: '0',
+      })
+    );
+  } else {
+    await signIn(provider, { redirectTo: callbackUrl });
+  }
 }
