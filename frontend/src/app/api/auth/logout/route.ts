@@ -62,6 +62,20 @@ export async function GET(request: NextRequest) {
     '__Secure-next-auth.callback-url',
   ];
 
+  const sessionCookieBases = [
+    'authjs.session-token',
+    '__Secure-authjs.session-token',
+    '__Host-authjs.session-token',
+    'next-auth.session-token',
+    '__Secure-next-auth.session-token',
+    '__Host-next-auth.session-token',
+  ];
+
+  const chunkedSessionCookies = sessionCookieBases.flatMap((base) => [
+    base,
+    ...Array.from({ length: 10 }, (_, index) => `${base}.${index}`),
+  ]);
+
   const authCookiePrefixes = [
     'authjs.',
     '__Secure-authjs.',
@@ -79,6 +93,7 @@ export async function GET(request: NextRequest) {
 
   const cookiesToDelete = new Set([
     ...knownAuthCookies,
+    ...chunkedSessionCookies,
     ...detectedAuthCookies.map(cookie => cookie.name)
   ]);
 
