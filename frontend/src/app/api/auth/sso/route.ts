@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     { callbackUrl },
     {
       prompt: 'login',
-      max_age: 0,
+      max_age: '0',
     }
   );
 }
