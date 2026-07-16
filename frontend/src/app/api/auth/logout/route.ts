@@ -15,10 +15,52 @@ export async function GET(request: NextRequest) {
 
   let response: NextResponse;
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  });
+  const requestCookieNames = request.cookies.getAll().map(cookie => cookie.name);
+
+  console.log(
+    '[Logout] Cookies recibidas Auth:',
+    requestCookieNames.filter(name =>
+      name.includes('authjs') || name.includes('next-auth')
+    )
+  );
+
+  const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+
+  const token =
+    await getToken({
+      req: request,
+      secret: authSecret,
+      secureCookie: true,
+      cookieName: '__Secure-authjs.session-token',
+    }) ??
+    await getToken({
+      req: request,
+      secret: authSecret,
+      secureCookie: true,
+      cookieName: 'authjs.session-token',
+    }) ??
+    await getToken({
+      req: request,
+      secret: authSecret,
+      secureCookie: true,
+      cookieName: '__Host-authjs.session-token',
+    }) ??
+    await getToken({
+      req: request,
+      secret: authSecret,
+      secureCookie: true,
+      cookieName: '__Secure-next-auth.session-token',
+    }) ??
+    await getToken({
+      req: request,
+      secret: authSecret,
+      secureCookie: true,
+      cookieName: 'next-auth.session-token',
+    });
+
+  console.log('[Logout] JWT encontrado:', Boolean(token));
+  console.log('[Logout] JWT keys:', token ? Object.keys(token) : []);
+  console.log('[Logout] id_token_hint presente:', Boolean(token?.idToken));
 
   const idToken = typeof token?.idToken === 'string' ? token.idToken : undefined;
 
