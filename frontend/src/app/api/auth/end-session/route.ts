@@ -81,7 +81,31 @@ export async function GET(request: NextRequest) {
 
       console.log('[Logout] id_token_hint presente:', Boolean(idToken));
 
-      response = NextResponse.redirect(keycloakLogoutUrl);
+      const encodedTarget = Buffer.from(keycloakLogoutUrl.toString(), 'utf8').toString('base64');
+
+      response = new NextResponse(
+        `<!doctype html>
+        <html lang="es">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="robots" content="noindex" />
+            <title>Cerrando sesión</title>
+          </head>
+          <body>
+            <p>Cerrando sesión...</p>
+            <script>
+              const target = atob('${encodedTarget}');
+              window.location.replace(target);
+            </script>
+          </body>
+        </html>`,
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+          },
+        }
+      );
     } else {
       response = NextResponse.redirect(postLogoutUrl);
     }
