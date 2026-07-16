@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     if (issuer) {
       const keycloakLogoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
       keycloakLogoutUrl.searchParams.set("client_id", clientId);
-      keycloakLogoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
       
       response = NextResponse.redirect(keycloakLogoutUrl);
     } else {
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
   }
   
-  const authCookies = [
+  const knownAuthCookies = [
     'authjs.session-token',
     '__Secure-authjs.session-token',
     '__Host-authjs.session-token',
@@ -48,7 +47,31 @@ export async function GET(request: NextRequest) {
     '__Secure-next-auth.callback-url',
   ];
 
-  authCookies.forEach((cookieName) => {
+  const authCookiePrefixes = [
+    'authjs.',
+    '__Secure-authjs.',
+    '__Host-authjs.',
+    'next-auth.',
+    '__Secure-next-auth.',
+    '__Host-next-auth.',
+  ];
+
+  const detectedAuthCookies = request.cookies
+    .getAll()
+    .filter(cookie =>
+      authCookiePrefixes.some(prefix => cookie.name.startsWith(prefix))
+    );
+
+  const cookiesToDelete = new Set([
+    ...knownAuthCookies,
+    ...detectedAuthCookies.map(cookie => cookie.name)
+  ]);
+
+  const deletedCookiesArray = Array.from(cookiesToDelete);
+
+  console.log('[Logout] Cookies eliminadas:', deletedCookiesArray);
+
+  for (const cookieName of deletedCookiesArray) {
     response.cookies.set({
       name: cookieName,
       value: '',
@@ -56,7 +79,7 @@ export async function GET(request: NextRequest) {
       maxAge: 0,
       expires: new Date(0),
     });
-  });
+  }
 
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   response.headers.set('Pragma', 'no-cache');
