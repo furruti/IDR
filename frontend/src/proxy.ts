@@ -5,6 +5,7 @@ const authRoutePrefix = '/api/auth';
 const nextRoutePrefix = '/_next';
 const ssoRoute = '/auth/sso';
 const legacyStaticPrefix = '/legacy-static';
+const endSessionRoute = '/salir';
 const publicFiles = new Set(['/favicon.ico']);
 const publicFilePattern = /\.(?:avif|css|gif|ico|jpg|jpeg|js|json|map|png|svg|txt|webmanifest|webp|woff|woff2)$/i;
 
@@ -17,6 +18,7 @@ export const proxy = auth((request) => {
     nextUrl.pathname.startsWith(legacyStaticPrefix) ||
     nextUrl.pathname === ssoRoute ||
     nextUrl.pathname === '/auth/reauth' ||
+    nextUrl.pathname === endSessionRoute ||
     publicFiles.has(nextUrl.pathname) ||
     publicFilePattern.test(nextUrl.pathname);
 
