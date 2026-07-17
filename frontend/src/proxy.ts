@@ -6,6 +6,7 @@ const nextRoutePrefix = '/_next';
 const ssoRoute = '/auth/sso';
 const legacyStaticPrefix = '/legacy-static';
 const endSessionRoute = '/auth/end';
+const finishSessionRoute = '/auth/finish';
 const debugRoutes = new Set([
   '/auth/debug-json',
   '/auth/debug-b64',
@@ -25,6 +26,7 @@ export const proxy = auth((request) => {
     nextUrl.pathname === ssoRoute ||
     nextUrl.pathname === '/auth/reauth' ||
     nextUrl.pathname === endSessionRoute ||
+    nextUrl.pathname === finishSessionRoute ||
     debugRoutes.has(nextUrl.pathname) ||
     publicFiles.has(nextUrl.pathname) ||
     publicFilePattern.test(nextUrl.pathname);

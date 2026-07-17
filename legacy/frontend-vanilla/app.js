@@ -5,21 +5,21 @@
     const STORAGE_KEY_DARK_MODE = 'IDR_dark';
     const btnDarkMode = document.getElementById('btn-dark-mode');
     const iconThemeUse = document.getElementById('icon-theme-use');
-    
+
     // Elementos PWA
     const btnInstallApp = document.getElementById('btn-install-app');
     let deferredPrompt;
 
     // --- LÓGICA DE MODO OSCURO ---
     function isDarkModeActive() {
-        try { return localStorage.getItem(STORAGE_KEY_DARK_MODE) === '1'; } 
+        try { return localStorage.getItem(STORAGE_KEY_DARK_MODE) === '1'; }
         catch (e) { return false; }
     }
 
     function setDarkMode(isActive) {
-        try { localStorage.setItem(STORAGE_KEY_DARK_MODE, isActive ? '1' : '0'); } 
-        catch (e) {}
-    } 
+        try { localStorage.setItem(STORAGE_KEY_DARK_MODE, isActive ? '1' : '0'); }
+        catch (e) { }
+    }
 
     function renderTheme(isDark) {
         if (isDark) document.documentElement.classList.add('dark-mode');
@@ -46,11 +46,11 @@
         if (btnInstallApp) {
             btnInstallApp.addEventListener('click', async () => {
                 if (!deferredPrompt) return;
-                
+
                 deferredPrompt.prompt(); // Muestra el prompt nativo
                 const { outcome } = await deferredPrompt.userChoice;
                 console.log(`PWA Installation outcome: ${outcome}`);
-                
+
                 deferredPrompt = null;
                 btnInstallApp.style.display = 'none'; // Oculta el botón
             });
@@ -76,7 +76,7 @@
     // --- LÓGICA DE NAVEGACIÓN ANIMADA ---
     function setupNavigation() {
         const appCards = document.querySelectorAll('.app-card');
-        
+
         appCards.forEach(card => {
             card.addEventListener('click', (e) => {
                 // Permitimos abrir en nueva pestaña con Ctrl/Cmd + click sin bloquear el comportamiento nativo
@@ -112,10 +112,10 @@
             appCards.forEach(card => {
                 // 1. Quitamos la clase de animación de salida
                 card.classList.remove('exiting');
-                
+
                 // 2. Este "truco" fuerza al navegador a redibujar el elemento inmediatamente, 
                 // solucionando el problema de los íconos SVG invisibles en Firefox.
-                void card.offsetWidth; 
+                void card.offsetWidth;
             });
         }
     });
@@ -123,7 +123,7 @@
     // --- INICIALIZACIÓN ---
     function boot() {
         renderTheme(isDarkModeActive());
-        
+
         if (btnDarkMode) {
             btnDarkMode.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -138,13 +138,13 @@
             btnLogout.addEventListener('click', async (event) => {
                 event.preventDefault();
                 try {
-                    const response = await fetch('/auth/end', {
+                    const response = await fetch('/auth/finish', {
                         method: 'GET',
                         credentials: 'include',
                         cache: 'no-store',
                     });
                     const data = await response.json();
-                    
+
                     if (data?.redirectB64) {
                         window.top.location.replace(atob(data.redirectB64));
                     } else {
