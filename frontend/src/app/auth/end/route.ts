@@ -65,7 +65,8 @@ export async function GET(request: NextRequest) {
   const idToken = typeof token?.idToken === 'string' ? token.idToken : undefined;
 
   if (isBypass) {
-    response = NextResponse.redirect(postLogoutUrl);
+    const encodedTarget = Buffer.from(postLogoutUrl, 'utf8').toString('base64');
+    response = NextResponse.json({ ok: true, redirectB64: encodedTarget }, { status: 200 });
   } else {
     const issuer = process.env.KEYCLOAK_ISSUER_URL ?? process.env.KEYCLOAK_ISSUER;
     const clientId = process.env.KEYCLOAK_CLIENT_ID || 'sder-idr';
@@ -83,31 +84,18 @@ export async function GET(request: NextRequest) {
 
       const encodedTarget = Buffer.from(keycloakLogoutUrl.toString(), 'utf8').toString('base64');
 
-      response = new NextResponse(
-        `<!doctype html>
-        <html lang="es">
-          <head>
-            <meta charset="utf-8" />
-            <meta name="robots" content="noindex" />
-            <title>Cerrando sesión</title>
-          </head>
-          <body>
-            <p>Cerrando sesión...</p>
-            <script>
-              const target = atob('${encodedTarget}');
-              window.location.replace(target);
-            </script>
-          </body>
-        </html>`,
+      response = NextResponse.json(
+        {
+          ok: true,
+          redirectB64: encodedTarget,
+        },
         {
           status: 200,
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-          },
         }
       );
     } else {
-      response = NextResponse.redirect(postLogoutUrl);
+      const encodedTarget = Buffer.from(postLogoutUrl, 'utf8').toString('base64');
+      response = NextResponse.json({ ok: true, redirectB64: encodedTarget }, { status: 200 });
     }
   }
   

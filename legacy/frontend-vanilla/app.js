@@ -135,9 +135,24 @@
 
         const btnLogout = document.getElementById('btn-logout');
         if (btnLogout) {
-            btnLogout.addEventListener('click', (event) => {
+            btnLogout.addEventListener('click', async (event) => {
                 event.preventDefault();
-                window.top.location.href = '/auth/end';
+                try {
+                    const response = await fetch('/auth/end', {
+                        method: 'GET',
+                        credentials: 'include',
+                        cache: 'no-store',
+                    });
+                    const data = await response.json();
+                    
+                    if (data?.redirectB64) {
+                        window.top.location.replace(atob(data.redirectB64));
+                    } else {
+                        window.top.location.href = '/auth/reauth';
+                    }
+                } catch (err) {
+                    window.top.location.href = '/auth/reauth';
+                }
             });
         }
 
