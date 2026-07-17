@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 export async function GET(request: NextRequest) {
@@ -99,37 +99,16 @@ export async function GET(request: NextRequest) {
     }
   }
   
-  const knownAuthCookies = [
-    'authjs.session-token',
+  // Cookies base mínimas que siempre intentamos borrar
+  const minimalBaseCookies = [
     '__Secure-authjs.session-token',
+    'authjs.session-token',
     '__Host-authjs.session-token',
-    'authjs.csrf-token',
     '__Host-authjs.csrf-token',
-    'authjs.callback-url',
     '__Secure-authjs.callback-url',
-    'next-auth.session-token',
-    '__Secure-next-auth.session-token',
-    '__Host-next-auth.session-token',
-    'next-auth.csrf-token',
-    '__Host-next-auth.csrf-token',
-    'next-auth.callback-url',
-    '__Secure-next-auth.callback-url',
   ];
 
-  const sessionCookieBases = [
-    'authjs.session-token',
-    '__Secure-authjs.session-token',
-    '__Host-authjs.session-token',
-    'next-auth.session-token',
-    '__Secure-next-auth.session-token',
-    '__Host-next-auth.session-token',
-  ];
-
-  const chunkedSessionCookies = sessionCookieBases.flatMap((base) => [
-    base,
-    ...Array.from({ length: 10 }, (_, index) => `${base}.${index}`),
-  ]);
-
+  // Prefijos para detectar dinámicamente cookies auth presentes en el request
   const authCookiePrefixes = [
     'authjs.',
     '__Secure-authjs.',
@@ -139,23 +118,24 @@ export async function GET(request: NextRequest) {
     '__Host-next-auth.',
   ];
 
+  // Detectar solo las cookies auth que realmente vinieron en el request
   const detectedAuthCookies = request.cookies
     .getAll()
     .filter(cookie =>
       authCookiePrefixes.some(prefix => cookie.name.startsWith(prefix))
-    );
+    )
+    .map(cookie => cookie.name);
 
+  // Unir base mínima + detectadas (sin duplicados)
   const cookiesToDelete = new Set([
-    ...knownAuthCookies,
-    ...chunkedSessionCookies,
-    ...detectedAuthCookies.map(cookie => cookie.name)
+    ...minimalBaseCookies,
+    ...detectedAuthCookies,
   ]);
 
-  const deletedCookiesArray = Array.from(cookiesToDelete);
+  console.log('[Logout] Cookies eliminadas count:', cookiesToDelete.size);
+  console.log('[Logout] Cookies eliminadas:', Array.from(cookiesToDelete));
 
-  console.log('[Logout] Cookies eliminadas:', deletedCookiesArray);
-
-  for (const cookieName of deletedCookiesArray) {
+  for (const cookieName of cookiesToDelete) {
     response.cookies.set({
       name: cookieName,
       value: '',
