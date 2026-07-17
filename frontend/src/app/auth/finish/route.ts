@@ -8,10 +8,7 @@ export async function GET(request: NextRequest) {
     process.env.NEXTAUTH_URL ||
     request.nextUrl.origin
   ).replace(/\/$/, '');
-  const postLogoutUrl = `${appOrigin}/auth/reauth`;
-
   console.log('[Logout] appOrigin:', appOrigin);
-  console.log('[Logout] postLogoutUrl:', postLogoutUrl);
 
   let response: NextResponse;
 
@@ -60,12 +57,10 @@ export async function GET(request: NextRequest) {
 
   console.log('[Logout] JWT encontrado:', Boolean(token));
   console.log('[Logout] JWT keys:', token ? Object.keys(token) : []);
-  console.log('[Logout] id_token_hint presente:', Boolean(token?.idToken));
-
-  const idToken = typeof token?.idToken === 'string' ? token.idToken : undefined;
 
   if (isBypass) {
-    const encodedTarget = Buffer.from(postLogoutUrl, 'utf8').toString('base64');
+    const fallbackUrl = `${appOrigin}/auth/sso`;
+    const encodedTarget = Buffer.from(fallbackUrl, 'utf8').toString('base64');
     response = NextResponse.json({ ok: true, redirectB64: encodedTarget }, { status: 200 });
   } else {
     const issuer = process.env.KEYCLOAK_ISSUER_URL ?? process.env.KEYCLOAK_ISSUER;
@@ -74,13 +69,6 @@ export async function GET(request: NextRequest) {
     if (issuer) {
       const keycloakLogoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
       keycloakLogoutUrl.searchParams.set("client_id", clientId);
-      keycloakLogoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
-
-      if (idToken) {
-        keycloakLogoutUrl.searchParams.set("id_token_hint", idToken);
-      }
-
-      console.log('[Logout] id_token_hint presente:', Boolean(idToken));
 
       const encodedTarget = Buffer.from(keycloakLogoutUrl.toString(), 'utf8').toString('base64');
 
@@ -94,7 +82,8 @@ export async function GET(request: NextRequest) {
         }
       );
     } else {
-      const encodedTarget = Buffer.from(postLogoutUrl, 'utf8').toString('base64');
+      const fallbackUrl = `${appOrigin}/auth/sso`;
+      const encodedTarget = Buffer.from(fallbackUrl, 'utf8').toString('base64');
       response = NextResponse.json({ ok: true, redirectB64: encodedTarget }, { status: 200 });
     }
   }

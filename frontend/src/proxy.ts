@@ -36,9 +36,9 @@ export const proxy = auth((request) => {
   console.log('[Auth Guard] authenticated:', isAuthenticated);
 
   if (!isAuthenticated && !isAllowedWithoutSession) {
-    const reauthUrl = new URL('/auth/reauth', nextUrl);
-    reauthUrl.searchParams.set('callbackUrl', `${nextUrl.pathname}${nextUrl.search}`);
-    return NextResponse.redirect(reauthUrl);
+    const ssoUrl = new URL('/auth/sso', nextUrl);
+    ssoUrl.searchParams.set('callbackUrl', `${nextUrl.pathname}${nextUrl.search}`);
+    return NextResponse.redirect(ssoUrl);
   }
 
   return NextResponse.next();
