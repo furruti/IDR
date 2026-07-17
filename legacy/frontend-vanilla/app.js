@@ -12,13 +12,17 @@
 
     // --- LÓGICA DE MODO OSCURO ---
     function isDarkModeActive() {
-        try { return localStorage.getItem(STORAGE_KEY_DARK_MODE) === '1'; }
+        try { return localStorage.getItem(STORAGE_KEY_DARK_MODE) === 'true'; }
         catch (e) { return false; }
     }
 
     function setDarkMode(isActive) {
-        try { localStorage.setItem(STORAGE_KEY_DARK_MODE, isActive ? '1' : '0'); }
-        catch (e) { }
+        try {
+            localStorage.setItem(STORAGE_KEY_DARK_MODE, isActive ? 'true' : 'false');
+            const parentWin = window.parent || window;
+            parentWin.dispatchEvent(new CustomEvent('idr-theme-change', { detail: { isDark: isActive } }));
+        }
+        catch (e) {}
     }
 
     function renderTheme(isDark) {
@@ -120,9 +124,63 @@
         }
     });
 
+    // --- LÓGICA DE USUARIO ---
+    async function setupUserBlock() {
+        const userBlock = document.getElementById('user-block');
+        const userAvatar = document.getElementById('user-avatar');
+        const userGreeting = document.getElementById('user-greeting');
+        const userNameEl = document.getElementById('user-name');
+
+        if (!userBlock) return;
+
+        try {
+            const response = await fetch('/api/auth/session');
+            if (!response.ok) throw new Error('Session fetch failed');
+            const data = await response.json();
+
+            let name = 'Usuario';
+            if (data && data.user) {
+                name = data.user.name || data.user.email || 'Usuario';
+            }
+
+            // Iniciales
+            const initials = name
+                .split(' ')
+                .map(part => part[0])
+                .filter(Boolean)
+                .join('')
+                .substring(0, 2)
+                .toUpperCase() || 'U';
+
+            // Saludo dinámico según la hora local
+            const hours = new Date().getHours();
+            let greeting = '¡Hola! 👋';
+            if (hours >= 6 && hours < 12) {
+                greeting = '¡Buen día! ☀️';
+            } else if (hours >= 12 && hours < 20) {
+                greeting = '¡Buenas tardes! 👋';
+            } else {
+                greeting = '¡Buenas noches! 👋';
+            }
+
+            if (userAvatar) userAvatar.textContent = initials;
+            if (userGreeting) userGreeting.textContent = greeting;
+            if (userNameEl) userNameEl.textContent = name;
+
+            userBlock.style.display = 'flex';
+        } catch (error) {
+            console.error('Error al cargar sesión del usuario:', error);
+            if (userAvatar) userAvatar.textContent = 'U';
+            if (userGreeting) userGreeting.textContent = '¡Hola! 👋';
+            if (userNameEl) userNameEl.textContent = 'Usuario';
+            userBlock.style.display = 'flex';
+        }
+    }
+
     // --- INICIALIZACIÓN ---
     function boot() {
         renderTheme(isDarkModeActive());
+        setupUserBlock();
 
         if (btnDarkMode) {
             btnDarkMode.addEventListener('click', (event) => {

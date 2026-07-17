@@ -1,1 +1,302 @@
-html,body{margin:0;width:100%;height:100%;} body{min-height:100vh;} .legacy-frame{border:0;width:100%;height:100vh;display:block;background:#fff;}
+:root {
+  --bg-sidebar: #ffffff;
+  --border-sidebar: #e2e6ef;
+  --text-sidebar: #5a6070;
+  --bg-body-layout: #f5f6fa;
+}
+
+html.dark-mode {
+  --bg-sidebar: #1e1f20;
+  --border-sidebar: #313333;
+  --text-sidebar: #b4b4b4;
+  --bg-body-layout: #131314;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: background-color 0.3s;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.legacy-frame {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #fff;
+}
+
+/* ════ LAYOUT GENERAL CON SIDEBAR ════ */
+.modules-layout-wrapper {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-body-layout);
+  transition: background-color 0.3s;
+}
+
+.modules-content-area {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ════ SIDEBAR DE NAVEGACIÓN ENTRE MÓDULOS ════ */
+.module-sidebar {
+  width: 84px;
+  height: 100%;
+  position: relative;
+  background: var(--bg-sidebar);
+  border-right: 1.5px solid var(--border-sidebar);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 0;
+  z-index: 100;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+  transition: background-color 0.3s, border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  height: 100%;
+  width: 100%;
+  padding-top: 0.75rem;
+  box-sizing: border-box;
+}
+
+.sidebar-brand-mini {
+  color: #3b64d2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+
+.sidebar-brand-mini:hover {
+  background-color: rgba(59, 100, 210, 0.08);
+  border-color: rgba(59, 100, 210, 0.15);
+  color: #3b64d2;
+}
+
+html.dark-mode .sidebar-brand-mini:hover {
+  background-color: rgba(59, 100, 210, 0.15);
+  border-color: rgba(59, 100, 210, 0.3);
+}
+
+.sidebar-brand-mini svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-divider {
+  width: 36px;
+  height: 1.5px;
+  background-color: var(--border-sidebar);
+  margin: 0.15rem 0;
+  transition: background-color 0.3s;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  align-items: center;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  margin-top: 0.2rem;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  box-sizing: border-box;
+}
+
+/* Ocultar scrollbar para la navegación para evitar recorte lateral de los bordes de selección */
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Items del sidebar */
+.sidebar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: var(--text-sidebar);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  padding: 0.3rem;
+  text-align: center;
+  user-select: none;
+}
+
+.sidebar-icon-wrapper {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.2rem;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-icon-wrapper svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar-label {
+  font-size: 0.575rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Modificadores de color y hover de items */
+.sidebar-item-green {
+  --theme-color: #4ca88c;
+  --theme-bg: rgba(76, 172, 140, 0.1);
+}
+.sidebar-item-blue {
+  --theme-color: #4c72ac;
+  --theme-bg: rgba(76, 114, 172, 0.1);
+}
+.sidebar-item-red {
+  --theme-color: #dc3545;
+  --theme-bg: rgba(220, 53, 69, 0.1);
+}
+.sidebar-item-orange {
+  --theme-color: #eb7734;
+  --theme-bg: rgba(235, 119, 52, 0.1);
+}
+.sidebar-item-purple {
+  --theme-color: #814cac;
+  --theme-bg: rgba(129, 76, 172, 0.1);
+}
+
+.sidebar-item .sidebar-icon-wrapper {
+  background-color: var(--theme-bg);
+  color: var(--theme-color);
+}
+
+.sidebar-item:hover {
+  border-color: var(--theme-color);
+  background-color: var(--theme-bg);
+  color: var(--theme-color);
+  transform: translateY(-2px);
+}
+
+.sidebar-item:hover .sidebar-icon-wrapper {
+  transform: scale(1.05);
+}
+
+/* Estado deshabilitado */
+.sidebar-item-disabled {
+  opacity: 0.4;
+  filter: grayscale(100%);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.sidebar-item-disabled:hover {
+  border-color: transparent;
+  background-color: transparent;
+  transform: none;
+}
+
+/* ════ RESPONSIVE DESIGN (MÓVILES / TABLETS) ════ */
+@media (max-width: 768px) {
+  .modules-layout-wrapper {
+    flex-direction: column;
+  }
+
+  .module-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1.5px solid var(--border-sidebar);
+    padding: 0.5rem 1rem;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+
+  .sidebar-inner {
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+    height: auto;
+  }
+
+  .sidebar-brand-mini {
+    display: none; /* Ocultamos el logo en mobile para ahorrar espacio */
+  }
+
+  .sidebar-divider {
+    display: none; /* Ocultamos el divisor en mobile */
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 0.75rem;
+    justify-content: center;
+    width: auto;
+    overflow-y: visible;
+    overflow-x: auto;
+    padding: 0.25rem 0;
+  }
+
+  .sidebar-item {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    padding: 0.25rem;
+  }
+
+  .sidebar-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    margin-bottom: 0.15rem;
+  }
+
+  .sidebar-icon-wrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sidebar-label {
+    font-size: 0.55rem;
+  }
+
+  .sidebar-item:hover {
+    transform: none; /* Desactivar traslación 3D en mobile al hacer hover */
+  }
+
+  .modules-content-area {
+    width: 100%;
+    height: calc(100vh - 81px); /* Ajuste de altura dinámica */
+  }
+}
