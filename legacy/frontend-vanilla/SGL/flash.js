@@ -1,9 +1,7 @@
 (function () {
     try {
-        var saved = localStorage.getItem('sgl_dark');
-        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('IDR_dark') === 'true') {
             document.documentElement.classList.add('dark-mode');
         }
     } catch (e) { }
 }());
-// Parche anti parpadeo blanco en modo oscuro

@@ -568,7 +568,11 @@ function toggleDarkMode() {
             iconUse.setAttribute('href', dark ? '#icon-sun' : '#icon-moon');
         }
     }
-    try { localStorage.setItem('SGI_dark', dark ? '1' : '0'); } catch (_) { }
+    try {
+        localStorage.setItem('IDR_dark', dark ? 'true' : 'false');
+        const parentWin = window.parent || window;
+        parentWin.dispatchEvent(new CustomEvent('idr-theme-change', { detail: { isDark: dark } }));
+    } catch (_) { }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3703,8 +3707,8 @@ function _ejecutarReporte() {
     const _on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
 
     // Header
-    _on('btn-inicio-logo', 'click', () => window.parent.location.href = '/');
-    _on('btn-inicio-titulo', 'click', () => window.parent.location.href = '/');
+    // _on('btn-inicio-logo', 'click', () => window.parent.location.href = '/');
+    // _on('btn-inicio-titulo', 'click', () => window.parent.location.href = '/');
     _on('btn-undo', 'click', () => historial.undo());
     _on('btn-redo', 'click', () => historial.redo());
     _on('btn-ajustes', 'click', () => MM.abrir('modal-ajustes'));
@@ -3925,9 +3929,11 @@ function _ejecutarReporte() {
 
     // dark mode
     try {
-        if (localStorage.getItem('SGI_dark') === '1') {
-            // Cambiar document.body por document.documentElement
+        if (localStorage.getItem('IDR_dark') === 'true') {
             document.documentElement.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+        }
             const btnDark = document.getElementById('btn-dark-mode');
             if (btnDark) {
                 btnDark.title = 'Modo claro';

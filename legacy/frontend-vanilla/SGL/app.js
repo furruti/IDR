@@ -1605,8 +1605,13 @@ const Gantt = (function () {
 const UI = (function () {
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
+        document.documentElement.classList.toggle('dark-mode');
         const isD = document.body.classList.contains('dark-mode');
-        localStorage.setItem(`${APP_KEY}_dark`, isD ? 'dark' : 'light');
+        localStorage.setItem('IDR_dark', isD ? 'true' : 'false');
+        try {
+            const parentWin = window.parent || window;
+            parentWin.dispatchEvent(new CustomEvent('idr-theme-change', { detail: { isDark: isD } }));
+        } catch (_) {}
         const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
         if (icon) icon.innerHTML = `<use href="#icon-${isD ? 'sun' : 'moon'}"/>`;
         if (label) label.textContent = isD ? 'Modo claro' : 'Modo oscuro';
@@ -2921,9 +2926,10 @@ window.addEventListener('DOMContentLoaded', () => {
         } catch (_) { }
     });
 
-    const saved = localStorage.getItem(`${APP_KEY}_dark`);
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const saved = localStorage.getItem('IDR_dark');
+    if (saved === 'true') {
         document.body.classList.add('dark-mode');
+        document.documentElement.classList.add('dark-mode');
         if (document.getElementById('theme-icon')) document.getElementById('theme-icon').innerHTML = '<use href="#icon-sun"/>';
         if (document.getElementById('theme-label')) document.getElementById('theme-label').textContent = 'Modo claro';
     }
@@ -3082,7 +3088,7 @@ window.addEventListener('DOMContentLoaded', () => {
     function _on(id, evt, fn) { const el = document.getElementById(id); if (el) el.addEventListener(evt, fn); }
 
     // Header
-    _on('btn-inicio', 'click', () => window.parent.location.href = '/');
+    // _on('btn-inicio', 'click', () => window.parent.location.href = '/');
     _on('year-selector', 'change', function () { Gantt.changeYear(this.value); });
     _on('btn-undo', 'click', () => Historial.undo());
     _on('btn-redo', 'click', () => Historial.redo());

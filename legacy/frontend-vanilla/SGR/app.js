@@ -4,7 +4,7 @@
 const APP_KEY = 'RCK_';
 
 (function () {
-    try { if (localStorage.getItem(APP_KEY + 'dark') === '1') document.documentElement.classList.add('dark-mode'); } catch (e) { }
+    try { if (localStorage.getItem('IDR_dark') === 'true') document.documentElement.classList.add('dark-mode'); else document.documentElement.classList.remove('dark-mode'); } catch (e) { }
 }());
 
 // ═══════════════════════════════════════════════════════
@@ -327,7 +327,11 @@ function toggleDarkMode() {
     const dark = document.documentElement.classList.toggle('dark-mode');
     const iconUse = document.getElementById('dark-icon-use');
     if (iconUse) iconUse.setAttribute('href', dark ? '#icon-sun' : '#icon-moon');
-    try { localStorage.setItem(APP_KEY + 'dark', dark ? '1' : '0'); } catch (_) { } // Actualizado
+    try {
+        localStorage.setItem('IDR_dark', dark ? 'true' : 'false');
+        const parentWin = window.parent || window;
+        parentWin.dispatchEvent(new CustomEvent('idr-theme-change', { detail: { isDark: dark } }));
+    } catch (_) { }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2213,7 +2217,7 @@ function _init() {
     cargar();
 
     try {
-        if (localStorage.getItem(APP_KEY + 'dark') === '1') {
+        if (localStorage.getItem('IDR_dark') === 'true') {
             document.getElementById('dark-icon-use')?.setAttribute('href', '#icon-sun');
         }
     } catch (_) { }
@@ -2387,8 +2391,8 @@ function _initBindings() {
     document.getElementById('tab-inventario')?.addEventListener('click', () => switchTab('inventario'));
 
     // Header
-    document.getElementById('btn-inicio-logo')?.addEventListener('click', () => window.parent.location.href = '/');
-    document.getElementById('btn-inicio-titulo')?.addEventListener('click', () => window.parent.location.href = '/');
+    // document.getElementById('btn-inicio-logo')?.addEventListener('click', () => window.parent.location.href = '/');
+    // document.getElementById('btn-inicio-titulo')?.addEventListener('click', () => window.parent.location.href = '/');
     document.getElementById('btn-dark-mode')?.addEventListener('click', toggleDarkMode);
     document.getElementById('btn-ajustes')?.addEventListener('click', () => UI.abrirAjustes());
     document.getElementById('btn-undo')?.addEventListener('click', () => historial.undo());

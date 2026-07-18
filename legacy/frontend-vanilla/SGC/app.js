@@ -6,8 +6,10 @@
     // ════════════════════════════════════════════════════════════════════════════
     ; (() => {
         try {
-            if (localStorage.getItem('IDR_dark') === '1') {
+            if (localStorage.getItem('IDR_dark') === 'true') {
                 document.documentElement.classList.add('dark-mode');
+            } else {
+                document.documentElement.classList.remove('dark-mode');
             }
             const saved = JSON.parse(localStorage.getItem('cctvs:cctv_tab') || 'null');
             const tab = (saved && saved.tab && (Date.now() - saved.ts) < 3600000) ? saved.tab : 'dashboard';
@@ -6744,7 +6746,7 @@
         const on = (id, evt, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(evt, fn); };
 
         // Header
-        on('btn-inicio', 'click', () => window.parent.location.href = '/');
+        // on('btn-inicio', 'click', () => window.parent.location.href = '/');
         on('btn-undo', 'click', () => historial.undo());
         on('btn-redo', 'click', () => historial.redo());
 
@@ -6760,7 +6762,11 @@
 
         const toggleTheme = () => {
             const isDark = document.documentElement.classList.toggle('dark-mode');
-            localStorage.setItem('IDR_dark', isDark ? '1' : '0');
+            localStorage.setItem('IDR_dark', isDark ? 'true' : 'false');
+            try {
+                const parentWin = window.parent || window;
+                parentWin.dispatchEvent(new CustomEvent('idr-theme-change', { detail: { isDark } }));
+            } catch (e) {}
             syncThemeIcons(isDark);
         };
         on('btn-dark-mode', 'click', toggleTheme);

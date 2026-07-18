@@ -1127,11 +1127,6 @@ input[type="file"].hidden {
     flex: 1;
 }
 
-#btn-inicio-logo,
-#btn-inicio-titulo {
-    cursor: pointer;
-}
-
 .icon-btn {
     width: 44px;
     height: 44px;
