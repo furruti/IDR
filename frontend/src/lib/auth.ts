@@ -6,6 +6,8 @@ import type { JWT } from 'next-auth/jwt';
 type KeycloakProfile = {
   sub?: string;
   name?: string;
+  given_name?: string;
+  family_name?: string;
   email?: string;
   preferred_username?: string;
   realm_access?: { roles?: string[] };
@@ -50,6 +52,21 @@ const authProviders = isBypass
         clientId: process.env.KEYCLOAK_CLIENT_ID,
         clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
         issuer: getKeycloakIssuer(),
+        profile(profile: KeycloakProfile) {
+          const fullName = [profile.given_name, profile.family_name].filter(Boolean).join(' ') ||
+                           profile.name ||
+                           profile.preferred_username ||
+                           'Usuario';
+          return {
+            id: profile.sub ?? '',
+            name: fullName,
+            email: profile.email ?? '',
+            image: null,
+            given_name: profile.given_name,
+            family_name: profile.family_name,
+            preferred_username: profile.preferred_username,
+          };
+        }
       }),
     ];
 
@@ -66,11 +83,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, account, profile, user }) {
       if (isBypass) {
         if (user) {
-          token.user = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          } satisfies DefaultSession['user'];
+          token.name = user.name;
+          token.email = user.email;
           token.roles = ['admin', 'user']; // Roles por defecto para bypass
         }
         return token;
@@ -78,40 +92,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const keycloakProfile = profile as KeycloakProfile | undefined;
 
-      // ATENCIÓN: Evitamos guardar el access_token y el id_token enteros en el token de NextAuth.
-      // Los tokens de Keycloak son muy grandes y causan que la cookie supere los 4KB.
-      // Cuando esto pasa, los Proxies Reversos (Nginx/Ingress) en producción descartan la cookie silenciosamente,
-      // lo que resulta en que /api/auth/session devuelva `null` después del login.
-      if (account) {
-        token.expiresAt = account.expires_at;
-        if (account.id_token) {
-          token.idToken = account.id_token as string;
-        }
+      if (user) {
+        token.name = user.name;
+        token.email = user.email;
+        token.given_name = (user as any).given_name;
+        token.family_name = (user as any).family_name;
+        token.preferred_username = (user as any).preferred_username;
+      } else if (keycloakProfile) {
+        const fullName = [keycloakProfile.given_name, keycloakProfile.family_name].filter(Boolean).join(' ') ||
+                         keycloakProfile.name ||
+                         keycloakProfile.preferred_username ||
+                         'Usuario';
+        token.name = fullName;
+        token.email = keycloakProfile.email;
+        token.given_name = keycloakProfile.given_name;
+        token.family_name = keycloakProfile.family_name;
+        token.preferred_username = keycloakProfile.preferred_username;
       }
 
       if (keycloakProfile) {
-        token.user = {
-          id: keycloakProfile.sub,
-          name: keycloakProfile.name ?? keycloakProfile.preferred_username,
-          email: keycloakProfile.email,
-        } satisfies DefaultSession['user'];
         token.roles = getRoles(keycloakProfile);
       }
 
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      const tokenUser = token.user ?? {};
-
       session.user = {
         ...session.user,
-        id: tokenUser.id,
-        name: tokenUser.name ?? session.user?.name,
-        email: tokenUser.email ?? session.user?.email,
+        id: token.sub,
+        name: token.name ?? session.user?.name,
+        email: token.email ?? session.user?.email,
         image: session.user?.image,
         roles: token.roles ?? [],
+        given_name: token.given_name,
+        family_name: token.family_name,
+        preferred_username: token.preferred_username,
       };
-      session.expiresAt = token.expiresAt;
 
       return session;
     },

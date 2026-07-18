@@ -8,22 +8,18 @@ declare module 'next-auth' {
       email?: string | null;
       image?: string | null;
       roles: string[];
+      given_name?: string | null;
+      family_name?: string | null;
+      preferred_username?: string | null;
     } & DefaultSession['user'];
-    expiresAt?: number;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    accessToken?: string;
-    idToken?: string;
-    expiresAt?: number;
     roles?: string[];
-    user?: {
-      id?: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-    };
+    given_name?: string | null;
+    family_name?: string | null;
+    preferred_username?: string | null;
   }
 }
